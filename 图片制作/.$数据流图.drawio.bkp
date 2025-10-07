@@ -1,0 +1,64 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
+  <diagram name="第 1 页" id="WDF55MsE2VZGOoAJsL-M">
+    <mxGraphModel dx="1068" dy="520" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="-5-8pFiCpFxngw76-w9e-1" value="前端层" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="120" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-2" value="教师管理页面" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="-5-8pFiCpFxngw76-w9e-1">
+          <mxGeometry x="10" y="40" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-3" value="学生使用页面" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="-5-8pFiCpFxngw76-w9e-1">
+          <mxGeometry x="110" y="40" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-4" value="后端层" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="260" width="200" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-5" value="API接口子层" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="-5-8pFiCpFxngw76-w9e-4">
+          <mxGeometry x="10" y="40" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-6" value="业务逻辑子层" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="-5-8pFiCpFxngw76-w9e-4">
+          <mxGeometry x="10" y="80" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-7" value="数据访问子层" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="-5-8pFiCpFxngw76-w9e-4">
+          <mxGeometry x="10" y="120" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-9" value="AI业务子模块" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="300" width="200" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-14" value="动作识别" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="-5-8pFiCpFxngw76-w9e-9">
+          <mxGeometry x="110" y="40" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-13" value="智能对话" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="-5-8pFiCpFxngw76-w9e-9">
+          <mxGeometry x="10" y="40" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-15" value="持久化层" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="460" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-17" value="文件存储服务器" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="-5-8pFiCpFxngw76-w9e-15">
+          <mxGeometry x="10" y="40" width="180" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-18" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="-5-8pFiCpFxngw76-w9e-4" target="-5-8pFiCpFxngw76-w9e-1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="410" y="280" as="sourcePoint" />
+            <mxPoint x="460" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-19" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="-5-8pFiCpFxngw76-w9e-4" target="-5-8pFiCpFxngw76-w9e-15">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="410" y="390" as="sourcePoint" />
+            <mxPoint x="460" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-5-8pFiCpFxngw76-w9e-20" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="-5-8pFiCpFxngw76-w9e-6">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="410" y="340" as="sourcePoint" />
+            <mxPoint x="480" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

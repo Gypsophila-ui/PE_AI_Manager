@@ -1,0 +1,6 @@
+@SE_PE_AI_Manager_HostAddress = http://localhost:5103
+
+GET {{SE_PE_AI_Manager_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
