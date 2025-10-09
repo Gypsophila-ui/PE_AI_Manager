@@ -1,15 +1,15 @@
 [
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
-    "Method": "Change_self_password",
-    "RelativePath": "User/change_self_password",
+    "Method": "Change_student_info",
+    "RelativePath": "User/change_student_info",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
         "Name": "request",
-        "Type": "SE_PE_AI_Manager.Basic.Request_two",
+        "Type": "SE_PE_AI_Manager.Basic.Request_seven",
         "IsRequired": true
       }
     ],
@@ -27,15 +27,15 @@
   },
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
-    "Method": "Change_student_info",
-    "RelativePath": "User/change_student_info",
+    "Method": "Change_student_password",
+    "RelativePath": "User/change_student_password",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
         "Name": "request",
-        "Type": "SE_PE_AI_Manager.Basic.Request_seven",
+        "Type": "SE_PE_AI_Manager.Basic.Request_three",
         "IsRequired": true
       }
     ],
@@ -79,8 +79,8 @@
   },
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
-    "Method": "Change_student_password",
-    "RelativePath": "User/delete_user",
+    "Method": "Change_teacher_password",
+    "RelativePath": "User/change_teacher_password",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
@@ -105,15 +105,41 @@
   },
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
-    "Method": "Get_user_info",
-    "RelativePath": "User/get_user_info",
+    "Method": "Get_student_info",
+    "RelativePath": "User/get_student_info",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
         "Name": "request",
-        "Type": "SE_PE_AI_Manager.Basic.Request_one",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
+    "Method": "Get_teacher_info",
+    "RelativePath": "User/get_teacher_info",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
         "IsRequired": true
       }
     ],

@@ -544,7 +544,7 @@ namespace SE_PE_AI_Manager.Operation
             return return_result;
         }
 
-        public static Function_result Change_teacher_info(string id, string jwt, string name, string gender, string title, string college, string department, OracleConnection connection)//注册教工
+        public static Function_result Change_teacher_info(string id, string jwt, string name, string gender, string title, string college, string department, OracleConnection connection)//修改教工个人信息
         {
             Function_result return_result = new Function_result();
             return_result.Code = -99;
@@ -581,7 +581,7 @@ namespace SE_PE_AI_Manager.Operation
             return return_result;
         }
 
-        public static Function_result Change_student_info(string id, string jwt, string name, string gender, string major, string college, string department, OracleConnection connection)//注册教工
+        public static Function_result Change_student_info(string id, string jwt, string name, string gender, string major, string college, string department, OracleConnection connection)//修改学生个人信息
         {
             Function_result return_result = new Function_result();
             return_result.Code = -99;
@@ -615,6 +615,274 @@ namespace SE_PE_AI_Manager.Operation
             }
             return_result.Code = 0;
             return_result.Message = "";
+            return return_result;
+        }
+
+        public static Function_result Change_teacher_password(string id, string old_password, string new_password, OracleConnection connection)//修改教工密码
+        {
+            Function_result return_result = new Function_result();
+            return_result.Code = -99;
+            return_result.Message = "Unknown Error";
+            //先查询id是否存在
+            string check = "SELECT COUNT(*) FROM teacher WHERE id = '" + id + "'";
+            int count = 0;
+            try
+            {
+                using (OracleCommand command = new OracleCommand(check, connection))
+                {
+                    object result = command.ExecuteScalar();//查询同名用户数量
+                    if (result != null && result != DBNull.Value)//如果result非空
+                    {
+                        count = Convert.ToInt32(result);//尝试转化为数字
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -11;//-11表示查询用户是否存在的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            if (count == 0)
+            {
+                return_result.Code = -21;//-21表示要修改密码的用户不存在的错误
+                return_result.Message = "User not found";
+                return return_result;
+            }
+            check = "SELECT password FROM teacher WHERE id = '" + id + "'";
+            string ans = "";
+            try
+            {
+                using (OracleCommand command = new OracleCommand(check, connection))
+                {
+                    object result = command.ExecuteScalar();//查询密码值
+                    if (result != null && result != DBNull.Value)//如果result非空
+                    {
+                        ans = Convert.ToString(result);
+                    }
+                    else
+                    {
+                        return_result.Code = -22;//-22表示查询成功但是无法获得密码
+                        return_result.Message = "Password not found";
+                        return return_result;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -12;//-12表示查询密码的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            if (old_password != ans) //如果旧密码不正确
+            {
+                return_result.Code = -23;//-23表示密码不正确
+                return_result.Message = "Old Password Error";
+                return return_result;
+            }
+            string action = "update teacher\n";
+            action = action + "set password = '" + new_password + "'\n";
+            action = action + "where id = '" + id + "'\n";
+            try
+            {
+                using (OracleCommand command = new OracleCommand(action, connection))
+                {
+                    command.ExecuteScalar();//执行修改操作
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -13;//-13表示修改用户信息的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            return_result.Code = 0;
+            return_result.Message = "";
+            return return_result;
+        }
+
+        public static Function_result Change_student_password(string id, string old_password, string new_password, OracleConnection connection)//修改学生密码
+        {
+            Function_result return_result = new Function_result();
+            return_result.Code = -99;
+            return_result.Message = "Unknown Error";
+            //先查询id是否存在
+            string check = "SELECT COUNT(*) FROM student WHERE id = '" + id + "'";
+            int count = 0;
+            try
+            {
+                using (OracleCommand command = new OracleCommand(check, connection))
+                {
+                    object result = command.ExecuteScalar();//查询同名用户数量
+                    if (result != null && result != DBNull.Value)//如果result非空
+                    {
+                        count = Convert.ToInt32(result);//尝试转化为数字
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -11;//-11表示查询用户是否存在的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            if (count == 0)
+            {
+                return_result.Code = -21;//-21表示要修改密码的用户不存在的错误
+                return_result.Message = "User not found";
+                return return_result;
+            }
+            check = "SELECT password FROM student WHERE id = '" + id + "'";
+            string ans = "";
+            try
+            {
+                using (OracleCommand command = new OracleCommand(check, connection))
+                {
+                    object result = command.ExecuteScalar();//查询密码值
+                    if (result != null && result != DBNull.Value)//如果result非空
+                    {
+                        ans = Convert.ToString(result);
+                    }
+                    else
+                    {
+                        return_result.Code = -22;//-22表示查询成功但是无法获得密码
+                        return_result.Message = "Password not found";
+                        return return_result;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -12;//-12表示查询密码的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            if (old_password != ans) //如果旧密码不正确
+            {
+                return_result.Code = -23;//-23表示密码不正确
+                return_result.Message = "Old Password Error";
+                return return_result;
+            }
+            string action = "update student\n";
+            action = action + "set password = '" + new_password + "'\n";
+            action = action + "where id = '" + id + "'\n";
+            try
+            {
+                using (OracleCommand command = new OracleCommand(action, connection))
+                {
+                    command.ExecuteScalar();//执行修改操作
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -13;//-13表示修改用户信息的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            return_result.Code = 0;
+            return_result.Message = "";
+            return return_result;
+        }
+
+        public static Function_result Get_teacher_info(string id, string jwt, string user_type, string teacher_id, OracleConnection connection)//修改教工密码
+        {
+            Function_result return_result = new Function_result();
+            return_result.Code = -99;
+            return_result.Message = "Unknown Error";
+            //先鉴权
+            return_result = Check_jwt(Convert.ToInt32(user_type), id, jwt, connection);//执行鉴权操作
+            if (return_result.Code < 0)//如果鉴权不通过
+            {
+                return return_result;//驳回操作
+            }
+            //鉴权成功，就执行获取信息的操作
+            string action = "select name, gender, title, college, department\n";
+            action = action + "from teacher\n";
+            action = action + "where id = '" + teacher_id + "'\n";
+            string ans = "";
+            try
+            {
+                using (OracleCommand command = new OracleCommand(action, connection))
+                {
+                    // 执行 select 语句
+                    using (OracleDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            ans = ans + reader["name"].ToString() + "\t\r";
+                            ans = ans + reader["gender"].ToString() + "\t\r";
+                            ans = ans + reader["title"].ToString() + "\t\r";
+                            ans = ans + reader["college"].ToString() + "\t\r";
+                            ans = ans + reader["department"].ToString() + "\t\r";
+                        }
+                        else
+                        {
+                            return_result.Code = -25;
+                            return_result.Message = "Read Error";
+                            return return_result;
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -13;
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            return_result.Code = 0;
+            return_result.Message = ans;
+            return return_result;
+        }
+
+        public static Function_result Get_student_info(string id, string jwt, string user_type, string student_id, OracleConnection connection)//修改教工密码
+        {
+            Function_result return_result = new Function_result();
+            return_result.Code = -99;
+            return_result.Message = "Unknown Error";
+            //先鉴权
+            return_result = Check_jwt(Convert.ToInt32(user_type), id, jwt, connection);//执行鉴权操作
+            if (return_result.Code < 0)//如果鉴权不通过
+            {
+                return return_result;//驳回操作
+            }
+            //鉴权成功，就执行获取信息的操作
+            string action = "select name, gender, major, college, department\n";
+            action = action + "from student\n";
+            action = action + "where id = '" + student_id + "'\n";
+            string ans = "";
+            try
+            {
+                using (OracleCommand command = new OracleCommand(action, connection))
+                {
+                    // 执行 select 语句
+                    using (OracleDataReader reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            ans = ans + reader["name"].ToString() + "\t\r";
+                            ans = ans + reader["gender"].ToString() + "\t\r";
+                            ans = ans + reader["major"].ToString() + "\t\r";
+                            ans = ans + reader["college"].ToString() + "\t\r";
+                            ans = ans + reader["department"].ToString() + "\t\r";
+                        }
+                        else
+                        {
+                            return_result.Code = -25;
+                            return_result.Message = "Read Error";
+                            return return_result;
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -13;
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            return_result.Code = 0;
+            return_result.Message = ans;
             return return_result;
         }
     }

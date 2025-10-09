@@ -293,7 +293,7 @@
         }
       }
     },
-    "/User/delete_user": {
+    "/User/change_teacher_password": {
       "post": {
         "tags": [
           "User"
@@ -341,7 +341,7 @@
         }
       }
     },
-    "/User/get_user_info": {
+    "/User/change_student_password": {
       "post": {
         "tags": [
           "User"
@@ -350,17 +350,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_three"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_three"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_three"
               }
             }
           }
@@ -389,7 +389,7 @@
         }
       }
     },
-    "/User/change_self_password": {
+    "/User/get_teacher_info": {
       "post": {
         "tags": [
           "User"
@@ -398,17 +398,65 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_two"
+                "$ref": "#/components/schemas/Request_four"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_two"
+                "$ref": "#/components/schemas/Request_four"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_two"
+                "$ref": "#/components/schemas/Request_four"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_result"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_result"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/API_result"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/User/get_student_info": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Request_four"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Request_four"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Request_four"
               }
             }
           }
@@ -462,13 +510,28 @@
         },
         "additionalProperties": false
       },
-      "Request_one": {
+      "Request_four": {
         "required": [
-          "first"
+          "first",
+          "fourth",
+          "second",
+          "third"
         ],
         "type": "object",
         "properties": {
           "first": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "second": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "third": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "fourth": {
             "minLength": 1,
             "type": "string"
           }
