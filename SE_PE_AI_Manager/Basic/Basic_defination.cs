@@ -33,6 +33,18 @@ namespace SE_PE_AI_Manager.Basic
         public string Second { get; set; } = null!;
     }
 
+    public class Request_three//三请求参数
+    {
+        [Required]
+        public string First { get; set; } = null!;
+
+        [Required]
+        public string Second { get; set; } = null!;
+
+        [Required]
+        public string Third { get; set; } = null!;
+    }
+
     public class Request_four//四请求参数
     {
         [Required]

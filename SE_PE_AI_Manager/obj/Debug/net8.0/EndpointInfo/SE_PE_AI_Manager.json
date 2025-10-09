@@ -197,7 +197,7 @@
         }
       }
     },
-    "/User/change_purview": {
+    "/User/change_teacher_info": {
       "post": {
         "tags": [
           "User"
@@ -206,17 +206,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_seven"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_seven"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_seven"
               }
             }
           }
@@ -245,7 +245,7 @@
         }
       }
     },
-    "/User/update_user_info": {
+    "/User/change_student_info": {
       "post": {
         "tags": [
           "User"
@@ -254,17 +254,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_two"
+                "$ref": "#/components/schemas/Request_seven"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_two"
+                "$ref": "#/components/schemas/Request_seven"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_two"
+                "$ref": "#/components/schemas/Request_seven"
               }
             }
           }
@@ -302,17 +302,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_three"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_three"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_one"
+                "$ref": "#/components/schemas/Request_three"
               }
             }
           }
@@ -512,6 +512,29 @@
             "type": "string"
           },
           "seventh": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Request_three": {
+        "required": [
+          "first",
+          "second",
+          "third"
+        ],
+        "type": "object",
+        "properties": {
+          "first": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "second": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "third": {
             "minLength": 1,
             "type": "string"
           }

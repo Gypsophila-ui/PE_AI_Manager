@@ -1,32 +1,6 @@
 [
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
-    "Method": "Change_purview",
-    "RelativePath": "User/change_purview",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "SE_PE_AI_Manager.Basic.Request_one",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "SE_PE_AI_Manager.Basic.API_result",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
     "Method": "Change_self_password",
     "RelativePath": "User/change_self_password",
     "HttpMethod": "POST",
@@ -53,7 +27,59 @@
   },
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
-    "Method": "Delete_user",
+    "Method": "Change_student_info",
+    "RelativePath": "User/change_student_info",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_seven",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
+    "Method": "Change_teacher_info",
+    "RelativePath": "User/change_teacher_info",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_seven",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
+    "Method": "Change_student_password",
     "RelativePath": "User/delete_user",
     "HttpMethod": "POST",
     "IsController": true,
@@ -61,7 +87,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "SE_PE_AI_Manager.Basic.Request_one",
+        "Type": "SE_PE_AI_Manager.Basic.Request_three",
         "IsRequired": true
       }
     ],
@@ -192,32 +218,6 @@
       {
         "Name": "request",
         "Type": "SE_PE_AI_Manager.Basic.Request_seven",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "SE_PE_AI_Manager.Basic.API_result",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
-    "Method": "Update_user_info",
-    "RelativePath": "User/update_user_info",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "SE_PE_AI_Manager.Basic.Request_two",
         "IsRequired": true
       }
     ],

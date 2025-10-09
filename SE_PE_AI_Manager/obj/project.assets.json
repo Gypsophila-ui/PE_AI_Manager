@@ -925,11 +925,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\15787\\Desktop\\2026-1\\软件工程\\SE_PE_AI_Manager\\SE_PE_AI_Manager.csproj",
+      "projectUniqueName": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\SE_PE_AI_Manager.csproj",
       "projectName": "SE_PE_AI_Manager",
-      "projectPath": "C:\\Users\\15787\\Desktop\\2026-1\\软件工程\\SE_PE_AI_Manager\\SE_PE_AI_Manager.csproj",
+      "projectPath": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\SE_PE_AI_Manager.csproj",
       "packagesPath": "C:\\Users\\15787\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\15787\\Desktop\\2026-1\\软件工程\\SE_PE_AI_Manager\\obj\\",
+      "outputPath": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

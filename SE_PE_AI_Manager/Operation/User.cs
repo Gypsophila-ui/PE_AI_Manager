@@ -233,7 +233,7 @@ namespace SE_PE_AI_Manager.Operation
             }
             if (count == 0)
             {
-                return_result.Code = -21;//-21表示要登录的用户不存在错误
+                return_result.Code = -21;//-21表示要校验的用户不存在错误
                 return_result.Message = "User not found";
                 return return_result;
             }
@@ -268,6 +268,7 @@ namespace SE_PE_AI_Manager.Operation
             string jwt_time = jwt.Substring(0, 14);
             ans = jwt_time + id + ans;
             ans = Basic_calculate.ComputeSHA256(ans);
+            ans = jwt_time + ans;
             if (ans != jwt)//如果我计算出来的jwt码和前端传来的不一样
             {
                 return_result.Code = -23;//-23表示jwt码无效
@@ -290,7 +291,7 @@ namespace SE_PE_AI_Manager.Operation
             }
         }
 
-        public static Function_result Check_teacher_jwt(string id, string jwt, OracleConnection connection)//鉴定学生的jwt语句是否有效
+        public static Function_result Check_teacher_jwt(string id, string jwt, OracleConnection connection)//鉴定教师的jwt语句是否有效
         {
             Function_result return_result = new Function_result();
             return_result.Code = -99;
@@ -352,6 +353,7 @@ namespace SE_PE_AI_Manager.Operation
             string jwt_time = jwt.Substring(0, 14);
             ans = jwt_time + id + ans;
             ans = Basic_calculate.ComputeSHA256(ans);
+            ans = jwt_time + ans;
             if (ans != jwt)//如果我计算出来的jwt码和前端传来的不一样
             {
                 return_result.Code = -23;//-23表示jwt码无效
@@ -534,6 +536,80 @@ namespace SE_PE_AI_Manager.Operation
             catch (Exception)
             {
                 return_result.Code = -13;//-13表示插入用户的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            return_result.Code = 0;
+            return_result.Message = "";
+            return return_result;
+        }
+
+        public static Function_result Change_teacher_info(string id, string jwt, string name, string gender, string title, string college, string department, OracleConnection connection)//注册教工
+        {
+            Function_result return_result = new Function_result();
+            return_result.Code = -99;
+            return_result.Message = "Unknown Error";
+            //先鉴权
+            return_result = Check_jwt(1, id, jwt, connection);//执行鉴权操作
+            if( return_result.Code < 0 )//如果鉴权不通过
+            {
+                return return_result;//驳回操作
+            }
+            //鉴权通过的话，就执行修改操作
+            string action = "update teacher\n";
+            action = action + "set name = '" + name + "',\n";
+            action = action + "gender = '" + gender + "',\n";
+            action = action + "title = '" + title + "',\n";
+            action = action + "college = '" + college + "',\n";
+            action = action + "department = '" + department + "'\n";
+            action = action + "where id = '" + id + "'\n";
+            try
+            {
+                using (OracleCommand command = new OracleCommand(action, connection))
+                {
+                    command.ExecuteScalar();//执行修改操作
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -13;//-13表示修改用户信息的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            return_result.Code = 0;
+            return_result.Message = "";
+            return return_result;
+        }
+
+        public static Function_result Change_student_info(string id, string jwt, string name, string gender, string major, string college, string department, OracleConnection connection)//注册教工
+        {
+            Function_result return_result = new Function_result();
+            return_result.Code = -99;
+            return_result.Message = "Unknown Error";
+            //先鉴权
+            return_result = Check_jwt(0, id, jwt, connection);//执行鉴权操作
+            if (return_result.Code < 0)//如果鉴权不通过
+            {
+                return return_result;//驳回操作
+            }
+            //鉴权通过的话，就执行修改操作
+            string action = "update student\n";
+            action = action + "set name = '" + name + "',\n";
+            action = action + "gender = '" + gender + "',\n";
+            action = action + "major = '" + major + "',\n";
+            action = action + "college = '" + college + "',\n";
+            action = action + "department = '" + department + "'\n";
+            action = action + "where id = '" + id + "'\n";
+            try
+            {
+                using (OracleCommand command = new OracleCommand(action, connection))
+                {
+                    command.ExecuteScalar();//执行修改操作
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -13;//-13表示修改用户信息的sql操作无法顺利执行
                 return_result.Message = "SQL Error";
                 return return_result;
             }

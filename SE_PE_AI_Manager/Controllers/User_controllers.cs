@@ -10,7 +10,7 @@ namespace SE_PE_AI_Manager.Controllers
     [Route("[controller]")]
     public class UserController : ControllerBase
     {
-        [HttpPost("login_teacher")]
+        [HttpPost("login_teacher")]//教师登录
         public ActionResult<API_result> Login_teacher([FromBody] Request_two request)
         {
             string name = request.First;//获取姓名
@@ -68,7 +68,7 @@ namespace SE_PE_AI_Manager.Controllers
             }
         }
 
-        [HttpPost("login_student")]
+        [HttpPost("login_student")]//学生登录
         public ActionResult<API_result> Login_student([FromBody] Request_two request)
         {
             string name = request.First;//获取姓名
@@ -126,7 +126,7 @@ namespace SE_PE_AI_Manager.Controllers
             }
         }
 
-        [HttpPost("new_teacher")]
+        [HttpPost("new_teacher")]//新建教师用户
         public ActionResult<API_result> New_teacher([FromBody] Request_seven request)
         {
             string id = request.First;//获取参数
@@ -190,7 +190,7 @@ namespace SE_PE_AI_Manager.Controllers
             }
         }
 
-        [HttpPost("new_student")]
+        [HttpPost("new_student")]//新建学生用户
         public ActionResult<API_result> New_student([FromBody] Request_seven request)
         {
             string id = request.First;//获取参数
@@ -254,10 +254,16 @@ namespace SE_PE_AI_Manager.Controllers
             }
         }
 
-        [HttpPost("change_purview")]
-        public ActionResult<API_result> Change_purview([FromBody] Request_one request)
+        [HttpPost("change_teacher_info")]//修改教师的个人信息
+        public ActionResult<API_result> Change_teacher_info([FromBody] Request_seven request)
         {
-            string parameters = request.First;//获取参数
+            string id = request.First;//获取参数
+            string jwt = request.Second;
+            string name = request.Third;
+            string gender = request.Fourth;
+            string title = request.Fifth;
+            string college = request.Sixth;
+            string department = request.Seventh;
             var API_result = new API_result//初始化的返回值
             {
                 Success = true,
@@ -265,7 +271,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Data = "NULL",
                 ErrorCode = 0
             };
-            if (parameters == null)//如果参数错误
+            if (id == null || jwt == null || name == null || gender == null || college == null)//如果参数错误
             {
                 API_result.Success = false;
                 API_result.Message = "Error parameters";
@@ -283,7 +289,6 @@ namespace SE_PE_AI_Manager.Controllers
                 return NotFound(API_result);
             }
             OracleConnection connection = Basic_link.Get_connection();
-
             if (connection == null)//如果未能正确获取链接
             {
                 API_result.Success = false;
@@ -293,57 +298,35 @@ namespace SE_PE_AI_Manager.Controllers
                 Basic_link.Close_link();
                 return NotFound(API_result);
             }
-            int val = 0;// user.Change_purview(parameters, connection);
-            if (val >= 0)
+            Function_result val = SE_PE_AI_Manager.Operation.User.Change_teacher_info(id, jwt, name, gender, title, college, department, connection);
+            if (val.Code < 0)//如果返回结果存在错误
+            {
+                API_result.Success = false;
+                API_result.Message = val.Message;
+                API_result.Data = "NULL";
+                API_result.ErrorCode = val.Code;
+                return BadRequest(API_result);
+            }
+            else//如果正常返回
             {
                 API_result.Success = true;
+                API_result.Data = val.Message;
                 API_result.Message = "NULL";
-                API_result.Data = Convert.ToString(val);//返回影响的行数
-                API_result.ErrorCode = 0;
-                Basic_link.Close_link();
+                API_result.ErrorCode = val.Code;
                 return Ok(API_result);
             }
-            if (val < 0 && val > -10) //参数出错
-            {
-                API_result.Success = false;
-                API_result.Message = "parameters";
-                API_result.Data = "NULL";
-                API_result.ErrorCode = val;
-                Basic_link.Close_link();
-                return BadRequest(API_result);
-            }
-            if (val >= -19 && val <= -10)//sql操作出错
-            {
-                API_result.Success = false;
-                API_result.Message = "Error SQL action";
-                API_result.Data = "NULL";
-                API_result.ErrorCode = val;
-                Basic_link.Close_link();
-                return BadRequest(API_result);
-            }
-            if (val == -21)//用户名不存在
-            {
-                API_result.Success = false;
-                API_result.Message = "Wrong Name";
-                API_result.Data = "NULL";
-                API_result.ErrorCode = val;
-                Basic_link.Close_link();
-                return NotFound(API_result);
-            }
-            //对于其他的意料之外的问题
-            API_result.Success = false;
-            API_result.Message = "Unknown Error";
-            API_result.Data = "NULL";
-            Basic_link.Close_link();
-            API_result.ErrorCode = val;
-            return BadRequest(API_result);
         }
 
-        [HttpPost("update_user_info")]
-        public ActionResult<API_result> Update_user_info([FromBody] Request_two request)
+        [HttpPost("change_student_info")]//修改学生的个人信息
+        public ActionResult<API_result> Change_student_info([FromBody] Request_seven request)
         {
-            string name = request.First;//获取参数
-            string parameters = request.Second;
+            string id = request.First;//获取参数
+            string jwt = request.Second;
+            string name = request.Third;
+            string gender = request.Fourth;
+            string major = request.Fifth;
+            string college = request.Sixth;
+            string department = request.Seventh;
             var API_result = new API_result//初始化的返回值
             {
                 Success = true,
@@ -351,7 +334,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Data = "NULL",
                 ErrorCode = 0
             };
-            if (parameters == null || name == null)//如果参数错误
+            if (id == null || jwt == null || name == null || gender == null || college == null)//如果参数错误
             {
                 API_result.Success = false;
                 API_result.Message = "Error parameters";
@@ -369,7 +352,6 @@ namespace SE_PE_AI_Manager.Controllers
                 return NotFound(API_result);
             }
             OracleConnection connection = Basic_link.Get_connection();
-
             if (connection == null)//如果未能正确获取链接
             {
                 API_result.Success = false;
@@ -379,56 +361,31 @@ namespace SE_PE_AI_Manager.Controllers
                 Basic_link.Close_link();
                 return NotFound(API_result);
             }
-            int val = 0;// user.Update_user_info(name, parameters, connection);
-            if (val >= 0)
+            Function_result val = SE_PE_AI_Manager.Operation.User.Change_student_info(id, jwt, name, gender, major, college, department, connection);
+            if (val.Code < 0)//如果返回结果存在错误
+            {
+                API_result.Success = false;
+                API_result.Message = val.Message;
+                API_result.Data = "NULL";
+                API_result.ErrorCode = val.Code;
+                return BadRequest(API_result);
+            }
+            else//如果正常返回
             {
                 API_result.Success = true;
+                API_result.Data = val.Message;
                 API_result.Message = "NULL";
-                API_result.Data = Convert.ToString(val);//返回影响的行数
-                API_result.ErrorCode = 0;
-                Basic_link.Close_link();
+                API_result.ErrorCode = val.Code;
                 return Ok(API_result);
             }
-            if (val < 0 && val > -10) //参数出错
-            {
-                API_result.Success = false;
-                API_result.Message = "parameters";
-                API_result.Data = "NULL";
-                API_result.ErrorCode = val;
-                Basic_link.Close_link();
-                return BadRequest(API_result);
-            }
-            if (val >= -19 && val <= -10)//sql操作出错
-            {
-                API_result.Success = false;
-                API_result.Message = "Error SQL action";
-                API_result.Data = "NULL";
-                API_result.ErrorCode = val;
-                Basic_link.Close_link();
-                return BadRequest(API_result);
-            }
-            if (val == -21)//用户名不存在
-            {
-                API_result.Success = false;
-                API_result.Message = "Wrong Name";
-                API_result.Data = "NULL";
-                API_result.ErrorCode = val;
-                Basic_link.Close_link();
-                return NotFound(API_result);
-            }
-            //对于其他的意料之外的问题
-            API_result.Success = false;
-            API_result.Message = "Unknown Error";
-            API_result.Data = "NULL";
-            Basic_link.Close_link();
-            API_result.ErrorCode = val;
-            return BadRequest(API_result);
         }
 
         [HttpPost("delete_user")]
-        public ActionResult<API_result> Delete_user([FromBody] Request_one request)
+        public ActionResult<API_result> Change_student_password ([FromBody] Request_three request)//修改学生密码
         {
-            string parameters = request.First;//获取参数
+            string id = request.First;//获取参数
+            string old_password = request.Second;
+            string new_password = request.Third;
             var API_result = new API_result//初始化的返回值
             {
                 Success = true,
@@ -436,7 +393,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Data = "NULL",
                 ErrorCode = 0
             };
-            if (parameters == null)//如果参数错误
+            if (id == null || old_password == null || new_password == null) //如果参数错误
             {
                 API_result.Success = false;
                 API_result.Message = "Error parameters";
