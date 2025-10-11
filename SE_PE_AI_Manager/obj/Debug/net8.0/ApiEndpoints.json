@@ -442,6 +442,136 @@
     ]
   },
   {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Delete_homework",
+    "RelativePath": "Homework/delete_homework",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Edit_homework",
+    "RelativePath": "Homework/edit_homework",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_seven",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_homework_id_by_course",
+    "RelativePath": "Homework/get_homework_id_by_course",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_info_by_homework_id",
+    "RelativePath": "Homework/get_info_by_homework_id",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_two",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "New_homework",
+    "RelativePath": "Homework/new_homework",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_six",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "SE_PE_AI_Manager.Controllers.UserController",
     "Method": "Change_student_info",
     "RelativePath": "User/change_student_info",

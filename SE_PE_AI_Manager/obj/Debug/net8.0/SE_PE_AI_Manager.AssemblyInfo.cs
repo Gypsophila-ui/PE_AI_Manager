@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SE_PE_AI_Manager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a81ff48448dd64d051c2807c5e569346fd164cdb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5aa3dcafae2394c5535c472f37d950a9c245fd96")]
 [assembly: System.Reflection.AssemblyProductAttribute("SE_PE_AI_Manager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SE_PE_AI_Manager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
