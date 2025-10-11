@@ -443,6 +443,32 @@
   },
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "AI_test",
+    "RelativePath": "Homework/AI_test",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
     "Method": "Delete_homework",
     "RelativePath": "Homework/delete_homework",
     "HttpMethod": "POST",
@@ -469,6 +495,32 @@
   },
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Edit_AI_type",
+    "RelativePath": "Homework/edit_AI_type",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_five",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
     "Method": "Edit_homework",
     "RelativePath": "Homework/edit_homework",
     "HttpMethod": "POST",
@@ -478,6 +530,58 @@
       {
         "Name": "request",
         "Type": "SE_PE_AI_Manager.Basic.Request_seven",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_AI_type",
+    "RelativePath": "Homework/get_AI_type",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_one",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_final_score",
+    "RelativePath": "Homework/get_final_score",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
         "IsRequired": true
       }
     ],
@@ -547,6 +651,136 @@
   },
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_submit_id_by_AI_not_test",
+    "RelativePath": "Homework/get_submit_id_by_AI_not_test",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_one",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_submit_id_by_homework",
+    "RelativePath": "Homework/get_submit_id_by_homework",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_submit_id_by_student",
+    "RelativePath": "Homework/get_submit_id_by_student",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_five",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_submit_id_by_teacher_not_test",
+    "RelativePath": "Homework/get_submit_id_by_teacher_not_test",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_one",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_submit_info",
+    "RelativePath": "Homework/get_submit_info",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
     "Method": "New_homework",
     "RelativePath": "Homework/new_homework",
     "HttpMethod": "POST",
@@ -556,6 +790,84 @@
       {
         "Name": "request",
         "Type": "SE_PE_AI_Manager.Basic.Request_six",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Set_AI_type",
+    "RelativePath": "Homework/set_AI_type",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_five",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Submit_homework",
+    "RelativePath": "Homework/submit_homework",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_five",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Teacher_test",
+    "RelativePath": "Homework/teacher_test",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_seven",
         "IsRequired": true
       }
     ],
