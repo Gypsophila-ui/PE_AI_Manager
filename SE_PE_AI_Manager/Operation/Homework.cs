@@ -1637,46 +1637,61 @@ namespace SE_PE_AI_Manager.Operation
             return return_result;
         }
 
-        public static Function_result Get_final_score(string teacher_id, string jwt, string student_id, string homework_id, OracleConnection connection)//查询某个学生某项作业的最终得分
+        public static Function_result Get_final_score(string user_type, string user_id, string jwt, string student_id, string homework_id, OracleConnection connection)//查询某个学生某项作业的最终得分
         {
             Function_result return_result = new Function_result();
             return_result.Code = -99;
             return_result.Message = "Unknown Error";
             //先鉴权
-            return_result = User.Check_jwt(1, teacher_id, jwt, connection);//执行鉴权操作
+            return_result = User.Check_jwt(Convert.ToInt32(user_type), user_id, jwt, connection);//执行鉴权操作
             if (return_result.Code < 0)//如果鉴权不通过
             {
                 return return_result;//驳回操作
             }
-            string action = "select max(score) from submit\n";
+            string action = "select id,score from final_grade\n";
             action = action + "where student_id = '" + student_id + "'\n";
             action = action + "and homework_id = '" + homework_id + "'\n";
             int count = 0;
+            string id = "";
+            string ans = "";
             try
             {
-                using (OracleCommand command = new OracleCommand(action, connection))
+                using (OracleCommand cmd = new OracleCommand(action, connection))
                 {
-                    object result = command.ExecuteScalar();
-                    if (result != null && result != DBNull.Value)//如果result非空
+                    using (OracleDataReader reader = cmd.ExecuteReader())
                     {
-                        count = Convert.ToInt32(result);//尝试转化为数字
+                        if(reader.Read())
+                        {
+                            id = reader["ID"].ToString();
+                            ans = reader["score"].ToString();
+                        }
+                        else
+                        {
+                            return_result.Code = -25;//为0表示当前作业不存在
+                            return_result.Message = "Homework Not found";
+                            return return_result;
+                        }
+                    }
+                    if (ans != null)//如果ans非空
+                    {
+                        count = Convert.ToInt32(ans);//尝试转化为数字
+                    }
+                    else
+                    {
+                        return_result.Code = -26;//ans为空表示当前作业还没有被批阅过的作业
+                        return_result.Message = "No Judgement";
+                        return return_result;
                     }
                 }
             }
             catch (Exception)
             {
-                return_result.Code = -13;//-13表示当前作业存在性的sql操作无法顺利执行
+                return_result.Code = -13;//-13表示当前查询成绩的sql操作无法顺利执行
                 return_result.Message = "SQL Error";
                 return return_result;
             }
-            if (count == 0)
-            {
-                return_result.Code = -25;//为0表示当前作业不存在
-                return_result.Message = "Homework Not found";
-                return return_result;
-            }
             return_result.Code = 0;
-            return_result.Message = Convert.ToString(count);
+            return_result.Message = id + "\t\r" + Convert.ToString(count);
             return return_result;
         }
     }

@@ -974,12 +974,13 @@ namespace SE_PE_AI_Manager.Controllers
         }
 
         [HttpPost("get_final_score")]//获取某个学生某个作业的最终得分
-        public ActionResult<API_result> Get_final_score([FromBody] Request_four request)
+        public ActionResult<API_result> Get_final_score([FromBody] Request_five request)
         {
-            string teacher_id = request.First;//获取参数
-            string jwt = request.Second;
-            string student_id = request.Third;
-            string homework_id= request.Fourth;
+            string user_type = request.First;//获取参数
+            string user_id = request.Second;
+            string jwt = request.Third;
+            string student_id = request.Fourth;
+            string homework_id= request.Fifth;
             var API_result = new API_result//初始化的返回值
             {
                 Success = true,
@@ -987,7 +988,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Data = "NULL",
                 ErrorCode = 0
             };
-            if (student_id == null || jwt == null || homework_id == null || teacher_id == null)//如果参数错误
+            if (user_type == null || student_id == null || jwt == null || homework_id == null || user_id == null) //如果参数错误
             {
                 API_result.Success = false;
                 API_result.Message = "Error parameters";
@@ -1014,7 +1015,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Basic_link.Close_link();
                 return NotFound(API_result);
             }
-            Function_result val = SE_PE_AI_Manager.Operation.Homework.Get_final_score(teacher_id, jwt, student_id, homework_id, connection);
+            Function_result val = SE_PE_AI_Manager.Operation.Homework.Get_final_score(user_type, user_id, jwt, student_id, homework_id, connection);
             if (val.Code < 0)//如果返回结果存在错误
             {
                 API_result.Success = false;

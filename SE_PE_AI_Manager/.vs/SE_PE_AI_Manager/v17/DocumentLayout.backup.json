@@ -9,14 +9,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\controllers\\homework_controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:controllers\\homework_controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\basic\\basic_defination.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:basic\\basic_defination.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\basic\\basic_calculate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:basic\\basic_calculate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -26,24 +18,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Homework.cs",
-              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\Homework.cs",
-              "RelativeDocumentMoniker": "Operation\\Homework.cs",
-              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\Homework.cs*",
-              "RelativeToolTip": "Operation\\Homework.cs*",
-              "ViewState": "AgIAAHEGAAAAAAAAAAAAwI4GAAA7AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-11T06:39:01.511Z",
-              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -53,35 +32,22 @@
               "RelativeDocumentMoniker": "Controllers\\Homework_controller.cs",
               "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Controllers\\Homework_controller.cs",
               "RelativeToolTip": "Controllers\\Homework_controller.cs",
-              "ViewState": "AgIAAHkBAAAAAAAAAAAcwKMCAAAxAAAAAAAAAA==",
+              "ViewState": "AgIAANYDAAAAAAAAAAAAwNgDAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-11T06:38:32.49Z",
+              "WhenOpened": "2025-10-16T01:18:27.588Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "Basic_defination.cs",
-              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Basic\\Basic_defination.cs",
-              "RelativeDocumentMoniker": "Basic\\Basic_defination.cs",
-              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Basic\\Basic_defination.cs",
-              "RelativeToolTip": "Basic\\Basic_defination.cs",
-              "ViewState": "AgIAACYAAAAAAAAAAAA6wE0AAAAyAAAAAAAAAA==",
+              "DocumentIndex": 0,
+              "Title": "Homework.cs",
+              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\Homework.cs",
+              "RelativeDocumentMoniker": "Operation\\Homework.cs",
+              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\Homework.cs*",
+              "RelativeToolTip": "Operation\\Homework.cs*",
+              "ViewState": "AgIAAH0GAAAAAAAAAAAQwJ0GAABKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-09T01:20:05.303Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Basic_calculate.cs",
-              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Basic\\Basic_calculate.cs",
-              "RelativeDocumentMoniker": "Basic\\Basic_calculate.cs",
-              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Basic\\Basic_calculate.cs",
-              "RelativeToolTip": "Basic\\Basic_calculate.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACQAAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-10-07T11:19:55.117Z",
+              "WhenOpened": "2025-10-11T06:39:01.511Z",
               "EditorCaption": ""
             }
           ]
