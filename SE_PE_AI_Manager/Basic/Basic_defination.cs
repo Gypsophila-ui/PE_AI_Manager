@@ -59,6 +59,46 @@ namespace SE_PE_AI_Manager.Basic
         [Required]
         public string Fourth { get; set; } = null!;
     }
+
+    public class Request_five//五请求参数
+    {
+        [Required]
+        public string First { get; set; } = null!;
+
+        [Required]
+        public string Second { get; set; } = null!;
+
+        [Required]
+        public string Third { get; set; } = null!;
+
+        [Required]
+        public string Fourth { get; set; } = null!;
+
+        [Required]
+        public string Fifth { get; set; } = null!;
+    }
+
+    public class Request_six//六请求参数
+    {
+        [Required]
+        public string First { get; set; } = null!;
+
+        [Required]
+        public string Second { get; set; } = null!;
+
+        [Required]
+        public string Third { get; set; } = null!;
+
+        [Required]
+        public string Fourth { get; set; } = null!;
+
+        [Required]
+        public string Fifth { get; set; } = null!;
+
+        [Required]
+        public string Sixth { get; set; } = null!;
+
+    }
     public class Request_seven//七请求参数
     {
         [Required]
