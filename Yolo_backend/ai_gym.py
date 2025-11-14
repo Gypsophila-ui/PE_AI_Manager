@@ -37,15 +37,14 @@ class AIGym(BaseSolution):
         self.count = None
         self.stage = None
         self.pose_type = pose_type
-        #self.kpts_to_check = kpts_to_check
         self.annotator = None
         # self.env_check = check_imshow(warn=True)
         self.fps = 30
 
         super().__init__(**kwargs)
-        self.count = 0  # 只跟踪一个人，所以只需一个计数器
-        self.angle = 0  # 只跟踪一个人，所以只需一个角度值
-        self.stage = "-"  # 只跟踪一个人，所以只需一个阶段值
+        self.count = 0
+        self.angle = 0
+        self.stage = "-"
         # 从配置中提取详细信息以供后续使用
         self.initial_stage = None
         self.poseup_angle = float(self.CFG["up_angle"])  # 预定义的"向上"姿态角度

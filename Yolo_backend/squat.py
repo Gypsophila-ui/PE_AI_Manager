@@ -129,7 +129,7 @@ class SquatTracker:
         draw_text(
             im0,
             "CORRECT: " + str(self.state_tracker['SQUAT_COUNT']),
-            pos=(int(frame_width * 0.68), 30),
+            pos=(int(frame_width * 0.68), 150),
             text_color=(255, 255, 130),
             font_scale=0.7,
             text_color_bg=(18, 185, 0)
@@ -159,7 +159,6 @@ class SquatTracker:
                 self.state_tracker['IMPROPER_SQUAT'] += 1
             self.state_tracker['state_seq'] = []
             self.state_tracker['INCORRECT_POSTURE'] = False
-
         # 反馈显示逻辑
         else:
             hip_vertical_angle = calculate_angle(k[6].cpu(), k[12].cpu(), reference_direction="vertical")
