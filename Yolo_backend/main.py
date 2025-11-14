@@ -25,7 +25,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Final-Count", "X-Total-Frames", "X-Total-Time"],  # 添加这行
 )
+
 
 class VideoProcessor:
     def __init__(self):

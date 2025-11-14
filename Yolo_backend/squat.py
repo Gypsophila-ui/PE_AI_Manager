@@ -9,13 +9,9 @@ class SquatTracker:
         # 初始化状态跟踪字典
         self.state_tracker = {
             'state_seq': [],
-            'INACTIVE_TIME': 0.0,
-            'INACTIVE_TIME_FRONT': 0.0,
             'DISPLAY_TEXT': np.full((4,), False),
             'COUNT_FRAMES': np.zeros((4,), dtype=np.int64),
-            'LOWER_HIPS': False,
             'INCORRECT_POSTURE': False,
-            'prev_state': None,
             'curr_state': None,
             'SQUAT_COUNT': 0,
             'IMPROPER_SQUAT': 0
@@ -23,10 +19,10 @@ class SquatTracker:
 
         # 设置反馈信息映射
         self.FEEDBACK_ID_MAP = {
-            0: ('BEND BACKWARDS', 215, (0, 153, 255)),
-            1: ('BEND FORWARD', 215, (0, 153, 255)),
-            2: ('KNEE FALLING OVER TOE', 170, (255, 80, 80)),
-            3: ('SQUAT TOO DEEP', 125, (255, 80, 80))
+            0: ('LEAN BACKWARDS', 215, (0, 153, 255)),       # 后倾过多
+            1: ('LEAN FORWARD', 215, (0, 153, 255)),          # 前倾过多
+            2: ('KNEE OVER TOE', 170, (255, 80, 80)),         # 膝盖超过脚尖
+            3: ('SQUAT TOO DEEP', 125, (255, 80, 80))         # 下蹲过深
         }
 
         # 获取阈值
@@ -129,8 +125,8 @@ class SquatTracker:
         draw_text(
             im0,
             "CORRECT: " + str(self.state_tracker['SQUAT_COUNT']),
-            pos=(int(frame_width * 0.68), 150),
-            text_color=(255, 255, 130),
+            pos=(int(frame_width * 0.68), 135),
+            text_color=(255, 255, 115),
             font_scale=0.7,
             text_color_bg=(18, 185, 0)
         )
