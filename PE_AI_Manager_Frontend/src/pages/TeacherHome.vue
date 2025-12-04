@@ -41,8 +41,11 @@
       <section>
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-3xl font-bold text-gray-800">🏫 我的班级</h2>
-          <button class="px-4 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow">
+          <button @click="handleManageClass(classItem)" class="px-4 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow">
             管理班级
+          </button>
+          <button @click="openGenerateCodeModal(classItem)" class="px-4 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow">
+            生成课程码
           </button>
         </div>
         
@@ -134,12 +137,59 @@
         </div>
       </section>
     </div>
+    
+    <!-- 课程码生成弹窗 -->
+    <div v-if="showCourseCodeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">生成课程码</h2>
+        <div v-if="selectedClassForCode">
+          <p class="mb-4 text-gray-600">正在为班级：{{ selectedClassForCode.name }} 生成课程码</p>
+          <button 
+            @click="generateAndSaveCourseCode"
+            class="w-full py-3 rounded-xl bg-blue-500 text-white font-bold hover:bg-blue-600 transition-all shadow-lg mb-4"
+          >
+            生成新的课程码
+          </button>
+          
+          <div v-if="generatedCourseCode" class="mb-4">
+            <h3 class="text-lg font-semibold mb-2 text-gray-700">课程码：</h3>
+            <div class="flex items-center justify-between p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+              <span class="text-2xl font-bold text-green-700 tracking-widest">{{ generatedCourseCode }}</span>
+              <button 
+                @click="copyToClipboard"
+                class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
+              >
+                复制
+              </button>
+            </div>
+          </div>
+          
+          <div v-if="successMessage" class="text-green-600 text-center mt-4">
+            {{ successMessage }}
+          </div>
+        </div>
+        
+        <div class="flex justify-end mt-6">
+          <button 
+            @click="showCourseCodeModal = false"
+            class="px-6 py-2 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow"
+          >
+            关闭
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
+<style scoped>
+/* Additional styles */
+</style>
+
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { generateCourseCode, saveCourseCode } from '../data/mockData.js'
 
 const router = useRouter()
 
@@ -202,6 +252,16 @@ const recentAssignments = ref([
   }
 ])
 
+// 状态管理
+const isClassManagementOpen = ref(false);
+const isAssignmentFilterOpen = ref(false);
+const isAssignmentStatisticsOpen = ref(false);
+const selectedClass = ref(null);
+const generatedCourseCode = ref('');
+const showCourseCodeModal = ref(false);
+const selectedClassForCode = ref(null);
+const successMessage = ref('');
+
 // 导航函数
 const goToPublish = () => {
   router.push('/teacher/publish')
@@ -229,5 +289,43 @@ const viewClassAssignments = (classId) => {
 const viewClassStudents = (classId) => {
   console.log('查看班级学生:', classId)
   // 这里可以跳转到班级学生页面
-}
+};
+
+const handleManageClass = (classItem) => {
+  console.log('Manage class:', classItem);
+  selectedClass.value = classItem;
+  isClassManagementOpen.value = true;
+};
+  
+const openGenerateCodeModal = (classItem) => {
+  selectedClassForCode.value = classItem;
+  showCourseCodeModal.value = true;
+};
+  
+const generateAndSaveCourseCode = () => {
+  if (!selectedClassForCode.value) return;
+  
+  const code = generateCourseCode();
+  const courseCode = {
+    code: code,
+    classId: selectedClassForCode.value.id,
+    className: selectedClassForCode.value.name
+  };
+  
+  saveCourseCode(courseCode);
+  generatedCourseCode.value = code;
+  successMessage.value = `课程码已生成：${code}`;
+  
+  // Clear success message after 3 seconds
+  setTimeout(() => {
+    successMessage.value = '';
+  }, 3000);
+};
+  
+const copyToClipboard = () => {
+  if (generatedCourseCode.value) {
+    navigator.clipboard.writeText(generatedCourseCode.value);
+    alert('课程码已复制到剪贴板');
+  }
+};
 </script>

@@ -87,7 +87,12 @@
       <section>
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-2xl font-bold text-gray-800">📝 作业列表</h2>
-          <button class="text-blue-500 hover:text-blue-700 text-sm font-medium">查看全部</button>
+          <div class="flex gap-3">
+            <button class="text-blue-500 hover:text-blue-700 text-sm font-medium">查看全部</button>
+            <button @click="openAddCourseModal" class="px-4 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow">
+              加入课程
+            </button>
+          </div>
         </div>
 
         <!-- 作业列表 -->
@@ -119,67 +124,108 @@
         </div>
       </section>
     </div>
+
+    <!-- 加入课程模态框 -->
+    <div v-if="showAddCourseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">加入课程</h2>
+        <div class="mb-6">
+          <p class="mb-2 text-gray-700">请输入教师提供的课程码：</p>
+          <input
+            v-model="courseCodeInput"
+            type="text"
+            placeholder="例如：ABC123"
+            class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none transition-all text-lg"
+          />
+        </div>
+
+        <div v-if="addCourseMessage" :class="addCourseSuccess ? 'text-green-600' : 'text-red-600'" class="text-center mb-4">
+          {{ addCourseMessage }}
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            @click="handleAddCourse"
+            class="flex-1 py-3 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition-all shadow-lg"
+          >
+            加入课程
+          </button>
+          <button
+            @click="showAddCourseModal = false"
+            class="flex-1 py-3 rounded-xl bg-gray-200 text-gray-800 font-bold hover:bg-gray-300 transition-all shadow-lg"
+          >
+            取消
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { assignments, submissions, validateCourseCode, addStudentToClass } from '../data/mockData.js'
 
 const router = useRouter()
 
-// 模拟数据
-const assignments = ref([
-  {
-    id: 1,
-    title: '50 米折返跑',
-    subject: '田径',
-    description: '完成50米折返跑测试，注意动作规范和安全。',
-    deadline: '11月30日',
-    score: 100,
-    status: 'pending'
-  },
-  {
-    id: 2,
-    title: '仰卧起坐测试',
-    subject: '力量',
-    description: '1分钟内完成仰卧起坐，记录次数。',
-    deadline: '12月2日',
-    score: 80,
-    status: 'pending'
-  },
-  {
-    id: 3,
-    title: '立定跳远',
-    subject: '跳跃',
-    description: '完成立定跳远测试，注意起跳和落地动作。',
-    deadline: '11月25日',
-    score: 90,
-    status: 'submitted'
-  },
-  {
-    id: 4,
-    title: '柔韧性测试',
-    subject: '拉伸',
-    description: '完成坐位体前屈测试，记录成绩。',
-    deadline: '11月20日',
-    score: 70,
-    status: 'graded'
-  }
-])
+  // 搜索和过滤
+  const searchQuery = ref('')
+  const statusFilter = ref('all')
 
-// 搜索和过滤
-const searchQuery = ref('')
-const statusFilter = ref('all')
+  // 使用从mockData导入的作业数据
+  const mockAssignments = assignments
+const courseCodeInput = ref('')
+const showAddCourseModal = ref(false)
+const addCourseMessage = ref('')
+const addCourseSuccess = ref(false)
 
 const filteredAssignments = computed(() => {
-  return assignments.value.filter(assignment => {
-    const matchesSearch = assignment.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    return mockAssignments.filter(assignment => {
+      const matchesSearch = assignment.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
                         assignment.description.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesStatus = statusFilter.value === 'all' || assignment.status === statusFilter.value
-    return matchesSearch && matchesStatus
+      const matchesStatus = statusFilter.value === 'all' || assignment.status === statusFilter.value
+      return matchesSearch && matchesStatus
+    })
   })
-})
+
+// 加入课程功能
+const openAddCourseModal = () => {
+  showAddCourseModal.value = true
+  courseCodeInput.value = ''
+  addCourseMessage.value = ''
+  addCourseSuccess.value = false
+}
+
+const handleAddCourse = () => {
+  if (!courseCodeInput.value.trim()) {
+    addCourseMessage.value = '请输入课程码'
+    addCourseSuccess.value = false
+    return
+  }
+
+  const validationResult = validateCourseCode(courseCodeInput.value.trim())
+  if (!validationResult.valid) {
+    addCourseMessage.value = validationResult.message
+    addCourseSuccess.value = false
+    return
+  }
+
+  // 获取当前学生ID（模拟）
+  const currentUser = JSON.parse(localStorage.getItem('user'))
+  const studentId = currentUser ? currentUser.id : 'student1'
+
+  // 添加学生到课程
+  addStudentToClass(studentId, validationResult.courseCode.className)
+
+  addCourseMessage.value = `成功加入课程：${validationResult.courseCode.className}`
+  addCourseSuccess.value = true
+
+  // 关闭模态框
+  setTimeout(() => {
+    showAddCourseModal.value = false
+  }, 1500)
+}
 
 
 </script>

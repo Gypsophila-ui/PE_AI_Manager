@@ -22,6 +22,94 @@ export const classes = [
   }
 ];
 
+// Course codes data - these would typically be stored in a database
+export const courseCodes = [
+  {
+    id: 1,
+    code: 'SP2024A',
+    classId: 1,
+    createdAt: '2024-05-10T08:30:00Z',
+    expiresAt: '2024-05-31T23:59:59Z',
+    used: false
+  },
+  {
+    id: 2,
+    code: 'SP2024B',
+    classId: 2,
+    createdAt: '2024-05-11T10:15:00Z',
+    expiresAt: '2024-05-31T23:59:59Z',
+    used: false
+  }
+];
+
+// Generate a random course code
+const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude similar looking characters
+
+export const generateCourseCode = (length = 6) => {
+  let result = '';
+  const charsLength = chars.length;
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * charsLength));
+  }
+  return result;
+};
+
+// Save course code to localStorage (simulating database storage)
+export const saveCourseCode = (courseCode) => {
+  const existingCodes = getCourseCodes();
+  const newCode = {
+    id: existingCodes.length + 1,
+    ...courseCode,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days expiration
+    used: false
+  };
+  existingCodes.push(newCode);
+  localStorage.setItem('courseCodes', JSON.stringify(existingCodes));
+  return newCode;
+};
+
+// Get all course codes from localStorage
+export const getCourseCodes = () => {
+  const codes = localStorage.getItem('courseCodes');
+  return codes ? JSON.parse(codes) : [...courseCodes]; // Fallback to mock data if no codes in localStorage
+};
+
+// Get course code by code string
+export const getCourseCodeByCode = (code) => {
+  const codes = getCourseCodes();
+  return codes.find(c => c.code === code);
+};
+
+// Validate course code
+export const validateCourseCode = (code) => {
+  const courseCode = getCourseCodeByCode(code);
+  if (!courseCode) {
+    return { valid: false, message: '课程码不存在' };
+  }
+
+  const now = new Date();
+  const expiresAt = new Date(courseCode.expiresAt);
+
+  if (now > expiresAt) {
+    return { valid: false, message: '课程码已过期' };
+  }
+
+  // For simplicity, we'll allow multiple uses. In a real app, you might want to track usage.
+  // if (courseCode.used) {
+  //   return { valid: false, message: '课程码已使用' };
+  // }
+
+  return { valid: true, courseCode };
+};
+
+// Add student to class (simulated)
+export const addStudentToClass = (studentId, className) => {
+  // In a real app, this would update the database
+  console.log(`Adding student ${studentId} to class ${className}`);
+  return true;
+};
+
 // Assignments data
 export const assignments = [
   {
