@@ -1,19 +1,19 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
     <div class="max-w-6xl mx-auto p-6 space-y-10">
-  
-      
+
+
       <!-- 顶部 Banner -->
       <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl">
-        <img src="https://images.unsplash.com/photo-1521412644187-c49fa049e84d" class="w-full h-96 object-cover opacity-70" />
+        <img src="../assets/HomeHeader.jpg" class="w-full h-96 object-cover opacity-50" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent">
-          <h1 class="absolute inset-0 flex items-center justify-center text-6xl font-extrabold tracking-widest text-white drop-shadow-2xl">
-            教 师 端
-          </h1>
-          <p class="absolute bottom-8 left-8 text-xl text-white font-medium">科学管理，高效教学</p>
+          <h2 class="absolute inset-0 flex items-center justify-center text-6xl font-display font-medium tracking-widest text-white drop-shadow-2xl">
+            智慧体育课堂
+          </h2>
+          <h3 class="absolute bottom-8 left-0 right-0 text-center text-2xl text-white font-medium">科学管理，高效教学</h3>
         </div>
       </div>
-      
+
       <!-- 快捷操作按钮 -->
       <section>
         <h2 class="text-3xl font-bold mb-6 text-gray-800">🚀 快捷操作</h2>
@@ -36,7 +36,7 @@
           </button>
         </div>
       </section>
-      
+
       <!-- 班级列表 -->
       <section>
         <div class="flex justify-between items-center mb-6">
@@ -48,9 +48,9 @@
             生成课程码
           </button>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div v-for="classItem in classes" :key="classItem.id" 
+          <div v-for="classItem in classes" :key="classItem.id"
                class="p-6 rounded-3xl shadow-lg bg-white border border-gray-200 hover:shadow-xl transition-all">
             <div class="flex justify-between items-center mb-4">
               <div>
@@ -59,7 +59,7 @@
               </div>
               <div class="text-4xl text-gray-300">{{ classItem.grade }}</div>
             </div>
-            
+
             <!-- 班级作业统计 -->
             <div class="space-y-3">
               <div v-for="stat in classItem.stats" :key="stat.id" class="flex justify-between items-center">
@@ -68,20 +68,20 @@
                   <span class="text-green-600 font-medium">{{ stat.submitted }}</span>
                   <span class="text-gray-400">/</span>
                   <span class="text-gray-600">{{ stat.total }}</span>
-                  <span :class="['w-2 h-2 rounded-full', 
-                                 stat.submitted === stat.total ? 'bg-green-500' : 
+                  <span :class="['w-2 h-2 rounded-full',
+                                 stat.submitted === stat.total ? 'bg-green-500' :
                                  stat.submitted > stat.total * 0.5 ? 'bg-yellow-500' : 'bg-red-500']"></span>
                 </div>
               </div>
             </div>
-            
+
             <!-- 班级操作按钮 -->
             <div class="flex gap-3 mt-6">
-              <button @click="viewClassAssignments(classItem.id)" 
+              <button @click="viewClassAssignments(classItem.id)"
                       class="flex-1 px-4 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow">
                 查看作业
               </button>
-              <button @click="viewClassStudents(classItem.id)" 
+              <button @click="viewClassStudents(classItem.id)"
                       class="flex-1 px-4 py-2 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow">
                 查看学生
               </button>
@@ -89,7 +89,7 @@
           </div>
         </div>
       </section>
-      
+
       <!-- 最近作业完成情况 -->
       <section>
         <div class="flex justify-between items-center mb-6">
@@ -98,9 +98,9 @@
             查看全部
           </button>
         </div>
-        
+
         <div class="space-y-4">
-          <div v-for="assignment in recentAssignments" :key="assignment.id" 
+          <div v-for="assignment in recentAssignments" :key="assignment.id"
                class="p-6 rounded-xl shadow bg-white border border-gray-200 hover:shadow-lg transition-all">
             <div class="flex justify-between items-start mb-4">
               <div>
@@ -109,7 +109,7 @@
               </div>
               <div class="text-xl font-bold text-gray-400">{{ assignment.subject }}</div>
             </div>
-            
+
             <div class="flex items-center gap-6">
               <div class="flex-1">
                 <div class="flex justify-between items-center text-sm mb-1">
@@ -117,18 +117,18 @@
                   <span class="text-blue-600 font-medium">{{ assignment.submitted }}/{{ assignment.total }}</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-3">
-                  <div class="bg-blue-500 h-3 rounded-full" 
+                  <div class="bg-blue-500 h-3 rounded-full"
                        :style="{ width: `${(assignment.submitted / assignment.total) * 100}%` }"></div>
                 </div>
               </div>
-              
+
               <div class="flex-1">
                 <div class="flex justify-between items-center text-sm mb-1">
                   <span class="text-gray-600">批改情况</span>
                   <span class="text-green-600 font-medium">{{ assignment.graded }}/{{ assignment.total }}</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-3">
-                  <div class="bg-green-500 h-3 rounded-full" 
+                  <div class="bg-green-500 h-3 rounded-full"
                        :style="{ width: `${(assignment.graded / assignment.total) * 100}%` }"></div>
                 </div>
               </div>
@@ -137,25 +137,25 @@
         </div>
       </section>
     </div>
-    
+
     <!-- 课程码生成弹窗 -->
     <div v-if="showCourseCodeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
         <h2 class="text-2xl font-bold mb-6 text-gray-800">生成课程码</h2>
         <div v-if="selectedClassForCode">
           <p class="mb-4 text-gray-600">正在为班级：{{ selectedClassForCode.name }} 生成课程码</p>
-          <button 
+          <button
             @click="generateAndSaveCourseCode"
             class="w-full py-3 rounded-xl bg-blue-500 text-white font-bold hover:bg-blue-600 transition-all shadow-lg mb-4"
           >
             生成新的课程码
           </button>
-          
+
           <div v-if="generatedCourseCode" class="mb-4">
             <h3 class="text-lg font-semibold mb-2 text-gray-700">课程码：</h3>
             <div class="flex items-center justify-between p-4 bg-green-50 border-2 border-green-200 rounded-xl">
               <span class="text-2xl font-bold text-green-700 tracking-widest">{{ generatedCourseCode }}</span>
-              <button 
+              <button
                 @click="copyToClipboard"
                 class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
               >
@@ -163,14 +163,14 @@
               </button>
             </div>
           </div>
-          
+
           <div v-if="successMessage" class="text-green-600 text-center mt-4">
             {{ successMessage }}
           </div>
         </div>
-        
+
         <div class="flex justify-end mt-6">
-          <button 
+          <button
             @click="showCourseCodeModal = false"
             class="px-6 py-2 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow"
           >
@@ -179,6 +179,8 @@
         </div>
       </div>
     </div>
+
+
   </div>
 </template>
 
@@ -296,32 +298,32 @@ const handleManageClass = (classItem) => {
   selectedClass.value = classItem;
   isClassManagementOpen.value = true;
 };
-  
+
 const openGenerateCodeModal = (classItem) => {
   selectedClassForCode.value = classItem;
   showCourseCodeModal.value = true;
 };
-  
+
 const generateAndSaveCourseCode = () => {
   if (!selectedClassForCode.value) return;
-  
+
   const code = generateCourseCode();
   const courseCode = {
     code: code,
     classId: selectedClassForCode.value.id,
     className: selectedClassForCode.value.name
   };
-  
+
   saveCourseCode(courseCode);
   generatedCourseCode.value = code;
   successMessage.value = `课程码已生成：${code}`;
-  
+
   // Clear success message after 3 seconds
   setTimeout(() => {
     successMessage.value = '';
   }, 3000);
 };
-  
+
 const copyToClipboard = () => {
   if (generatedCourseCode.value) {
     navigator.clipboard.writeText(generatedCourseCode.value);

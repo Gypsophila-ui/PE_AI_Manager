@@ -4,8 +4,9 @@ import TeacherHome from '../pages/TeacherHome.vue'
 import Assistant from '../pages/Assistant.vue'
 import Login from '../pages/UserLogin.vue'
 import Register from '../pages/UserRegister.vue'
+import UserProfile from '../pages/UserProfile.vue'
 import TeacherAssignments from '../pages/teacher/TeacherAssignments.vue'
-//import StudentAssignments from '../pages/student/StudentAssignments.vue'
+import StudentAssignments from '../pages/student/StudentAssignments.vue'
 import SubmitAssignment from '../pages/student/SubmitAssignment.vue'
 import PublishAssignment from '../pages/teacher/PublishAssignment.vue'
 import GradeManagement from '../pages/teacher/GradeManagement.vue'
@@ -18,7 +19,7 @@ const routes = [
 
   // 学生端路由
   { path: '/student', component: StudentHome },
-  //{ path: '/student/assignments', component: StudentAssignments },
+  { path: '/student/assignments/:id', component: StudentAssignments },
   { path: '/student/submit/:id', component: SubmitAssignment },
   { path: '/student/assistant', component: Assistant },
 
@@ -31,7 +32,9 @@ const routes = [
   { path: '/teacher/assistant', component: Assistant },
 
   // 公共路由
-  { path: '/assistant', component: Assistant }
+  { path: '/assistant', component: Assistant },
+  // 个人信息页面
+  { path: '/profile', component: UserProfile }
 ]
 
 const router = createRouter({
@@ -39,25 +42,66 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫，实现根据登录身份显示不同主页
+// 路由守卫，实现根据登录身份显示不同主页和权限控制
 router.beforeEach((to, from, next) => {
   // 获取用户信息
   const user = localStorage.getItem('user')
+  const userInfo = user ? JSON.parse(user) : null
 
-  // 如果用户已登录且访问的是根路径或登录页面
-  if (user && (to.path === '/' || to.path === '/login')) {
-    const userInfo = JSON.parse(user)
-    // 根据用户角色跳转到对应的主页
-    if (userInfo.role === 'student') {
-      next('/student')
-    } else if (userInfo.role === 'teacher') {
-      next('/teacher')
-    } else {
-      next()
-    }
-  } else {
-    next()
+  // 定义需要认证的路由
+  const requiresAuth = [
+    '/student',
+    '/teacher',
+    '/teacher/assignments',
+    '/teacher/publish',
+    '/teacher/grade/:id',
+    '/teacher/videos',
+    '/teacher/assistant',
+    '/student/assignments/:id',
+    '/student/submit/:id',
+    '/student/assistant',
+    '/profile'
+  ]
+
+  // 检查当前路由是否需要认证
+  const isAuthRequired = requiresAuth.some(route =>
+    to.path.startsWith(route.replace(':id', ''))
+  )
+
+  // 如果需要认证但用户未登录
+  if (isAuthRequired && !userInfo) {
+    next('/login')
+    return
   }
+
+  // 根据角色控制页面访问权限
+  if (userInfo) {
+    // 学生角色只能访问学生相关页面
+    if (userInfo.role === 'student' && to.path.startsWith('/teacher')) {
+      next('/student')
+      return
+    }
+
+    // 教师角色只能访问教师相关页面
+    if (userInfo.role === 'teacher' && to.path.startsWith('/student')) {
+      next('/teacher')
+      return
+    }
+
+    // 如果用户已登录且访问的是根路径或登录页面，跳转到对应角色的主页
+    if (to.path === '/' || to.path === '/login') {
+      if (userInfo.role === 'student') {
+        next('/student')
+      } else if (userInfo.role === 'teacher') {
+        next('/teacher')
+      } else {
+        next()
+      }
+      return
+    }
+  }
+
+  next()
 })
 
 export default router
