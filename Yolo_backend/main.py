@@ -38,13 +38,13 @@ class VideoProcessor:
         """加载YOLO模型"""
         if self.model is None:
             try:
-                self.model = YOLO("yolov8m-pose.pt")
+                self.model = YOLO("yolov8n-pose.pt")
                 print("YOLO模型加载成功")
             except Exception as e:
                 print(f"模型加载失败: {e}")
                 # 尝试从当前目录的models文件夹加载
                 try:
-                    self.model = YOLO(os.path.join("models", "yolov8m-pose.pt"))
+                    self.model = YOLO(os.path.join("models", "yolov8n-pose.pt"))
                     print("从models文件夹加载模型成功")
                 except Exception as e2:
                     print(f"备用模型加载也失败: {e2}")
@@ -109,28 +109,28 @@ def process_video_logic(file_content: bytes, pose_type: str):
         # 读取视频
         logger.info("尝试打开视频文件...")
         logger.info(f"视频文件路径: {tmp_file_path}")
-        
+
         # 检查文件是否存在
         if not os.path.exists(tmp_file_path):
             logger.error(f"视频文件不存在: {tmp_file_path}")
             raise HTTPException(status_code=400, detail="视频文件未找到")
-            
+
         # 检查文件大小
         file_size = os.path.getsize(tmp_file_path)
         logger.info(f"视频文件大小: {file_size} 字节")
-        
+
         # 检查文件是否可读
         if not os.access(tmp_file_path, os.R_OK):
             logger.error(f"视频文件不可读: {tmp_file_path}")
             raise HTTPException(status_code=400, detail="视频文件不可读")
-        
+
         # 使用默认方式打开视频
         cap = cv2.VideoCapture(tmp_file_path)
-        
+
         if not cap.isOpened():
             logger.error("无法打开视频文件")
             raise HTTPException(status_code=400, detail="无法打开视频文件")
-        
+
         logger.info("视频文件打开成功")
         # 记录使用的后端
         backend_name = cap.getBackendName()
@@ -146,17 +146,21 @@ def process_video_logic(file_content: bytes, pose_type: str):
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         logger.info(f"视频信息: FPS={fps}, 宽度={width}, 高度={height}, 总帧数={frame_count}")
 
-        # 创建输出视频文件
+        # 创建输出视频文件，保持原始FPS不变
         output_path = os.path.join(temp_dir, "output_video.mp4")
 
+        # 跳帧因子，skip_factor=1表示不跳帧，skip_factor=2表示每隔1帧处理1帧
+        SKIP_FACTOR = 2  # 可根据需要调整，值越大跳过的帧越多，处理越快但精度可能下降
+
         # 视频编码器
+        output_fps = fps / SKIP_FACTOR
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height), True)
+        out = cv2.VideoWriter(output_path, fourcc, output_fps, (width, height), True)
         # 如果上面的方法失败，尝试使用不同的方法
         if not out.isOpened():
             logger.warning("使用默认API创建视频写入器")
             out = cv2.VideoWriter()
-            out.open(output_path, cv2.CAP_FFMPEG, fourcc, fps, (width, height), True)
+            out.open(output_path, cv2.CAP_FFMPEG, fourcc, output_fps, (width, height), True)
 
         if not out.isOpened():
             raise HTTPException(status_code=500, detail="无法创建输出视频文件")
@@ -182,6 +186,11 @@ def process_video_logic(file_content: bytes, pose_type: str):
             if not success:
                 logger.info("视频读取完成")
                 break
+
+            # 跳帧处理，加快处理速度
+            if frame_index % SKIP_FACTOR != 0:
+                frame_index += 1
+                continue
 
             try:
                 processed_frame, count = gym_object.monitor(frame)
@@ -214,7 +223,7 @@ def process_video_logic(file_content: bytes, pose_type: str):
         # 确保视频文件正确关闭
         out.release()
         cap.release()
-        
+
         # 重新打开输出视频文件以确保其完整性
         test_cap = cv2.VideoCapture(output_path)
         if not test_cap.isOpened():
@@ -224,13 +233,13 @@ def process_video_logic(file_content: bytes, pose_type: str):
         # 读取处理后的视频文件
         with open(output_path, "rb") as video_file:
             processed_video = video_file.read()
-            
+
         # 返回处理结果
         return {
             "processed_video": processed_video, # 二进制数据视频
             "max_count": max_count,
             "processed_frame_count": processed_frame_count,
-            "total_time": processed_frame_count / fps if fps > 0 else 0,
+            "total_time": frame_index / fps if fps > 0 else 0,  # 使用原始帧数计算总时间
             "temp_dir": temp_dir,
             "output_path": output_path
         }

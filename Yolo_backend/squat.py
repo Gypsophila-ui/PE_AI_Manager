@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 from function import draw_text, calculate_angle, _show_feedback, draw_dotted_line
 
@@ -14,7 +15,8 @@ class SquatTracker:
             'INCORRECT_POSTURE': False,
             'curr_state': None,
             'SQUAT_COUNT': 0,
-            'IMPROPER_SQUAT': 0
+            'IMPROPER_SQUAT': 0,
+            'LOWER_HIPS': False  # 添加LOWER_HIPS标志
         }
 
         # 设置反馈信息映射
@@ -111,15 +113,50 @@ class SquatTracker:
         right_knee = (int(k[14][0].cpu().item()), int(k[14][1].cpu().item()))
         right_hip = (int(k[12][0].cpu().item()), int(k[12][1].cpu().item()))
         right_ankle = (int(k[16][0].cpu().item()), int(k[16][1].cpu().item()))
+        right_shoulder = (int(k[6][0].cpu().item()), int(k[6][1].cpu().item()))
 
+        # 绘制辅助线和角度指示器，模仿MediaPipe的效果
         # 绘制竖直虚线
         dotted_line_length = 60
         im0 = draw_dotted_line(im0, right_knee, right_knee[1] - dotted_line_length, right_knee[1], (255, 0, 0))
         im0 = draw_dotted_line(im0, right_hip, right_hip[1] - dotted_line_length, right_hip[1], (255, 0, 0))
         im0 = draw_dotted_line(im0, right_ankle, right_ankle[1] - dotted_line_length, right_ankle[1], (255, 0, 0))
 
-        # 计算膝髋夹角
-        knee_hip_angle = calculate_angle(k[12].cpu(), k[14].cpu(), reference_direction='vertical')
+        # 计算各个角度
+        hip_vertical_angle = calculate_angle(right_shoulder, right_hip, reference_direction="vertical")
+        knee_vertical_angle = calculate_angle(right_hip, right_knee, reference_direction="vertical")
+        ankle_vertical_angle = calculate_angle(right_knee, right_ankle, reference_direction="vertical")
+        
+        knee_hip_angle = calculate_angle(right_hip, right_knee, reference_direction='vertical')
+
+        # 绘制骨架连线
+        color_light_blue = (204, 204, 0)  # BGR格式的浅蓝色
+        cv2.line(im0, right_shoulder, right_hip, color_light_blue, 4)
+        cv2.line(im0, right_hip, right_knee, color_light_blue, 4)
+        cv2.line(im0, right_knee, right_ankle, color_light_blue, 4)
+        
+        # 绘制关节点
+        color_yellow = (0, 255, 255)  # BGR格式的黄色
+        cv2.circle(im0, right_shoulder, 7, color_yellow, -1)
+        cv2.circle(im0, right_hip, 7, color_yellow, -1)
+        cv2.circle(im0, right_knee, 7, color_yellow, -1)
+        cv2.circle(im0, right_ankle, 7, color_yellow, -1)
+
+        # 绘制角度指示器
+        # 髋关节角度指示器
+        if hip_vertical_angle is not None:
+            cv2.ellipse(im0, right_hip, (30, 30), angle=0, startAngle=-90, 
+                       endAngle=-90+hip_vertical_angle, color=(255, 255, 255), thickness=3)
+        
+        # 膝关节角度指示器
+        if knee_vertical_angle is not None:
+            cv2.ellipse(im0, right_knee, (20, 20), angle=0, startAngle=-90, 
+                       endAngle=-90-knee_vertical_angle, color=(255, 255, 255), thickness=3)
+        
+        # 踝关节角度指示器
+        if ankle_vertical_angle is not None:
+            cv2.ellipse(im0, right_ankle, (30, 30), angle=0, startAngle=-90, 
+                       endAngle=-90+ankle_vertical_angle, color=(255, 255, 255), thickness=3)
 
         # 绘制计数
         draw_text(
@@ -130,15 +167,26 @@ class SquatTracker:
             font_scale=0.7,
             text_color_bg=(18, 185, 0)
         )
+        
+        draw_text(
+            im0,
+            "INCORRECT: " + str(self.state_tracker['IMPROPER_SQUAT']),
+            pos=(int(frame_width * 0.68), 180),
+            text_color=(255, 255, 230),
+            font_scale=0.7,
+            text_color_bg=(221, 0, 0),
+        )
+        
         # 调试：在屏幕上显示angle值
         draw_text(
             im0,
             "ANGLE: " + str(round(knee_hip_angle, 2)),
-            pos=(int(frame_width * 0.68), 180),
+            pos=(int(frame_width * 0.68), 225),
             text_color=(255, 255, 255),
             font_scale=0.7,
             text_color_bg=(0, 0, 0)
         )
+        
         # 获取当前状态
         current_state = self._get_state(knee_hip_angle)
         self.state_tracker['curr_state'] = current_state
@@ -155,16 +203,13 @@ class SquatTracker:
                 self.state_tracker['IMPROPER_SQUAT'] += 1
             self.state_tracker['state_seq'] = []
             self.state_tracker['INCORRECT_POSTURE'] = False
+            self.state_tracker['LOWER_HIPS'] = False  # 重置LOWER_HIPS标志
         # 反馈显示逻辑
         else:
-            hip_vertical_angle = calculate_angle(k[6].cpu(), k[12].cpu(), reference_direction="vertical")
-            knee_vertical_angle = calculate_angle(k[12].cpu(), k[14].cpu(), reference_direction="vertical")
-            ankle_vertical_angle = calculate_angle(k[14].cpu(), k[16].cpu(), reference_direction="vertical")
-
+            # 检查各种错误姿势
             if hip_vertical_angle > self.thresholds['HIP_THRESH'][1]:
                 self.state_tracker['DISPLAY_TEXT'][0] = True
-            elif hip_vertical_angle < self.thresholds['HIP_THRESH'][0] and self.state_tracker['state_seq'].count(
-                    's2') == 1:
+            elif hip_vertical_angle < self.thresholds['HIP_THRESH'][0] and self.state_tracker['state_seq'].count('s2') == 1:
                 self.state_tracker['DISPLAY_TEXT'][1] = True
 
             if self.thresholds['KNEE_THRESH'][0] < knee_vertical_angle < self.thresholds['KNEE_THRESH'][1] and \
@@ -179,5 +224,23 @@ class SquatTracker:
                 self.state_tracker['INCORRECT_POSTURE'] = True
 
             self.state_tracker['COUNT_FRAMES'][self.state_tracker['DISPLAY_TEXT']] += 1
+            
+            # 显示"LOWER YOUR HIPS"提示
+            if self.state_tracker['LOWER_HIPS']:
+                draw_text(
+                    im0, 
+                    'LOWER YOUR HIPS', 
+                    pos=(30, 80),
+                    text_color=(0, 0, 0),
+                    font_scale=0.6,
+                    text_color_bg=(0, 255, 255)  # 黄色背景
+                )
+            
+            # 显示其他错误提示
             im0 = _show_feedback(im0, self.state_tracker['COUNT_FRAMES'], self.FEEDBACK_ID_MAP)
+            
+        # 重置显示文本
+        self.state_tracker['DISPLAY_TEXT'][self.state_tracker['COUNT_FRAMES'] > self.thresholds['CNT_FRAME_THRESH']] = False
+        self.state_tracker['COUNT_FRAMES'][self.state_tracker['COUNT_FRAMES'] > self.thresholds['CNT_FRAME_THRESH']] = 0    
+            
         return im0

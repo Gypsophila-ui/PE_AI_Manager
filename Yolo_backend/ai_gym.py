@@ -24,9 +24,9 @@ class AIGym(BaseSolution):
                  **kwargs):
         # Check if the model name ends with '-pose'
         if "model" in kwargs and "-pose" not in kwargs["model"]:
-            kwargs["model"] = "yolov8m-pose.pt"
+            kwargs["model"] = "yolov8n-pose.pt"
         elif "model" not in kwargs:
-            kwargs["model"] = "yolov8m-pose.pt"
+            kwargs["model"] = "yolov8n-pose.pt"
 
         """初始化 AIGym，以便使用姿态估计和预定义角度监控锻炼。"""
         self.im0 = None
