@@ -97,14 +97,31 @@
             </div>
           </div>
 
+          <!-- 上传进度显示 -->
+          <div v-if="isUploading" class="w-full max-w-2xl">
+            <div class="bg-gray-100 rounded-xl p-6">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-gray-700 font-medium">上传进度</span>
+                <span class="text-blue-600 font-bold">{{ uploadProgress }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                  :style="{ width: uploadProgress + '%' }"
+                ></div>
+              </div>
+              <p class="text-sm text-gray-500 mt-2 text-center">视频正在上传，请不要关闭页面...</p>
+            </div>
+          </div>
+
           <!-- 提交按钮 -->
           <button
             @click="submitAssignment"
-            :disabled="!selectedFile"
+            :disabled="!selectedFile || isUploading"
             class="px-10 py-4 rounded-2xl bg-blue-500 text-white font-bold text-lg hover:bg-blue-600 transition-all shadow-lg"
-            :class="!selectedFile ? 'opacity-50 cursor-not-allowed' : ''"
+            :class="{ 'opacity-50 cursor-not-allowed': !selectedFile || isUploading }"
           >
-            提交作业
+            {{ isUploading ? '上传中...' : '提交作业' }}
           </button>
         </div>
       </section>
@@ -116,6 +133,7 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { assignments } from '../../data/mockData'
+import apiClient from '../../services/axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -124,9 +142,12 @@ const route = useRoute()
 const fileInput = ref(null)
 const videoPreview = ref(null)
 const selectedFile = ref(null)
+const uploadProgress = ref(0)
+const isUploading = ref(false)
 
-// 获取作业ID
-const assignmentId = parseInt(route.params.id) || 1
+// 获取课程ID和作业ID
+const courseId = route.params.courseId
+const assignmentId = parseInt(route.params.assignmentId) || 1
 
 // 获取作业信息
 const assignment = ref(assignments.find(a => a.id === assignmentId) || assignments[0])
@@ -165,14 +186,52 @@ const removeFile = () => {
 }
 
 // 提交作业
-const submitAssignment = () => {
+const submitAssignment = async () => {
   if (!selectedFile.value) return
 
-  // 模拟提交作业
-  alert('作业提交成功！AI正在评分，请稍后查看结果。')
+  try {
+    // 设置上传状态
+    isUploading.value = true
+    uploadProgress.value = 0
 
-  // 跳转到学生首页
-  router.push('/student')
+    // 创建FormData对象，用于上传文件
+    const formData = new FormData()
+    formData.append('video', selectedFile.value)
+    formData.append('courseId', courseId)
+    formData.append('assignmentId', assignmentId)
+
+    // 获取当前用户信息
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    formData.append('studentId', user.id || 'student1')
+
+    // 调用API上传视频
+    const response = await apiClient.post('/submit_assignment_video', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      onUploadProgress: (progressEvent) => {
+        // 计算上传进度百分比
+        if (progressEvent.total) {
+          uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        }
+      }
+    })
+
+    // 上传成功处理
+    if (response.status === 200 || response.status === 201) {
+      alert('作业提交成功！AI正在评分，请稍后查看结果。')
+      // 跳转到课程详情页
+      router.push(`/course/${courseId}`)
+    } else {
+      alert('作业提交失败，请稍后重试。')
+    }
+  } catch (error) {
+    console.error('视频上传失败:', error)
+    alert('视频上传失败，请稍后重试。')
+  } finally {
+    // 重置上传状态
+    isUploading.value = false
+  }
 }
 
 // 格式化日期
@@ -198,7 +257,7 @@ const formatFileSize = (bytes) => {
 
 // 导航函数
 const goBack = () => {
-  router.push('/student')
+  router.push(`/course/${courseId}`)
 }
 
 const goToAssistant = () => {

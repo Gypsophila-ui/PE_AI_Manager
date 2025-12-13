@@ -2,7 +2,7 @@
   <div>
     <!-- 只在非登录页面显示导航栏 -->
     <nav v-if="!isLoginPage" class="flex items-center justify-between px-6 py-4 bg-white shadow fixed top-0 left-0 right-0 z-50">
-      <h1 class="text-3xl font-bold text-blue-600">运动课堂</h1>
+      <h1 class="text-3xl font-bold text-blue-600">同济大学智慧体育课堂</h1>
       <div class="space-x-4">
         <button @click="goToHome" class="text-gray-700 hover:text-blue-600 cursor-pointer">首页</button>
         <RouterLink to="/profile" class="text-gray-700 hover:text-blue-600">个人信息</RouterLink>
@@ -34,7 +34,7 @@ const goToHome = () => {
   // 获取用户信息
   const user = localStorage.getItem('user')
   const userInfo = user ? JSON.parse(user) : null
-  
+
   // 根据用户角色跳转到对应的首页
   if (userInfo) {
     if (userInfo.role === 'student') {

@@ -26,58 +26,58 @@
         </div>
       </div>
 
-      <!-- 课堂作业管理 -->
+      <!-- 我的课程 -->
       <section>
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">课堂作业管理</h2>
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">我的课程</h2>
         <div class="space-y-3">
-          <!-- 作业列表项1 -->
+          <!-- 课程列表项1 -->
           <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4">
             <div class="flex flex-col md:flex-row md:items-center justify-between">
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-gray-800 mb-1">俯卧撑标准动作练习</h3>
-                <p class="text-sm text-gray-600 mb-2">完成标准俯卧撑动作，要求动作规范，身体保持直线</p>
+                <h3 class="text-lg font-semibold text-gray-800 mb-1">体能训练课程</h3>
+                <p class="text-sm text-gray-600 mb-2">学习和掌握各种体能训练技巧，包括俯卧撑、仰卧起坐等基础动作</p>
                 <div class="flex items-center space-x-4">
-                  <span class="text-xs text-gray-500">体能训练</span>
+                  <span class="text-xs text-gray-500">体育</span>
                   <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">进行中</span>
-                  <span class="text-xs text-gray-500">截止时间: 2024-01-20</span>
-                  <span class="text-sm font-medium text-gray-800">提交情况: 25/30</span>
+                  <span class="text-xs text-gray-500">作业数量: 2/5</span>
+                  <span class="text-sm font-medium text-gray-800">完成率: 40%</span>
                 </div>
               </div>
-              <router-link to="/student/assignments/1" class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">查看</router-link>
+              <router-link to="/course/PE101" class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">查看</router-link>
             </div>
           </div>
 
-          <!-- 作业列表项2 -->
+          <!-- 课程列表项2 -->
           <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4">
             <div class="flex flex-col md:flex-row md:items-center justify-between">
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-gray-800 mb-1">仰卧起坐耐力测试</h3>
-                <p class="text-sm text-gray-600 mb-2">在规定时间内完成尽可能多的仰卧起坐，测试核心力量</p>
+                <h3 class="text-lg font-semibold text-gray-800 mb-1">协调能力训练</h3>
+                <p class="text-sm text-gray-600 mb-2">通过跳绳、敏捷梯等训练提升身体协调性和反应能力</p>
                 <div class="flex items-center space-x-4">
-                  <span class="text-xs text-gray-500">体能测试</span>
-                  <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">进行中</span>
-                  <span class="text-xs text-gray-500">截止时间: 2024-01-25</span>
-                  <span class="text-sm font-medium text-gray-800">提交情况: 18/30</span>
-                </div>
-              </div>
-              <router-link to="/student/assignments/2" class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">查看</router-link>
-            </div>
-          </div>
-
-          <!-- 作业列表项3 -->
-          <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4">
-            <div class="flex flex-col md:flex-row md:items-center justify-between">
-              <div class="flex-1">
-                <h3 class="text-lg font-semibold text-gray-800 mb-1">跳绳技巧练习</h3>
-                <p class="text-sm text-gray-600 mb-2">掌握基本跳绳技巧，提高协调性和耐力</p>
-                <div class="flex items-center space-x-4">
-                  <span class="text-xs text-gray-500">协调训练</span>
+                  <span class="text-xs text-gray-500">体育</span>
                   <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">已完成</span>
-                  <span class="text-xs text-gray-500">截止时间: 2024-01-15</span>
-                  <span class="text-sm font-medium text-gray-800">提交情况: 30/30</span>
+                  <span class="text-xs text-gray-500">作业数量: 3/3</span>
+                  <span class="text-sm font-medium text-gray-800">完成率: 100%</span>
                 </div>
               </div>
-              <router-link to="/student/assignments/3" class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">查看</router-link>
+              <router-link to="/course/PE202" class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">查看</router-link>
+            </div>
+          </div>
+
+          <!-- 课程列表项3 -->
+          <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between">
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-800 mb-1">田径基础训练</h3>
+                <p class="text-sm text-gray-600 mb-2">学习田径运动的基本技能，包括短跑、跳远等项目</p>
+                <div class="flex items-center space-x-4">
+                  <span class="text-xs text-gray-500">体育</span>
+                  <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">进行中</span>
+                  <span class="text-xs text-gray-500">作业数量: 1/4</span>
+                  <span class="text-sm font-medium text-gray-800">完成率: 25%</span>
+                </div>
+              </div>
+              <router-link to="/course/PE303" class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">查看</router-link>
             </div>
           </div>
         </div>

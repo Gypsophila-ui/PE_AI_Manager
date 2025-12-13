@@ -11,6 +11,8 @@ import SubmitAssignment from '../pages/student/SubmitAssignment.vue'
 import PublishAssignment from '../pages/teacher/PublishAssignment.vue'
 import GradeManagement from '../pages/teacher/GradeManagement.vue'
 import TeachingVideos from '../pages/teacher/TeachingVideos.vue'
+import CourseDetails from '../pages/CourseDetails.vue'
+import TeacherCourseDetails from '../pages/teacher/TeacherCourseDetails.vue'
 
 const routes = [
   { path: '/', component: Login },
@@ -19,8 +21,9 @@ const routes = [
 
   // 学生端路由
   { path: '/student', component: StudentHome },
-  { path: '/student/assignments/:id', component: StudentAssignments },
-  { path: '/student/submit/:id', component: SubmitAssignment },
+  { path: '/course/:courseId', component: CourseDetails },
+  { path: '/course/:courseId/assignments/:assignmentId', component: StudentAssignments },
+  { path: '/course/:courseId/submit/:assignmentId', component: SubmitAssignment },
   { path: '/student/assistant', component: Assistant },
 
   // 教师端路由
@@ -30,6 +33,7 @@ const routes = [
   { path: '/teacher/grade/:id', component: GradeManagement },
   { path: '/teacher/videos', component: TeachingVideos },
   { path: '/teacher/assistant', component: Assistant },
+  { path: '/teacher/course/:courseId', component: TeacherCourseDetails },
 
   // 公共路由
   { path: '/assistant', component: Assistant },
@@ -60,6 +64,7 @@ router.beforeEach((to, from, next) => {
     '/student/assignments/:id',
     '/student/submit/:id',
     '/student/assistant',
+    '/course',
     '/profile'
   ]
 

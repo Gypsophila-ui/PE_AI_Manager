@@ -127,8 +127,9 @@ const loading = ref(true)
 const error = ref(false)
 const errorMessage = ref('')
 
-// 获取作业ID
-const assignmentId = route.params.id
+// 获取课程ID和作业ID
+const courseId = route.params.courseId
+const assignmentId = route.params.assignmentId
 
 // 获取作业详情
 const fetchAssignmentDetails = async () => {
@@ -185,7 +186,7 @@ const fetchAssignmentDetails = async () => {
       console.log('使用真实API请求获取作业详情')
 
       const response = await axios.post('/api/get_info_by_homework_id', {
-        course_id: 'course123', // 实际应该从用户课程信息中获取
+        course_id: courseId, // 使用路由参数中的课程ID
         homework_id: assignmentId,
         user_type: '0', // 学生
         user_id: 'user123', // 实际应该从登录信息中获取
@@ -235,7 +236,7 @@ const formatDate = (dateString) => {
 
 // 导航函数
 const goBack = () => {
-  router.push('/student')
+  router.push(`/course/${courseId}`)
 }
 
 const goToAssistant = () => {
@@ -243,7 +244,7 @@ const goToAssistant = () => {
 }
 
 const goToSubmitAssignment = () => {
-  router.push(`/student/submit/${assignmentId}`)
+  router.push(`/course/${courseId}/submit/${assignmentId}`)
 }
 
 const logout = () => {
