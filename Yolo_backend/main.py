@@ -15,9 +15,13 @@ import traceback
 import logging
 import time
 import shutil
+import sqlite3
+from database import init_database, insert_exercise_feedback, get_exercise_feedback, get_exercise_feedback_by_id
+from typing import List, Optional
 
 app = FastAPI(title="AI Gym API", description="健身动作识别后端API")
-
+# 数据库文件路径
+DB_PATH = "exercise_feedback.db"
 # 设置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -95,6 +99,8 @@ video_processor = VideoProcessor()
 async def startup_event():
     """启动时加载模型"""
     video_processor.load_model()
+    # 初始化数据库
+    init_database()
 
 
 @app.on_event("shutdown")
@@ -113,11 +119,12 @@ def sse_format(event_type, data):
     return f"data: {json_data}\n\n"
 
 
-async def stream_video_processing(file_content: bytes, pose_type: str):
-    """流式处理视频并逐帧返回结果"""
+async def stream_process_video_endpoint(file_content: bytes, pose_type: str, save_path: str = None, homework_id: str = None, student_id: str = None):
+    """流式处理视频并逐帧返回结果，可选保存到指定位置"""
     session_id = None
     cap = None
     out = None
+    start_time = time.time()  # 记录开始时间
     
     try:
         logger.info("开始流式处理视频上传...")
@@ -255,19 +262,33 @@ async def stream_video_processing(file_content: bytes, pose_type: str):
         out.release()
         cap.release()
         
+        # 如果需要保存到指定位置
+        if save_path:
+            # 创建保存目录
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            # 复制处理后的视频到目标位置
+            shutil.copy2(output_path, save_path)
+            
         # 读取处理后的视频文件
         with open(output_path, "rb") as video_file:
             processed_video = video_file.read()
             
         # 发送最终统计信息
-        yield sse_format("final_stats", {
+        final_stats = {
             "message": "视频处理完成",
             "max_count": max_count,
             "processed_frame_count": processed_frame_count,
             "total_time": frame_index / fps if fps > 0 else 0,
             "output_path": output_path,
             "video_size": len(processed_video)
-        })
+        }
+        
+        if save_path:
+            final_stats["saved_path"] = save_path
+            if homework_id and student_id:
+                final_stats["video_url"] = f"/get_processed_video?homework_id={homework_id}&student_id={student_id}"
+                
+        yield sse_format("final_stats", final_stats)
         
         # 保存视频以便下载
         download_path = os.path.join(temp_dir, "download_video.mp4")
@@ -278,6 +299,74 @@ async def stream_video_processing(file_content: bytes, pose_type: str):
             "message": "视频可供下载",
             "download_url": f"/download_processed_video?temp_id={temp_id}"
         })
+        
+        # 如果提供了保存路径和作业信息，则将处理结果保存到数据库
+        if save_path and homework_id and student_id:
+            try:
+                video_duration = frame_index / fps if fps > 0 else 0
+                
+                # 从gym_object获取详细的反馈信息
+                feedback_details = {}
+                correct_count = max_count
+                incorrect_count = 0
+                
+                if gym_object and hasattr(gym_object, 'result_data'):
+                    result_data = gym_object.result_data
+                    # 提取正确的计数和错误计数 - 这里需要修正
+                    correct_count = result_data.get('correct_count', 0)  # 从tracker获取正确计数
+                    incorrect_count = result_data.get('incorrect_count', 0)  # 从tracker获取错误计数
+                    
+                    # 确保total_count是正确的总和
+                    total_count_from_tracker = correct_count + incorrect_count
+                    
+                    # 构建反馈详情
+                    feedback_details = {
+                        "events": result_data.get('events', []),
+                        "performance": {
+                            "total_count": total_count_from_tracker,  # 使用tracker的总计数
+                            "correct_count": correct_count,
+                            "incorrect_count": incorrect_count,
+                            "accuracy_rate": correct_count / total_count_from_tracker * 100 if total_count_from_tracker > 0 else 0
+                        },
+                        "video_info": {
+                            "total_frames": frame_index,
+                            "processed_frames": processed_frame_count,
+                            "fps": fps,
+                            "duration": video_duration
+                        }
+                    }
+                    
+                    # 更新max_count为tracker的总计数
+                    max_count = total_count_from_tracker
+                    
+                else:
+                    # 默认处理方式
+                    feedback_details = {
+                        "processed_frame_count": processed_frame_count,
+                        "max_count": max_count,
+                        "performance": {
+                            "total_count": max_count,
+                            "correct_count": max_count,  # 默认假设全部正确
+                            "incorrect_count": 0
+                        }
+                    }
+                
+                # 插入数据库 - 关键修改：使用tracker返回的计数
+                insert_exercise_feedback(
+                    homework_id=homework_id,
+                    student_id=student_id,
+                    pose_type=pose_type,
+                    processed_video_path=save_path,
+                    total_count=max_count,  # 更新后的总计数
+                    correct_count=correct_count,      # 使用tracker返回的正确计数
+                    incorrect_count=incorrect_count,   # 使用tracker返回的错误计数
+                    feedback_json=json.dumps(feedback_details),
+                    video_duration=video_duration
+                )
+                logger.info(f"视频处理结果已保存到数据库: homework_id={homework_id}, student_id={student_id}, pose_type={pose_type}")
+            except Exception as e:
+                logger.error(f"保存视频处理结果到数据库时出错: {e}")
+                logger.error(traceback.format_exc())
         
     except Exception as e:
         error_msg = f"处理视频时出错: {str(e)}"
@@ -313,7 +402,7 @@ async def stream_process_video(file: UploadFile = File(...), pose_type: str = "p
     file_content = await file.read()
     logger.info(f"视频文件读取完成，大小: {len(file_content)} 字节")
     
-    return SSEStreamingResponse(stream_video_processing(file_content, pose_type))
+    return SSEStreamingResponse(stream_process_video_endpoint(file_content, pose_type))
 
 
 @app.get("/download_processed_video")
@@ -528,32 +617,12 @@ def process_video_logic(file_content: bytes, pose_type: str):
 
 @app.post("/process_video")
 async def process_video(file: UploadFile = File(...), pose_type: str = "pushup"):
-    """处理视频并返回处理后的完整视频"""
+    """流式处理视频并返回处理后的完整视频"""
     # 读取上传的文件内容
     file_content = await file.read()
     logger.info(f"视频文件读取完成，大小: {len(file_content)} 字节")
     
-    # 处理视频
-    result = process_video_logic(file_content, pose_type)
-    
-    # 清理临时目录
-    try:
-        if os.path.exists(result["temp_dir"]):
-            shutil.rmtree(result["temp_dir"])
-    except Exception as e:
-        logger.error(f"清理临时目录时出错: {e}")
-
-    # 直接返回视频流，统计信息放在header中
-    return Response(
-        content=result["processed_video"],
-        media_type="video/mp4",
-        headers={
-            "Content-Disposition": f"attachment; filename=processed_{pose_type}.mp4",
-            "X-Final-Count": str(result["max_count"]),
-            "X-Total-Frames": str(result["processed_frame_count"]),
-            "X-Total-Time": str(result["total_time"])
-        }
-    )
+    return SSEStreamingResponse(stream_process_video_endpoint(file_content, pose_type))
 
 
 @app.post("/process_and_save_video")
@@ -563,39 +632,27 @@ async def process_and_save_video(
     pose_type: str = Query("pushup", description="动作类型"),
     file: UploadFile = File(..., description="上传的视频文件")
 ):
-    """处理视频并将处理后的视频保存到 homework/homework_id/student_id 目录下"""
+    """流式处理视频并将处理后的视频保存到 homework/homework_id/student_id 目录下"""
+    start_time = time.time()
+    
     # 读取上传的文件内容
     file_content = await file.read()
     logger.info(f"视频文件读取完成，大小: {len(file_content)} 字节")
     
-    # 处理视频
-    result = process_video_logic(file_content, pose_type)
-    
-    # 创建保存目录
+    # 创建保存目录和路径
     save_dir = os.path.join("homework", homework_id, student_id)
-    os.makedirs(save_dir, exist_ok=True)
-    
-    # 保存处理后的视频
     save_path = os.path.join(save_dir, "processed_video.mp4")
-    with open(save_path, "wb") as f:
-        f.write(result["processed_video"])
     
-    # 清理临时目录
-    try:
-        if os.path.exists(result["temp_dir"]):
-            shutil.rmtree(result["temp_dir"])
-    except Exception as e:
-        logger.error(f"清理临时目录时出错: {e}")
-
-    # 返回处理结果
-    return {
-        "status": "success",
-        "message": "视频处理完成并已保存",
-        "final_count": result["max_count"],
-        "total_frames": result["processed_frame_count"],
-        "total_time": result["total_time"],
-        "video_url": f"/get_processed_video?homework_id={homework_id}&student_id={student_id}"
-    }
+    # 使用流式处理并保存
+    return SSEStreamingResponse(
+        stream_process_video_endpoint(
+            file_content, 
+            pose_type, 
+            save_path=save_path,
+            homework_id=homework_id,
+            student_id=student_id
+        )
+    )
 
 
 @app.get("/get_processed_video")
@@ -657,6 +714,60 @@ async def get_supported_poses():
     }
 
 
+@app.get("/query_records")
+async def query_records(
+    homework_id: str = Query(..., description="作业ID"),
+    student_id: str = Query(..., description="学生ID"),
+    pose_type: Optional[str] = Query(None, description="动作类型")
+):
+    """根据作业ID、学生ID和动作类型查询反馈记录"""
+    try:
+        if pose_type:
+            # 查询特定动作类型的记录
+            result = get_exercise_feedback(homework_id, student_id, pose_type)
+            if result is None:
+                raise HTTPException(status_code=404, detail="未找到相关记录")
+            return [result]
+        else:
+            # 查询该学生该作业的所有记录
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM exercise_feedback 
+                WHERE homework_id = ? AND student_id = ?
+                ORDER BY uploaded_at DESC
+            """, (homework_id, student_id))
+            
+            rows = cursor.fetchall()
+            conn.close()
+            
+            if not rows:
+                raise HTTPException(status_code=404, detail="未找到相关记录")
+            
+            return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"查询记录时出错: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/query_all_records")
+async def query_all_records():
+    """查询所有反馈记录"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT * FROM exercise_feedback ORDER BY uploaded_at DESC")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"查询所有记录时出错: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # 存储临时目录，以便稍后清理
 temp_dirs = {}  # 存储临时目录信息，包括创建时间和路径
 
@@ -676,6 +787,28 @@ def cleanup_temp_dirs():
     # 从字典中移除已删除的条目
     for temp_id in to_delete:
         del temp_dirs[temp_id]
+
+
+@app.get("/get_record_details/{record_id}")
+async def get_record_details(record_id: int):
+    """获取指定记录的详细信息"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT * FROM exercise_feedback WHERE id = ?", (record_id,))
+        record = cursor.fetchone()
+        conn.close()
+        
+        if not record:
+            raise HTTPException(status_code=404, detail="记录不存在")
+        
+        return dict(record)
+    except Exception as e:
+        logger.error(f"获取记录详情时出错: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

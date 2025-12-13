@@ -40,6 +40,7 @@ class AIGym(BaseSolution):
         self.annotator = None
         # self.env_check = check_imshow(warn=True)
         self.fps = 30
+        self.result_data = {}  # 添加这个属性存储结果数据
 
         super().__init__(**kwargs)
         self.count = 0
@@ -118,36 +119,42 @@ class AIGym(BaseSolution):
                 try:
                     # 创建一个包含单个元素的列表传递给tracker
                     count_list = [self.count]
-                    im0 = self.tracker.track(k, im0, 0, count_list)
+                    # 调用tracker的track方法，传入fps参数
+                    tracker_result = self.tracker.track(k, im0, 0, count_list, fps=self.fps)
+                    
+                    # 检查返回的数据类型
+                    if isinstance(tracker_result, dict):
+                        # 从字典中提取处理后的图像
+                        im0 = tracker_result.get('processed_frame', im0)
+                        # 保存完整的结果数据
+                        self.result_data = tracker_result
+                    else:
+                        # 向后兼容：直接返回的是图像
+                        im0 = tracker_result
+                        # 创建一个基本的结果数据结构
+                        self.result_data = {
+                            'processed_frame': im0,
+                            'correct_count': self.count,
+                            'incorrect_count': 0,
+                            'events': []
+                        }
+                    
                     # 更新计数器
                     self.count = count_list[0]
+                    
                 except Exception as e:
                     logger.error(f"Error tracking {self.pose_type}: {e}")
                     logger.error(traceback.format_exc())
+                    # 出错时设置基本数据
+                    self.result_data = {
+                        'processed_frame': im0,
+                        'correct_count': self.count,
+                        'incorrect_count': 0,
+                        'events': []
+                    }
 
 
         if hasattr(self.annotator, 'kpts'):
             self.annotator.kpts(k, shape=(640,640), radius=1, kpt_line=True)
             
         return im0, self.count  # 返回处理后的图像和计数值
-
-
-"""
-0    nose    鼻子
-1    left_eye    左眼
-2    right_eye    右眼
-3    left_ear    左耳
-4    right_ear    右耳
-5    left_shoulder    左肩
-6    right_shoulder    右肩
-7    left_elbow    左肘
-8    right_elbow    右肘
-9    left_wrist    左腕
-10    right_wrist    右腕
-11    left_hip    左髋
-12    right_hip    右髋
-13    left_knee    左膝
-14    right_knee    右膝
-15    left_ankle    左踝
-16    right_ankle    右踝
-"""
