@@ -46,6 +46,7 @@
             cursor: pointer;
             font-size: 16px;
             width: 100%;
+            margin-bottom: 5px;
         }
         button:hover {
             background-color: #45a049;
@@ -88,15 +89,64 @@
             margin-top: 0;
             color: #555;
         }
+        #streamVideo {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            background-color: #000;
+        }
+        #streamStats {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        /* 添加一些样式 */
+        .record-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .feedback-details {
+            grid-column: span 2;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .feedback-details pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>AI健身助手 - 视频处理测试</h1>
-        
+
         <!-- 现有功能测试 -->
         <div class="section">
-            <h2 class="section-title">直接处理视频（原功能）</h2>
+            <h2 class="section-title">直接处理视频</h2>
             <form id="directProcessForm">
                 <div class="form-group">
                     <label for="directPoseType">动作类型:</label>
@@ -116,10 +166,37 @@
             </form>
             <div id="directResult" class="result"></div>
         </div>
-        
+
+        <!-- 流式处理视频 -->
+        <div class="section">
+            <h2 class="section-title">流式处理视频</h2>
+            <form id="streamProcessForm">
+                <div class="form-group">
+                    <label for="streamPoseType">动作类型:</label>
+                    <select id="streamPoseType">
+                        <option value="pushup">俯卧撑</option>
+                        <option value="squat">深蹲</option>
+                        <option value="abworkout">腹肌训练</option>
+                        <option value="deadlift">硬拉</option>
+                        <option value="benchpress">卧推</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="streamVideoFile">选择视频:</label>
+                    <input type="file" id="streamVideoFile" accept="video/*" required>
+                </div>
+                <button type="submit" id="streamProcessBtn">流式处理视频</button>
+            </form>
+            <div class="video-container">
+                <img id="streamVideo" alt="流式视频处理结果" style="display: none;">
+            </div>
+            <div id="streamStats"></div>
+            <div id="streamResult" class="result"></div>
+        </div>
+
         <!-- 新功能测试 -->
         <div class="section">
-            <h2 class="section-title">处理并保存视频（新功能）</h2>
+            <h2 class="section-title">处理并保存视频</h2>
             <form id="saveProcessForm">
                 <div class="form-group">
                     <label for="homeworkId">作业ID:</label>
@@ -147,7 +224,7 @@
             </form>
             <div id="saveResult" class="result"></div>
         </div>
-        
+
         <!-- 查看已处理视频 -->
         <div class="section">
             <h2 class="section-title">查看已处理视频</h2>
@@ -168,7 +245,7 @@
                 </video>
             </div>
         </div>
-        
+
         <!-- 删除作业 -->
         <div class="section">
             <h2 class="section-title">删除作业</h2>
@@ -181,141 +258,615 @@
             </form>
             <div id="deleteResult" class="result"></div>
         </div>
+
+        <!-- 查询作业记录 -->
+        <div class="section">
+            <h2 class="section-title">查询作业记录</h2>
+            <form id="queryRecordForm">
+                <div class="form-group">
+                    <label for="queryHomeworkId">作业ID:</label>
+                    <input type="text" id="queryHomeworkId" placeholder="请输入作业ID" required>
+                </div>
+                <div class="form-group">
+                    <label for="queryStudentId">学生ID:</label>
+                    <input type="text" id="queryStudentId" placeholder="请输入学生ID" required>
+                </div>
+                <div class="form-group">
+                    <label for="queryPoseType">动作类型:</label>
+                    <select id="queryPoseType">
+                        <option value="">全部</option>
+                        <option value="pushup">俯卧撑</option>
+                        <option value="squat">深蹲</option>
+                        <option value="abworkout">腹肌训练</option>
+                        <option value="deadlift">硬拉</option>
+                        <option value="benchpress">卧推</option>
+                    </select>
+                </div>
+                <button type="submit" id="queryRecordBtn">查询记录</button>
+                <button type="button" id="queryAllRecordsBtn">查询所有记录</button>
+            </form>
+            <div id="queryResult" class="result">
+                <table id="recordsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>作业ID</th>
+                            <th>学生ID</th>
+                            <th>动作类型</th>
+                            <th>上传时间</th>
+                            <th>总次数</th>
+                            <th>正确次数</th>
+                            <th>错误次数</th>
+                            <th>准确率</th>
+                            <th>视频时长(秒)</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 在原HTML的查询作业记录部分添加以下内容 -->
+        <div class="section">
+            <h2 class="section-title">详细查看记录</h2>
+            <div class="form-group">
+                <label for="detailHomeworkId">作业ID:</label>
+                <input type="text" id="detailHomeworkId" placeholder="请输入作业ID">
+                
+                <label for="detailStudentId">学生ID:</label>
+                <input type="text" id="detailStudentId" placeholder="请输入学生ID">
+                
+                <button onclick="getRecordDetailsByHomeworkStudent()">查看详情</button>
+            </div>
+            <div id="recordDetailsByHomeworkStudent" class="result"></div>
+        </div>
+
+        <!-- 查询记录详情 -->
+        <div class="section">
+            <h2 class="section-title">查询记录详情</h2>
+            <form id="queryDetailsForm">
+                <div class="form-group">
+                    <label for="recordId">记录ID:</label>
+                    <input type="number" id="recordId" placeholder="输入记录ID">
+                </div>
+                <div class="form-group">
+                    <label for="homeworkIdDetail">作业ID:</label>
+                    <input type="text" id="homeworkIdDetail" placeholder="输入作业ID">
+                </div>
+                <div class="form-group">
+                    <label for="studentIdDetail">学生ID:</label>
+                    <input type="text" id="studentIdDetail" placeholder="输入学生ID">
+                </div>
+                <button type="button" onclick="getRecordDetails()">查询记录详情</button>
+                <button type="button" onclick="getAllRecords()">查询所有记录</button>
+            </form>
+            <div id="recordDetails" class="result"></div>
+        </div>
+
+        <!-- 新增：获取学生所有记录 -->
+        <div class="section">
+            <h2 class="section-title">获取学生所有记录</h2>
+            <form id="allRecordsForm">
+                <div class="form-group">
+                    <label for="studentIdForAllRecords">学生ID:</label>
+                    <input type="text" id="studentIdForAllRecords" placeholder="输入学生ID">
+                </div>
+                <button type="button" onclick="getStudentAllRecords()">获取学生所有记录</button>
+            </form>
+            <div id="allRecordsDetails" class="result"></div>
+        </div>
     </div>
 
     <script>
         // 设置基础URL
         const BASE_URL = 'http://localhost:8000';
-        
-        // 直接处理视频（原功能）
-        document.getElementById('directProcessForm').addEventListener('submit', async function(e) {
+
+        // 直接处理视频
+        document.getElementById('directProcessForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const poseType = document.getElementById('directPoseType').value;
             const videoFile = document.getElementById('directVideoFile').files[0];
             const processBtn = document.getElementById('directProcessBtn');
+            const streamStats = document.createElement('div');
+            const streamVideo = document.createElement('img');
             const resultDiv = document.getElementById('directResult');
-            
+
             if (!videoFile) {
                 showResult(resultDiv, '请先选择视频文件', 'error');
                 return;
             }
-            
+
+            // 设置流式显示元素
+            streamStats.id = 'directProcessStats';
+            streamStats.style.marginTop = '10px';
+            streamStats.style.padding = '10px';
+            streamStats.style.backgroundColor = '#f0f0f0';
+            streamStats.style.borderRadius = '4px';
+            resultDiv.parentNode.insertBefore(streamStats, resultDiv.nextSibling);
+            streamStats.innerHTML = '正在准备上传文件...';
+
+            streamVideo.id = 'directProcessVideo';
+            streamVideo.style.maxWidth = '100%';
+            streamVideo.style.height = 'auto';
+            streamVideo.style.display = 'none';
+            streamVideo.alt = '处理过程预览';
+            streamStats.parentNode.insertBefore(streamVideo, streamStats.nextSibling);
+
             // 禁用按钮并显示加载状态
             processBtn.disabled = true;
             processBtn.textContent = '处理中...';
-            
+
             try {
+                // 创建 FormData 对象
                 const formData = new FormData();
                 formData.append('file', videoFile);
-                formData.append('pose_type', poseType);
-                
-                const response = await fetch(`${BASE_URL}/process_video`, {
+
+                // 构造请求URL
+                const url = `${BASE_URL}/process_video?pose_type=${encodeURIComponent(poseType)}`;
+
+                // 使用 EventSource 或 Fetch API 来处理 SSE 流
+                streamStats.innerHTML = '正在连接到流式处理服务...';
+
+                // 使用 Fetch API 和 ReadableStream 处理 SSE
+                fetch(url, {
                     method: 'POST',
                     body: formData
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    // 处理 SSE 流
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    let videoChunks = [];
+
+                    function processStream() {
+                        reader.read().then(({done, value}) => {
+                            if (done) {
+                                // 处理完成，创建视频下载
+                                if (videoChunks.length > 0) {
+                                    const processedVideoBlob = new Blob(videoChunks, { type: 'video/mp4' });
+                                    const url = window.URL.createObjectURL(processedVideoBlob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = `processed_${poseType}.mp4`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    window.URL.revokeObjectURL(url);
+
+                                    showResult(resultDiv, `
+                                        视频处理成功！视频已自动下载
+                                    `, 'success');
+                                }
+
+                                streamStats.innerHTML += '<br>处理完成!';
+                                processBtn.disabled = false;
+                                processBtn.textContent = '处理视频';
+                                return;
+                            }
+
+                            // 将接收到的数据添加到缓冲区
+                            buffer += decoder.decode(value, {stream: true});
+
+                            // 处理缓冲区中的数据
+                            let lines = buffer.split('\n\n');
+                            buffer = lines.pop(); // 保留不完整的最后一行
+
+                            for (const chunk of lines) {
+                                if (chunk.startsWith('data: ')) {
+                                    try {
+                                        const jsonData = chunk.slice(6); // 去掉 'data: ' 前缀
+                                        const data = JSON.parse(jsonData);
+
+                                        switch (data.event) {
+                                            case 'init':
+                                                streamStats.innerHTML = `<strong>初始化:</strong> ${data.data.message}<br>`;
+                                                if (data.data.fps) {
+                                                    streamStats.innerHTML += `FPS: ${data.data.fps}, 分辨率: ${data.data.width}x${data.data.height}<br>`;
+                                                }
+                                                break;
+
+                                            case 'frame':
+                                                // 显示处理后的帧
+                                                streamVideo.src = `data:image/jpeg;base64,${data.data.image}`;
+                                                streamVideo.style.display = 'block';
+                                                streamStats.innerHTML = `
+                                                    <strong>处理中...</strong><br>
+                                                    当前帧: ${data.data.processed_frame_count}<br>
+                                                    计数: ${data.data.count}<br>
+                                                    最大计数: ${data.data.max_count}
+                                                `;
+                                                break;
+
+                                            case 'final_stats':
+                                                if (data.data.download_url) {
+                                                    streamStats.innerHTML += `
+                                                        <br><strong>处理完成!</strong><br>
+                                                        最终计数: ${data.data.max_count}<br>
+                                                        处理帧数: ${data.data.processed_frame_count}<br>
+                                                        总时间: ${parseFloat(data.data.total_time).toFixed(2)} 秒<br>
+                                                        <button onclick="window.location.href='${BASE_URL}${data.data.download_url}'">下载视频</button>
+                                                    `;
+                                                } else if (data.data.video_size) {
+                                                    streamStats.innerHTML += `
+                                                        <br><strong>处理完成!</strong><br>
+                                                        最终计数: ${data.data.max_count}<br>
+                                                        处理帧数: ${data.data.processed_frame_count}<br>
+                                                        总时间: ${parseFloat(data.data.total_time).toFixed(2)} 秒
+                                                    `;
+                                                }
+                                                break;
+
+                                            case 'error':
+                                                throw new Error(data.data.message);
+                                        }
+                                    } catch (e) {
+                                        // 如果不是JSON格式，可能是视频数据的一部分
+                                        // 这里我们简单地收集这些数据作为视频块
+                                        videoChunks.push(value);
+                                    }
+                                } else {
+                                    // 收集非SSE格式的数据作为视频块
+                                    videoChunks.push(value);
+                                }
+                            }
+
+                            // 继续处理流
+                            processStream();
+                        }).catch(error => {
+                            console.error('Error:', error);
+                            showResult(resultDiv, `流式处理过程中发生错误: ${error.message}`, 'error');
+                            streamStats.innerHTML += `<br>错误: ${error.message}`;
+                            processBtn.disabled = false;
+                            processBtn.textContent = '处理视频';
+                        });
+                    }
+
+                    // 开始处理流
+                    processStream();
+                }).catch(error => {
+                    console.error('连接错误:', error);
+                    showResult(resultDiv, `连接流式处理服务时发生错误: ${error.message}`, 'error');
+                    streamStats.innerHTML = `错误: ${error.message}`;
+                    processBtn.disabled = false;
+                    processBtn.textContent = '处理视频';
                 });
-                
-                if (response.ok) {
-                    // 获取响应头中的统计数据
-                    const finalCount = response.headers.get('X-Final-Count');
-                    const totalFrames = response.headers.get('X-Total-Frames');
-                    const totalTime = response.headers.get('X-Total-Time');
-                    
-                    // 创建下载链接
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `processed_${poseType}.mp4`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    
-                    showResult(resultDiv, `
-                        视频处理成功！
-                        <br>最终计数: ${finalCount}
-                        <br>总帧数: ${totalFrames}
-                        <br>总时间: ${parseFloat(totalTime).toFixed(2)} 秒
-                        <br>视频已自动下载
-                    `, 'success');
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(`处理失败: ${errorText}`);
-                }
             } catch (error) {
                 console.error('Error:', error);
-                showResult(resultDiv, `处理过程中发生错误: ${error.message}`, 'error');
-            } finally {
-                // 恢复按钮状态
+                showResult(resultDiv, `流式处理过程中发生错误: ${error.message}`, 'error');
                 processBtn.disabled = false;
                 processBtn.textContent = '处理视频';
             }
         });
-        
-        // 处理并保存视频（新功能）
-        document.getElementById('saveProcessForm').addEventListener('submit', async function(e) {
+
+        // 流式处理视频
+        document.getElementById('streamProcessForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
+            const poseType = document.getElementById('streamPoseType').value;
+            const videoFile = document.getElementById('streamVideoFile').files[0];
+            const processBtn = document.getElementById('streamProcessBtn');
+            const streamVideo = document.getElementById('streamVideo');
+            const streamStats = document.getElementById('streamStats');
+            const resultDiv = document.getElementById('streamResult');
+
+            if (!videoFile) {
+                showResult(resultDiv, '请先选择视频文件', 'error');
+                return;
+            }
+
+            // 禁用按钮并显示加载状态
+            processBtn.disabled = true;
+            processBtn.textContent = '处理中...';
+
+            try {
+                // 显示视频元素
+                streamVideo.style.display = 'block';
+                streamStats.innerHTML = '正在准备上传文件...';
+
+                // 创建 FormData 对象
+                const formData = new FormData();
+                formData.append('file', videoFile);
+
+                // 构造请求URL
+                const url = `${BASE_URL}/stream_process_video?pose_type=${encodeURIComponent(poseType)}`;
+
+                // 使用 EventSource 或 Fetch API 来处理 SSE 流
+                streamStats.innerHTML = '正在连接到流式处理服务...';
+
+                // 使用 Fetch API 和 ReadableStream 处理 SSE
+                fetch(url, {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    // 处理 SSE 流
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+
+                    function processStream() {
+                        reader.read().then(({done, value}) => {
+                            if (done) {
+                                streamStats.innerHTML += '<br>处理完成!';
+                                processBtn.disabled = false;
+                                processBtn.textContent = '流式处理视频';
+                                return;
+                            }
+
+                            // 将接收到的数据添加到缓冲区
+                            buffer += decoder.decode(value, {stream: true});
+
+                            // 处理缓冲区中的数据
+                            let lines = buffer.split('\n\n');
+                            buffer = lines.pop(); // 保留不完整的最后一行
+
+                            for (const chunk of lines) {
+                                if (chunk.startsWith('data: ')) {
+                                    try {
+                                        const jsonData = chunk.slice(6); // 去掉 'data: ' 前缀
+                                        const data = JSON.parse(jsonData);
+
+                                        switch (data.event) {
+                                            case 'init':
+                                                streamStats.innerHTML = `<strong>初始化:</strong> ${data.data.message}<br>`;
+                                                if (data.data.fps) {
+                                                    streamStats.innerHTML += `FPS: ${data.data.fps}, 分辨率: ${data.data.width}x${data.data.height}<br>`;
+                                                }
+                                                break;
+
+                                            case 'frame':
+                                                // 显示处理后的帧
+                                                streamVideo.src = `data:image/jpeg;base64,${data.data.image}`;
+                                                streamStats.innerHTML = `
+                                                    <strong>处理中...</strong><br>
+                                                    当前帧: ${data.data.processed_frame_count}<br>
+                                                    计数: ${data.data.count}<br>
+                                                    最大计数: ${data.data.max_count}
+                                                `;
+                                                break;
+
+                                            case 'final_stats':
+                                                if (data.data.download_url) {
+                                                    streamStats.innerHTML += `
+                                                        <br><strong>处理完成!</strong><br>
+                                                        最终计数: ${data.data.max_count}<br>
+                                                        处理帧数: ${data.data.processed_frame_count}<br>
+                                                        总时间: ${parseFloat(data.data.total_time).toFixed(2)} 秒<br>
+                                                        <button onclick="window.location.href='${BASE_URL}${data.data.download_url}'">下载视频</button>
+                                                    `;
+                                                } else {
+                                                    streamStats.innerHTML += `
+                                                        <br><strong>处理完成!</strong><br>
+                                                        最终计数: ${data.data.max_count}<br>
+                                                        处理帧数: ${data.data.processed_frame_count}<br>
+                                                        总时间: ${parseFloat(data.data.total_time).toFixed(2)} 秒
+                                                    `;
+                                                }
+                                                showResult(resultDiv, '流式处理完成!', 'success');
+                                                break;
+
+                                            case 'error':
+                                                throw new Error(data.data.message);
+                                        }
+                                    } catch (e) {
+                                        console.error('解析数据失败:', e);
+                                        streamStats.innerHTML += `<br>解析数据失败: ${e.message}`;
+                                    }
+                                }
+                            }
+
+                            // 继续处理流
+                            processStream();
+                        }).catch(error => {
+                            console.error('Error:', error);
+                            showResult(resultDiv, `流式处理过程中发生错误: ${error.message}`, 'error');
+                            streamStats.innerHTML += `<br>错误: ${error.message}`;
+                            processBtn.disabled = false;
+                            processBtn.textContent = '流式处理视频';
+                        });
+                    }
+
+                    // 开始处理流
+                    processStream();
+                }).catch(error => {
+                    console.error('连接错误:', error);
+                    showResult(resultDiv, `连接流式处理服务时发生错误: ${error.message}`, 'error');
+                    streamStats.innerHTML = `错误: ${error.message}`;
+                    processBtn.disabled = false;
+                    processBtn.textContent = '流式处理视频';
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(resultDiv, `流式处理过程中发生错误: ${error.message}`, 'error');
+                streamStats.innerHTML = `错误: ${error.message}`;
+                processBtn.disabled = false;
+                processBtn.textContent = '流式处理视频';
+            }
+        });
+
+        // 处理并保存视频
+        document.getElementById('saveProcessForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
             const homeworkId = document.getElementById('homeworkId').value;
             const studentId = document.getElementById('studentId').value;
             const poseType = document.getElementById('poseType').value;
             const videoFile = document.getElementById('videoFile').files[0];
             const processBtn = document.getElementById('saveProcessBtn');
+            const streamStats = document.createElement('div');
+            const streamVideo = document.createElement('img');
             const resultDiv = document.getElementById('saveResult');
-            
+
             if (!videoFile) {
                 showResult(resultDiv, '请先选择视频文件', 'error');
                 return;
             }
-            
+
+            // 设置流式显示元素
+            streamStats.id = 'saveProcessStats';
+            streamStats.style.marginTop = '10px';
+            streamStats.style.padding = '10px';
+            streamStats.style.backgroundColor = '#f0f0f0';
+            streamStats.style.borderRadius = '4px';
+            resultDiv.parentNode.insertBefore(streamStats, resultDiv.nextSibling);
+            streamStats.innerHTML = '正在准备上传文件...';
+
+            streamVideo.id = 'saveProcessVideo';
+            streamVideo.style.maxWidth = '100%';
+            streamVideo.style.height = 'auto';
+            streamVideo.style.display = 'none';
+            streamVideo.alt = '处理过程预览';
+            streamStats.parentNode.insertBefore(streamVideo, streamStats.nextSibling);
+
             // 禁用按钮并显示加载状态
             processBtn.disabled = true;
             processBtn.textContent = '处理中...';
-            
+
             try {
+                // 创建 FormData 对象
                 const formData = new FormData();
                 formData.append('file', videoFile);
-                
-                const response = await fetch(`${BASE_URL}/process_and_save_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}&pose_type=${encodeURIComponent(poseType)}`, {
+
+                // 构造请求URL
+                const url = `${BASE_URL}/process_and_save_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}&pose_type=${encodeURIComponent(poseType)}`;
+
+                // 使用 EventSource 或 Fetch API 来处理 SSE 流
+                streamStats.innerHTML = '正在连接到流式处理服务...';
+
+                // 使用 Fetch API 和 ReadableStream 处理 SSE
+                fetch(url, {
                     method: 'POST',
                     body: formData
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    // 处理 SSE 流
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+
+                    function processStream() {
+                        reader.read().then(({done, value}) => {
+                            if (done) {
+                                streamStats.innerHTML += '<br>处理完成!';
+                                processBtn.disabled = false;
+                                processBtn.textContent = '处理并保存视频';
+                                return;
+                            }
+
+                            // 将接收到的数据添加到缓冲区
+                            buffer += decoder.decode(value, {stream: true});
+
+                            // 处理缓冲区中的数据
+                            let lines = buffer.split('\n\n');
+                            buffer = lines.pop(); // 保留不完整的最后一行
+
+                            for (const chunk of lines) {
+                                if (chunk.startsWith('data: ')) {
+                                    try {
+                                        const jsonData = chunk.slice(6); // 去掉 'data: ' 前缀
+                                        const data = JSON.parse(jsonData);
+
+                                        switch (data.event) {
+                                            case 'init':
+                                                streamStats.innerHTML = `<strong>初始化:</strong> ${data.data.message}<br>`;
+                                                if (data.data.fps) {
+                                                    streamStats.innerHTML += `FPS: ${data.data.fps}, 分辨率: ${data.data.width}x${data.data.height}<br>`;
+                                                }
+                                                break;
+
+                                            case 'frame':
+                                                // 显示处理后的帧
+                                                streamVideo.src = `data:image/jpeg;base64,${data.data.image}`;
+                                                streamVideo.style.display = 'block';
+                                                streamStats.innerHTML = `
+                                                    <strong>处理中...</strong><br>
+                                                    当前帧: ${data.data.processed_frame_count}<br>
+                                                    计数: ${data.data.count}<br>
+                                                    最大计数: ${data.data.max_count}
+                                                `;
+                                                break;
+
+                                            case 'final_stats':
+                                                if (data.data.video_url) {
+                                                    showResult(resultDiv, `
+                                                        视频处理完成并已保存
+                                                        <br>最终计数: ${data.data.max_count}
+                                                        <br>处理帧数: ${data.data.processed_frame_count}
+                                                        <br>总时间: ${parseFloat(data.data.total_time).toFixed(2)} 秒
+                                                        <br>访问地址: <a href="${BASE_URL}${data.data.video_url}" target="_blank">点击访问</a>
+                                                    `, 'success');
+                                                } else {
+                                                    showResult(resultDiv, `
+                                                        视频处理完成并已保存
+                                                        <br>最终计数: ${data.data.max_count}
+                                                        <br>处理帧数: ${data.data.processed_frame_count}
+                                                        <br>总时间: ${parseFloat(data.data.total_time).toFixed(2)} 秒
+                                                    `, 'success');
+                                                }
+                                                break;
+
+                                            case 'error':
+                                                throw new Error(data.data.message);
+                                        }
+                                    } catch (e) {
+                                        console.error('解析数据失败:', e);
+                                        streamStats.innerHTML += `<br>解析数据失败: ${e.message}`;
+                                    }
+                                }
+                            }
+
+                            // 继续处理流
+                            processStream();
+                        }).catch(error => {
+                            console.error('Error:', error);
+                            showResult(resultDiv, `流式处理过程中发生错误: ${error.message}`, 'error');
+                            streamStats.innerHTML += `<br>错误: ${error.message}`;
+                            processBtn.disabled = false;
+                            processBtn.textContent = '处理并保存视频';
+                        });
+                    }
+
+                    // 开始处理流
+                    processStream();
+                }).catch(error => {
+                    console.error('连接错误:', error);
+                    showResult(resultDiv, `连接流式处理服务时发生错误: ${error.message}`, 'error');
+                    streamStats.innerHTML = `错误: ${error.message}`;
+                    processBtn.disabled = false;
+                    processBtn.textContent = '处理并保存视频';
                 });
-                
-                if (response.ok) {
-                    const result = await response.json();
-                    showResult(resultDiv, `
-                        ${result.message}
-                        <br>最终计数: ${result.final_count}
-                        <br>总帧数: ${result.total_frames}
-                        <br>总时间: ${parseFloat(result.total_time).toFixed(2)} 秒
-                        <br>访问地址: <a href="${result.video_url}" target="_blank">点击访问</a>
-                    `, 'success');
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(`处理失败: ${errorText}`);
-                }
             } catch (error) {
                 console.error('Error:', error);
-                showResult(resultDiv, `处理过程中发生错误: ${error.message}`, 'error');
-            } finally {
-                // 恢复按钮状态
+                showResult(resultDiv, `流式处理过程中发生错误: ${error.message}`, 'error');
                 processBtn.disabled = false;
                 processBtn.textContent = '处理并保存视频';
             }
         });
-        
+
         // 查看已处理视频
         document.getElementById('viewVideoForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const homeworkId = document.getElementById('viewHomeworkId').value;
             const studentId = document.getElementById('viewStudentId').value;
             const videoElement = document.getElementById('processedVideo');
-            
+
             try {
                 const response = await fetch(`${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}`);
-                
+
                 if (response.ok) {
                     const blob = await response.blob();
                     const url = URL.createObjectURL(blob);
@@ -332,29 +883,29 @@
                 alert(`获取视频过程中发生错误: ${error.message}`);
             }
         });
-        
+
         // 删除作业
         document.getElementById('deleteHomeworkForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const homeworkId = document.getElementById('deleteHomeworkId').value;
             const deleteBtn = document.getElementById('deleteHomeworkBtn');
             const resultDiv = document.getElementById('deleteResult');
-            
+
             // 确认删除操作
             if (!confirm(`确定要删除作业 ${homeworkId} 的所有视频吗？此操作不可恢复！`)) {
                 return;
             }
-            
+
             // 禁用按钮并显示加载状态
             deleteBtn.disabled = true;
             deleteBtn.textContent = '删除中...';
-            
+
             try {
                 const response = await fetch(`${BASE_URL}/delete_homework?homework_id=${encodeURIComponent(homeworkId)}`, {
                     method: 'DELETE'
                 });
-                
+
                 if (response.ok) {
                     const result = await response.json();
                     showResult(resultDiv, result.message, 'success');
@@ -371,12 +922,438 @@
                 deleteBtn.textContent = '删除作业';
             }
         });
-        
+
+        // 查询作业记录
+        document.getElementById('queryRecordForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const homeworkId = document.getElementById('queryHomeworkId').value;
+            const studentId = document.getElementById('queryStudentId').value;
+            const poseType = document.getElementById('queryPoseType').value;
+
+            try {
+                // 构造查询参数
+                let url = `${BASE_URL}/query_records?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}`;
+                if (poseType) {
+                    url += `&pose_type=${encodeURIComponent(poseType)}`;
+                }
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const records = await response.json();
+                    try {
+                        displayRecords(records);
+                    } catch (displayError) {
+                        console.error('显示记录时出错:', displayError);
+                        const queryResultElement = document.getElementById('queryResult');
+                        if (queryResultElement) {
+                            showResult(queryResultElement, '显示记录时出错', 'error');
+                        } else {
+                            alert('显示记录时出错');
+                        }
+                    }
+                } else if (response.status === 404) {
+                    const queryResultElement = document.getElementById('queryResult');
+                    if (queryResultElement) {
+                        showResult(queryResultElement, '未找到相关记录', 'error');
+                    } else {
+                        alert('未找到相关记录');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`查询失败: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const queryResultElement = document.getElementById('queryResult');
+                if (queryResultElement) {
+                    showResult(queryResultElement, `查询过程中发生错误: ${error.message}`, 'error');
+                } else {
+                    alert(`查询过程中发生错误: ${error.message}`);
+                }
+            }
+        });
+
+        // 查询所有记录
+        document.getElementById('queryAllRecordsBtn').addEventListener('click', async function() {
+            try {
+                const response = await fetch(`${BASE_URL}/query_all_records`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const records = await response.json();
+                    try {
+                        displayRecords(records);
+                    } catch (displayError) {
+                        console.error('显示记录时出错:', displayError);
+                        const queryResultElement = document.getElementById('queryResult');
+                        if (queryResultElement) {
+                            showResult(queryResultElement, '显示记录时出错', 'error');
+                        } else {
+                            alert('显示记录时出错');
+                        }
+                    }
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`查询失败: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const queryResultElement = document.getElementById('queryResult');
+                if (queryResultElement) {
+                    showResult(queryResultElement, `查询过程中发生错误: ${error.message}`, 'error');
+                } else {
+                    alert(`查询过程中发生错误: ${error.message}`);
+                }
+            }
+        });
+
+        // 显示查询结果
+        function displayRecords(records) {
+            const table = document.getElementById('recordsTable');
+            const tbody = document.getElementById('recordsTableBody');
+            const queryResultElement = document.getElementById('queryResult');
+
+            // 清空现有数据
+            tbody.innerHTML = '';
+
+            if (records.length === 0) {
+                if (queryResultElement) {
+                    showResult(queryResultElement, '未找到相关记录', 'error');
+                } else {
+                    alert('未找到相关记录');
+                }
+                table.style.display = 'none';
+                return;
+            }
+
+            // 填充表格数据
+            records.forEach(record => {
+                const row = document.createElement('tr');
+
+                // 计算准确率
+                let accuracyRate = '';
+                if (record.total_count && record.total_count > 0) {
+                    accuracyRate = ((record.correct_count || 0) / record.total_count * 100).toFixed(2) + '%';
+                }
+
+                // 格式化日期时间
+                const uploadTime = record.uploaded_at ? new Date(record.uploaded_at).toLocaleString() : '';
+
+                row.innerHTML = `
+                    <td>${record.id || ''}</td>
+                    <td>${record.homework_id || ''}</td>
+                    <td>${record.student_id || ''}</td>
+                    <td>${record.pose_type || ''}</td>
+                    <td>${uploadTime}</td>
+                    <td>${record.total_count !== null ? record.total_count : ''}</td>
+                    <td>${record.correct_count !== null ? record.correct_count : ''}</td>
+                    <td>${record.incorrect_count !== null ? record.incorrect_count : ''}</td>
+                    <td>${accuracyRate}</td>
+                    <td>${record.video_duration !== null ? parseFloat(record.video_duration).toFixed(2) : ''}</td>
+                    <td>
+                        <button onclick="viewRecordDetails(${record.id})" style="padding: 4px 8px; margin: 2px;">详情</button>
+                        <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')" style="padding: 4px 8px; margin: 2px;">视频</button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            // 显示表格
+            table.style.display = 'table';
+            if (queryResultElement) {
+                queryResultElement.className = 'result success';
+                queryResultElement.style.display = 'block';
+            }
+        }
+
         // 显示结果消息
         function showResult(element, message, type) {
-            element.innerHTML = message;
-            element.className = `result ${type}`;
-            element.style.display = 'block';
+            // 检查元素是否存在
+            if (element) {
+                element.innerHTML = message;
+                element.className = `result ${type}`;
+                element.style.display = 'block';
+            } else {
+                // 如果元素不存在，输出到控制台
+                console.warn('试图设置不存在的元素:', message);
+            }
+        }
+
+        // 获取记录详情
+        async function getRecordDetails() {
+            const recordId = document.getElementById('recordId').value;
+            const detailsDiv = document.getElementById('recordDetails');
+            
+            if (!recordId) {
+                showResult(detailsDiv, '请输入记录ID', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${BASE_URL}/get_record_details/${recordId}`);
+                if (response.ok) {
+                    const record = await response.json();
+                    displayRecordDetails(record);
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`获取记录详情失败: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(detailsDiv, `获取记录详情时发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 通过作业ID和学生ID获取记录详情
+        async function getRecordDetailsByHomeworkStudent() {
+            const homeworkId = document.getElementById('detailHomeworkId').value;
+            const studentId = document.getElementById('detailStudentId').value;
+            const detailsDiv = document.getElementById('recordDetailsByHomeworkStudent');
+            
+            if (!homeworkId || !studentId) {
+                showResult(detailsDiv, '请输入作业ID和学生ID', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${BASE_URL}/get_record_details?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}`);
+                if (response.ok) {
+                    const records = await response.json();
+                    displayMultipleRecordDetails(records, 'recordDetailsByHomeworkStudent');
+                } else if (response.status === 404) {
+                    showResult(detailsDiv, '未找到相关记录', 'error');
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`获取记录详情失败: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(detailsDiv, `获取记录详情时发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 显示记录详情
+        function displayRecordDetails(record) {
+            const detailsDiv = document.getElementById('recordDetails');
+            
+            let html = `
+                <h3>记录详情 (ID: ${record.id})</h3>
+                <div class="record-details-grid">
+                    <div><strong>作业ID:</strong> ${record.homework_id || ''}</div>
+                    <div><strong>学生ID:</strong> ${record.student_id || ''}</div>
+                    <div><strong>动作类型:</strong> ${record.pose_type || ''}</div>
+                    <div><strong>上传时间:</strong> ${new Date(record.uploaded_at).toLocaleString() || ''}</div>
+                    <div><strong>总次数:</strong> ${record.total_count || 0}</div>
+                    <div><strong>正确次数:</strong> ${record.correct_count || 0}</div>
+                    <div><strong>错误次数:</strong> ${record.incorrect_count || 0}</div>
+                    <div><strong>准确率:</strong> ${record.total_count > 0 ? ((record.correct_count || 0) / record.total_count * 100).toFixed(2) + '%' : '0%'}</div>
+                    <div><strong>视频时长:</strong> ${record.video_duration ? parseFloat(record.video_duration).toFixed(2) + '秒' : ''}</div>
+                    <div><strong>原始视频路径:</strong> ${record.original_video_path || ''}</div>
+                    <div><strong>处理后视频路径:</strong> ${record.processed_video_path || ''}</div>
+            `;
+            
+            // 解析并显示反馈详情
+            if (record.feedback_json) {
+                try {
+                    const feedback = JSON.parse(record.feedback_json);
+                    html += `<div class="feedback-details"><strong>反馈详情:</strong><pre>${JSON.stringify(feedback, null, 2)}</pre></div>`;
+                } catch (e) {
+                    html += `<div><strong>反馈详情:</strong> ${record.feedback_json}</div>`;
+                }
+            }
+            
+            html += `
+                </div>
+                <button onclick="downloadRecordData('${record.id}')">下载JSON数据</button>
+                <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')">查看处理视频</button>
+            `;
+            
+            detailsDiv.innerHTML = html;
+            detailsDiv.className = 'result success';
+            detailsDiv.style.display = 'block';
+        }
+
+        // 显示多个记录详情
+        function displayMultipleRecordDetails(records) {
+            const detailsDiv = document.getElementById('recordDetails');
+            
+            if (!records || records.length === 0) {
+                showResult(detailsDiv, '未找到相关记录', 'error');
+                return;
+            }
+            
+            let html = '<h3>记录详情</h3>';
+            
+            records.forEach(record => {
+                html += `
+                    <div class="record-details-grid">
+                        <div><strong>记录ID:</strong> ${record.id || ''}</div>
+                        <div><strong>作业ID:</strong> ${record.homework_id || ''}</div>
+                        <div><strong>学生ID:</strong> ${record.student_id || ''}</div>
+                        <div><strong>动作类型:</strong> ${record.pose_type || ''}</div>
+                        <div><strong>上传时间:</strong> ${new Date(record.uploaded_at).toLocaleString() || ''}</div>
+                        <div><strong>总次数:</strong> ${record.total_count || 0}</div>
+                        <div><strong>正确次数:</strong> ${record.correct_count || 0}</div>
+                        <div><strong>错误次数:</strong> ${record.incorrect_count || 0}</div>
+                        <div><strong>准确率:</strong> ${record.total_count > 0 ? ((record.correct_count || 0) / record.total_count * 100).toFixed(2) + '%' : '0%'}</div>
+                        <div><strong>视频时长:</strong> ${record.video_duration ? parseFloat(record.video_duration).toFixed(2) + '秒' : ''}</div>
+                        <div><strong>原始视频路径:</strong> ${record.original_video_path || ''}</div>
+                        <div><strong>处理后视频路径:</strong> ${record.processed_video_path || ''}</div>
+                `;
+                
+                // 解析并显示反馈详情
+                if (record.feedback_json) {
+                    try {
+                        const feedback = JSON.parse(record.feedback_json);
+                        html += `<div class="feedback-details"><strong>反馈详情:</strong><pre>${JSON.stringify(feedback, null, 2)}</pre></div>`;
+                    } catch (e) {
+                        html += `<div><strong>反馈详情:</strong> ${record.feedback_json}</div>`;
+                    }
+                }
+                
+                html += `
+                        <div>
+                            <button onclick="downloadRecordData('${record.id}')" style="margin-right: 10px;">下载JSON数据</button>
+                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')">查看处理视频</button>
+                        </div>
+                    </div>
+                    <hr>
+                `;
+            });
+            
+            detailsDiv.innerHTML = html;
+            detailsDiv.className = 'result success';
+            detailsDiv.style.display = 'block';
+        }
+
+        // 下载记录数据为JSON文件
+        function downloadRecordData(recordId) {
+            fetch(`${BASE_URL}/get_record_details/${recordId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `record_${recordId}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(`下载数据失败: ${error.message}`);
+                });
+        }
+
+        // 查看处理后的视频
+        function viewProcessedVideo(homeworkId, studentId) {
+            const videoUrl = `${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}`;
+            window.open(videoUrl, '_blank');
+        }
+
+        // 查看记录详情
+        function viewRecordDetails(recordId) {
+            document.getElementById('recordId').value = recordId;
+            getRecordDetails();
+        }
+
+        // 获取指定学生的所有记录（新接口测试）
+        async function getStudentAllRecords() {
+            const studentId = document.getElementById('studentIdForAllRecords').value.trim();
+            
+            if (!studentId) {
+                alert('请输入学生ID');
+                return;
+            }
+            
+            const detailsDiv = document.getElementById('allRecordsDetails');
+            showResult(detailsDiv, '正在获取学生所有记录...', 'success');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/student/all-records/${encodeURIComponent(studentId)}`);
+                
+                if (response.ok) {
+                    const records = await response.json();
+                    displayMultipleRecordDetails(records, 'allRecordsDetails');
+                } else if (response.status === 404) {
+                    showResult(detailsDiv, '未找到该学生记录', 'error');
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`获取学生记录失败: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(detailsDiv, `获取学生记录时发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 显示多个记录详情（保留向后兼容性）
+        function displayMultipleRecordDetails(records, containerId = 'recordDetails') {
+            const detailsDiv = document.getElementById(containerId);
+            
+            if (!records || records.length === 0) {
+                showResult(detailsDiv, '未找到相关记录', 'error');
+                return;
+            }
+            
+            let html = '<h3>记录详情</h3>';
+            
+            records.forEach(record => {
+                html += `
+                    <div class="record-details-grid">
+                        <div><strong>记录ID:</strong> ${record.id || ''}</div>
+                        <div><strong>作业ID:</strong> ${record.homework_id || ''}</div>
+                        <div><strong>学生ID:</strong> ${record.student_id || ''}</div>
+                        <div><strong>动作类型:</strong> ${record.pose_type || ''}</div>
+                        <div><strong>上传时间:</strong> ${new Date(record.uploaded_at).toLocaleString() || ''}</div>
+                        <div><strong>总次数:</strong> ${record.total_count || 0}</div>
+                        <div><strong>正确次数:</strong> ${record.correct_count || 0}</div>
+                        <div><strong>错误次数:</strong> ${record.incorrect_count || 0}</div>
+                        <div><strong>准确率:</strong> ${record.total_count > 0 ? ((record.correct_count || 0) / record.total_count * 100).toFixed(2) + '%' : '0%'}</div>
+                        <div><strong>视频时长:</strong> ${record.video_duration ? parseFloat(record.video_duration).toFixed(2) + '秒' : ''}</div>
+                        <div><strong>原始视频路径:</strong> ${record.original_video_path || ''}</div>
+                        <div><strong>处理后视频路径:</strong> ${record.processed_video_path || ''}</div>
+                `;
+                
+                // 解析并显示反馈详情
+                if (record.feedback_json) {
+                    try {
+                        const feedback = JSON.parse(record.feedback_json);
+                        html += `<div class="feedback-details"><strong>反馈详情:</strong><pre>${JSON.stringify(feedback, null, 2)}</pre></div>`;
+                    } catch (e) {
+                        html += `<div><strong>反馈详情:</strong> ${record.feedback_json}</div>`;
+                    }
+                }
+                
+                html += `
+                        <div>
+                            <button onclick="downloadRecordData('${record.id}')" style="margin-right: 10px;">下载JSON数据</button>
+                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')">查看处理视频</button>
+                        </div>
+                    </div>
+                    <hr>
+                `;
+            });
+            
+            detailsDiv.innerHTML = html;
+            detailsDiv.className = 'result success';
+            detailsDiv.style.display = 'block';
         }
     </script>
 </body>
