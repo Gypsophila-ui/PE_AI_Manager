@@ -18,6 +18,7 @@ import shutil
 import sqlite3
 from database import init_database, insert_exercise_feedback, get_exercise_feedback, get_exercise_feedback_by_id
 from typing import List, Optional
+from datetime import datetime
 
 app = FastAPI(title="AI Gym API", description="健身动作识别后端API")
 # 数据库文件路径
@@ -807,6 +808,75 @@ async def get_record_details(record_id: int):
         return dict(record)
     except Exception as e:
         logger.error(f"获取记录详情时出错: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/get_record_details")
+async def get_record_details_by_homework_student(
+    homework_id: str = Query(..., description="作业ID"),
+    student_id: str = Query(..., description="学生ID")
+):
+    """通过作业ID和学生ID获取记录的详细信息"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT * FROM exercise_feedback 
+            WHERE homework_id = ? AND student_id = ?
+            ORDER BY uploaded_at DESC
+        """, (homework_id, student_id))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        if not rows:
+            raise HTTPException(status_code=404, detail="未找到相关记录")
+        
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"获取记录详情时出错: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/student/all-records/{student_id}")
+async def get_student_all_records(student_id: str):
+    """获取指定学生的所有记录"""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT * FROM exercise_feedback 
+            WHERE student_id = ?
+            ORDER BY uploaded_at DESC
+        """, (student_id,))
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        if not rows:
+            raise HTTPException(status_code=404, detail="未找到该学生记录")
+        
+        # 转换为字典列表
+        records = []
+        for row in rows:
+            record = dict(row)
+            # 解析JSON字段
+            if record.get('feedback_json'):
+                try:
+                    record['feedback_data'] = json.loads(record['feedback_json'])
+                except json.JSONDecodeError:
+                    record['feedback_data'] = {}
+            else:
+                record['feedback_data'] = {}
+            records.append(record)
+        
+        return records
+    except Exception as e:
+        logger.error(f"获取学生记录时出错: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -312,11 +312,50 @@
         <div class="section">
             <h2 class="section-title">详细查看记录</h2>
             <div class="form-group">
-                <label for="recordId">记录ID:</label>
-                <input type="text" id="recordId" placeholder="请输入记录ID">
-                <button onclick="getRecordDetails()">查看详情</button>
+                <label for="detailHomeworkId">作业ID:</label>
+                <input type="text" id="detailHomeworkId" placeholder="请输入作业ID">
+                
+                <label for="detailStudentId">学生ID:</label>
+                <input type="text" id="detailStudentId" placeholder="请输入学生ID">
+                
+                <button onclick="getRecordDetailsByHomeworkStudent()">查看详情</button>
             </div>
+            <div id="recordDetailsByHomeworkStudent" class="result"></div>
+        </div>
+
+        <!-- 查询记录详情 -->
+        <div class="section">
+            <h2 class="section-title">查询记录详情</h2>
+            <form id="queryDetailsForm">
+                <div class="form-group">
+                    <label for="recordId">记录ID:</label>
+                    <input type="number" id="recordId" placeholder="输入记录ID">
+                </div>
+                <div class="form-group">
+                    <label for="homeworkIdDetail">作业ID:</label>
+                    <input type="text" id="homeworkIdDetail" placeholder="输入作业ID">
+                </div>
+                <div class="form-group">
+                    <label for="studentIdDetail">学生ID:</label>
+                    <input type="text" id="studentIdDetail" placeholder="输入学生ID">
+                </div>
+                <button type="button" onclick="getRecordDetails()">查询记录详情</button>
+                <button type="button" onclick="getAllRecords()">查询所有记录</button>
+            </form>
             <div id="recordDetails" class="result"></div>
+        </div>
+
+        <!-- 新增：获取学生所有记录 -->
+        <div class="section">
+            <h2 class="section-title">获取学生所有记录</h2>
+            <form id="allRecordsForm">
+                <div class="form-group">
+                    <label for="studentIdForAllRecords">学生ID:</label>
+                    <input type="text" id="studentIdForAllRecords" placeholder="输入学生ID">
+                </div>
+                <button type="button" onclick="getStudentAllRecords()">获取学生所有记录</button>
+            </form>
+            <div id="allRecordsDetails" class="result"></div>
         </div>
     </div>
 
@@ -1079,6 +1118,34 @@
             }
         }
 
+        // 通过作业ID和学生ID获取记录详情
+        async function getRecordDetailsByHomeworkStudent() {
+            const homeworkId = document.getElementById('detailHomeworkId').value;
+            const studentId = document.getElementById('detailStudentId').value;
+            const detailsDiv = document.getElementById('recordDetailsByHomeworkStudent');
+            
+            if (!homeworkId || !studentId) {
+                showResult(detailsDiv, '请输入作业ID和学生ID', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${BASE_URL}/get_record_details?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}`);
+                if (response.ok) {
+                    const records = await response.json();
+                    displayMultipleRecordDetails(records, 'recordDetailsByHomeworkStudent');
+                } else if (response.status === 404) {
+                    showResult(detailsDiv, '未找到相关记录', 'error');
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`获取记录详情失败: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(detailsDiv, `获取记录详情时发生错误: ${error.message}`, 'error');
+            }
+        }
+
         // 显示记录详情
         function displayRecordDetails(record) {
             const detailsDiv = document.getElementById('recordDetails');
@@ -1120,6 +1187,59 @@
             detailsDiv.style.display = 'block';
         }
 
+        // 显示多个记录详情
+        function displayMultipleRecordDetails(records) {
+            const detailsDiv = document.getElementById('recordDetails');
+            
+            if (!records || records.length === 0) {
+                showResult(detailsDiv, '未找到相关记录', 'error');
+                return;
+            }
+            
+            let html = '<h3>记录详情</h3>';
+            
+            records.forEach(record => {
+                html += `
+                    <div class="record-details-grid">
+                        <div><strong>记录ID:</strong> ${record.id || ''}</div>
+                        <div><strong>作业ID:</strong> ${record.homework_id || ''}</div>
+                        <div><strong>学生ID:</strong> ${record.student_id || ''}</div>
+                        <div><strong>动作类型:</strong> ${record.pose_type || ''}</div>
+                        <div><strong>上传时间:</strong> ${new Date(record.uploaded_at).toLocaleString() || ''}</div>
+                        <div><strong>总次数:</strong> ${record.total_count || 0}</div>
+                        <div><strong>正确次数:</strong> ${record.correct_count || 0}</div>
+                        <div><strong>错误次数:</strong> ${record.incorrect_count || 0}</div>
+                        <div><strong>准确率:</strong> ${record.total_count > 0 ? ((record.correct_count || 0) / record.total_count * 100).toFixed(2) + '%' : '0%'}</div>
+                        <div><strong>视频时长:</strong> ${record.video_duration ? parseFloat(record.video_duration).toFixed(2) + '秒' : ''}</div>
+                        <div><strong>原始视频路径:</strong> ${record.original_video_path || ''}</div>
+                        <div><strong>处理后视频路径:</strong> ${record.processed_video_path || ''}</div>
+                `;
+                
+                // 解析并显示反馈详情
+                if (record.feedback_json) {
+                    try {
+                        const feedback = JSON.parse(record.feedback_json);
+                        html += `<div class="feedback-details"><strong>反馈详情:</strong><pre>${JSON.stringify(feedback, null, 2)}</pre></div>`;
+                    } catch (e) {
+                        html += `<div><strong>反馈详情:</strong> ${record.feedback_json}</div>`;
+                    }
+                }
+                
+                html += `
+                        <div>
+                            <button onclick="downloadRecordData('${record.id}')" style="margin-right: 10px;">下载JSON数据</button>
+                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')">查看处理视频</button>
+                        </div>
+                    </div>
+                    <hr>
+                `;
+            });
+            
+            detailsDiv.innerHTML = html;
+            detailsDiv.className = 'result success';
+            detailsDiv.style.display = 'block';
+        }
+
         // 下载记录数据为JSON文件
         function downloadRecordData(recordId) {
             fetch(`${BASE_URL}/get_record_details/${recordId}`)
@@ -1151,6 +1271,89 @@
         function viewRecordDetails(recordId) {
             document.getElementById('recordId').value = recordId;
             getRecordDetails();
+        }
+
+        // 获取指定学生的所有记录（新接口测试）
+        async function getStudentAllRecords() {
+            const studentId = document.getElementById('studentIdForAllRecords').value.trim();
+            
+            if (!studentId) {
+                alert('请输入学生ID');
+                return;
+            }
+            
+            const detailsDiv = document.getElementById('allRecordsDetails');
+            showResult(detailsDiv, '正在获取学生所有记录...', 'success');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/student/all-records/${encodeURIComponent(studentId)}`);
+                
+                if (response.ok) {
+                    const records = await response.json();
+                    displayMultipleRecordDetails(records, 'allRecordsDetails');
+                } else if (response.status === 404) {
+                    showResult(detailsDiv, '未找到该学生记录', 'error');
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`获取学生记录失败: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(detailsDiv, `获取学生记录时发生错误: ${error.message}`, 'error');
+            }
+        }
+
+        // 显示多个记录详情（保留向后兼容性）
+        function displayMultipleRecordDetails(records, containerId = 'recordDetails') {
+            const detailsDiv = document.getElementById(containerId);
+            
+            if (!records || records.length === 0) {
+                showResult(detailsDiv, '未找到相关记录', 'error');
+                return;
+            }
+            
+            let html = '<h3>记录详情</h3>';
+            
+            records.forEach(record => {
+                html += `
+                    <div class="record-details-grid">
+                        <div><strong>记录ID:</strong> ${record.id || ''}</div>
+                        <div><strong>作业ID:</strong> ${record.homework_id || ''}</div>
+                        <div><strong>学生ID:</strong> ${record.student_id || ''}</div>
+                        <div><strong>动作类型:</strong> ${record.pose_type || ''}</div>
+                        <div><strong>上传时间:</strong> ${new Date(record.uploaded_at).toLocaleString() || ''}</div>
+                        <div><strong>总次数:</strong> ${record.total_count || 0}</div>
+                        <div><strong>正确次数:</strong> ${record.correct_count || 0}</div>
+                        <div><strong>错误次数:</strong> ${record.incorrect_count || 0}</div>
+                        <div><strong>准确率:</strong> ${record.total_count > 0 ? ((record.correct_count || 0) / record.total_count * 100).toFixed(2) + '%' : '0%'}</div>
+                        <div><strong>视频时长:</strong> ${record.video_duration ? parseFloat(record.video_duration).toFixed(2) + '秒' : ''}</div>
+                        <div><strong>原始视频路径:</strong> ${record.original_video_path || ''}</div>
+                        <div><strong>处理后视频路径:</strong> ${record.processed_video_path || ''}</div>
+                `;
+                
+                // 解析并显示反馈详情
+                if (record.feedback_json) {
+                    try {
+                        const feedback = JSON.parse(record.feedback_json);
+                        html += `<div class="feedback-details"><strong>反馈详情:</strong><pre>${JSON.stringify(feedback, null, 2)}</pre></div>`;
+                    } catch (e) {
+                        html += `<div><strong>反馈详情:</strong> ${record.feedback_json}</div>`;
+                    }
+                }
+                
+                html += `
+                        <div>
+                            <button onclick="downloadRecordData('${record.id}')" style="margin-right: 10px;">下载JSON数据</button>
+                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')">查看处理视频</button>
+                        </div>
+                    </div>
+                    <hr>
+                `;
+            });
+            
+            detailsDiv.innerHTML = html;
+            detailsDiv.className = 'result success';
+            detailsDiv.style.display = 'block';
         }
     </script>
 </body>

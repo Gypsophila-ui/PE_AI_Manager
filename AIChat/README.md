@@ -1,15 +1,100 @@
 # AI聊天应用
 
-一个基于Flask的AI聊天应用后端，支持多用户会话管理和历史记录持久化。
+一个基于FastAPI的AI聊天应用后端，支持多用户会话管理和历史记录持久化。
 
 ## 技术栈
 
-- 后端：Python + Flask
+- 后端：Python + FastAPI
 - 数据库：SQLite
 - 前端：HTML + JavaScript
 - AI模型：支持多种大语言模型（通义千问、文心一言、Moonshot）
 
+## 最近更新
+
+### 修复的错误
+
+1. **CORS跨域问题**：
+   - 统一使用FastAPI框架，移除Flask相关代码
+   - 正确配置CORS中间件以支持跨域请求
+
+2. **异步请求处理问题**：
+   - 修复了在FastAPI中处理请求体时缺少`await`关键字的问题
+   - 所有异步函数均已正确实现
+
+3. **数据库表结构问题**：
+   - 修复了`ai_analysis_reports`表缺少`student_info`列的问题
+   - 更新了数据库初始化脚本以支持新的表结构
+
 ## 接口文档
+
+### AI分析报告接口
+
+#### 1. 生成智能分析报告
+
+**URL**: `POST /api/analysis/generate`
+
+**功能**: 根据学生运动数据生成智能分析报告
+
+**参数** (JSON):
+- `student_id` (string): 学生ID
+- `analysis_type` (string): 分析类型，可选值为"homework_feedback"（作业反馈）或"personalized_tips"（个性化建议）
+- `homework_id` (string, 可选): 作业ID，当analysis_type为"homework_feedback"时必需
+- `student_info` (object, 可选): 学生个人信息，当analysis_type为"personalized_tips"时可提供
+- `query` (string, 可选): 用户的具体查询问题
+
+**示例请求**:
+```
+POST /api/analysis/generate
+Content-Type: application/json
+
+{
+  "student_id": "stu123",
+  "analysis_type": "homework_feedback",
+  "homework_id": "hw456"
+}
+```
+
+**成功响应**:
+``json
+{
+  "success": true,
+  "data": {
+    "report": "分析报告内容...",
+    "analysis_type": "homework_feedback"
+  }
+}
+```
+
+#### 2. 查询已生成的报告
+
+**URL**: `GET /api/analysis/query`
+
+**功能**: 查询已生成的分析报告
+
+**参数** (query string):
+- `student_id` (string): 学生ID
+- `homework_id` (string, 可选): 作业ID
+- `analysis_type` (string, 可选): 分析类型
+
+**示例请求**:
+```
+GET /api/analysis/query?student_id=stu123&homework_id=hw456&analysis_type=homework_feedback
+```
+
+#### 3. 获取最近的分析记录
+
+**URL**: `GET /api/analysis/recent`
+
+**功能**: 获取最近生成的分析报告记录
+
+**参数** (query string):
+- `student_id` (string, 可选): 学生ID
+- `limit` (int, 可选): 返回记录数量限制，默认为10
+
+**示例请求**:
+```
+GET /api/analysis/recent?student_id=stu123&limit=5
+```
 
 ### 1. 获取用户会话列表
 

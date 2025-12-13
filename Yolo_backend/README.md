@@ -217,7 +217,7 @@ curl -X DELETE "http://localhost:8000/delete_homework?homework_id=hw001"
 ```
 
 **响应示例**（成功）:
-```json
+```
 {
   "status": "success",
   "message": "作业 hw001 的所有视频已成功删除"
@@ -225,7 +225,7 @@ curl -X DELETE "http://localhost:8000/delete_homework?homework_id=hw001"
 ```
 
 **响应示例**（失败）:
-```json
+```
 {
   "detail": "作业ID hw001 不存在"
 }
@@ -248,7 +248,7 @@ curl -X GET "http://localhost:8000/query_records?homework_id=hw001&student_id=st
 ```
 
 **响应示例**（成功）:
-```json
+```
 [
   {
     "id": 1,
@@ -278,7 +278,7 @@ curl -X GET "http://localhost:8000/query_all_records"
 ```
 
 **响应示例**（成功）:
-```json
+```
 [
   {
     "id": 1,
@@ -297,7 +297,73 @@ curl -X GET "http://localhost:8000/query_all_records"
 ]
 ```
 
-### 11. 获取记录详情接口
+### 11. 获取学生所有记录接口
+
+**接口地址**: `GET /api/student/all-records/{student_id}`
+
+**功能描述**: 获取指定学生的所有健身动作记录，按上传时间倒序排列
+
+**请求参数**:
+- `student_id`: 学生ID（路径参数，必填）
+
+**请求示例**:
+```bash
+curl -X GET http://localhost:8000/api/student/all-records/stu001
+```
+
+**响应示例**:
+```
+[
+  {
+    "id": 12,
+    "homework_id": "hw001",
+    "student_id": "stu001",
+    "pose_type": "pushup",
+    "uploaded_at": "2023-12-01 10:30:00",
+    "original_video_path": null,
+    "processed_video_path": "homework/hw001/stu001/processed_video.mp4",
+    "total_count": 15,
+    "correct_count": 12,
+    "incorrect_count": 3,
+    "feedback_json": "{\"events\":[],\"performance\":{\"total_count\":15,\"correct_count\":12,\"incorrect_count\":3,\"accuracy_rate\":80.0},\"video_info\":{\"total_frames\":180,\"processed_frames\":90,\"fps\":30,\"duration\":6.0}}",
+    "video_duration": 6.0
+  },
+  {
+    "id": 8,
+    "homework_id": "hw002",
+    "student_id": "stu001",
+    "pose_type": "squat",
+    "uploaded_at": "2023-11-28 14:15:00",
+    "original_video_path": null,
+    "processed_video_path": "homework/hw002/stu001/processed_video.mp4",
+    "total_count": 20,
+    "correct_count": 18,
+    "incorrect_count": 2,
+    "feedback_json": "{\"events\":[],\"performance\":{\"total_count\":20,\"correct_count\":18,\"incorrect_count\":2,\"accuracy_rate\":90.0},\"video_info\":{\"total_frames\":240,\"processed_frames\":120,\"fps\":30,\"duration\":8.0}}",
+    "video_duration": 8.0
+  }
+]
+```
+
+**响应字段说明**:
+- `id`: 记录ID
+- `homework_id`: 作业ID
+- `student_id`: 学生ID
+- `pose_type`: 动作类型
+- `uploaded_at`: 视频上传时间
+- `original_video_path`: 原始视频路径（可能为空）
+- `processed_video_path`: 处理后视频路径
+- `total_count`: 总动作次数
+- `correct_count`: 正确动作次数
+- `incorrect_count`: 错误动作次数
+- `feedback_json`: AI反馈数据（JSON格式）
+- `video_duration`: 视频时长（秒）
+
+**错误响应**:
+- 404: 未找到该学生记录
+- 500: 服务器内部错误
+
+### 12. 获取记录详情接口
 
 **接口地址**: `GET /get_record_details/{record_id}`
 
@@ -312,7 +378,7 @@ curl -X GET "http://localhost:8000/get_record_details/1"
 ```
 
 **响应示例**（成功）:
-```json
+```
 {
   "id": 1,
   "homework_id": "hw001",
@@ -664,6 +730,7 @@ const streamProcessVideoWithAxios = async (file, poseType = 'pushup') => {
 6. 使用 [/get_processed_video](file:///G:/Third_year_first_semester/SoftwareEngineering/Yolo_backend/main.py#L335-L345) 接口获取已保存的处理视频
 7. 如需删除作业，可调用 [/delete_homework](file:///G:/Third_year_first_semester/SoftwareEngineering/Yolo_backend/main.py#L347-L361) 接口删除指定作业的所有视频
 8. 使用 [/query_records](file:///G:/Third_year_first_semester/SoftwareEngineering/Yolo_backend/main.py#L415-L441) 查询处理记录
+9. 使用 [/api/student/all-records/{student_id}](file:///G:/Third_year_first_semester/SoftwareEngineering/Yolo_backend/main.py#L832-L870) 获取学生所有记录用于个性化分析
 
 ## 注意事项
 
