@@ -103,7 +103,7 @@ class PushupTracker:
             if (state not in self.state_tracker['state_seq']) and 's2' in self.state_tracker['state_seq']:
                 self.state_tracker['state_seq'].append(state)
 
-    def track(self, k, im0, ind, count):
+    def track(self, k, im0, ind, count, fps=30):
         """
         处理俯卧撑检测与计数的主逻辑，包含状态跟踪、姿势检查和反馈显示。
 
@@ -112,6 +112,7 @@ class PushupTracker:
         - im0: 当前帧图像
         - ind: 当前处理对象的索引（对于单人模式，始终为0）
         - count: 计数器列表（对于单人模式，只包含一个元素）
+        - fps: 视频帧率
         """
         frame_height, frame_width, _ = im0.shape
 
@@ -182,4 +183,12 @@ class PushupTracker:
             self.state_tracker['COUNT_FRAMES'][self.state_tracker['DISPLAY_TEXT']] += 1
             im0 = _show_feedback(im0, self.state_tracker['COUNT_FRAMES'], self.FEEDBACK_ID_MAP)
 
-        return im0
+        # 准备返回数据
+        result_data = {
+            'processed_frame': im0,
+            'correct_count': self.state_tracker['PUSHUP_COUNT'],
+            'incorrect_count': self.state_tracker['IMPROPER_PUSHUP'],
+            'events': []
+        }
+        
+        return result_data
