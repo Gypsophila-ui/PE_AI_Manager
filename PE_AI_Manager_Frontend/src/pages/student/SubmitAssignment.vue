@@ -255,17 +255,4 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-// 导航函数
-const goBack = () => {
-  router.push(`/course/${courseId}`)
-}
-
-const goToAssistant = () => {
-  router.push('/student/assistant')
-}
-
-const logout = () => {
-  localStorage.removeItem('user')
-  router.push('/login')
-}
 </script>

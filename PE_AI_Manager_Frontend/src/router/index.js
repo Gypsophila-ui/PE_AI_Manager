@@ -61,6 +61,7 @@ router.beforeEach((to, from, next) => {
     '/teacher/grade/:id',
     '/teacher/videos',
     '/teacher/assistant',
+    '/teacher/course',
     '/student/assignments/:id',
     '/student/submit/:id',
     '/student/assistant',
