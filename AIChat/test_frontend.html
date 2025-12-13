@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:5000; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
     <title>AI聊天测试界面</title>
     <style>
         body {
@@ -150,6 +151,33 @@
         </div>
     </div>
 
+    <!-- AI分析报告功能区域 -->
+    <div class="container" style="margin-top: 20px;">
+        <h1>AI分析报告测试界面</h1>
+        
+        <div class="session-controls">
+            <input type="text" id="homework-id-input" placeholder="输入作业ID">
+            <input type="text" id="student-id-input" placeholder="输入学生ID">
+            <input type="number" id="height-input" placeholder="身高(cm)" min="100" max="250" style="width: 100px;">
+            <input type="number" id="weight-input" placeholder="体重(kg)" min="30" max="200" style="width: 100px;">
+            <select id="analysis-type-select">
+                <option value="homework_feedback">作业反馈</option>
+                <option value="personalized_tips">个性化建议</option>
+            </select>
+            <input type="text" id="analysis-query-input" placeholder="输入分析问题（可选）">
+            <button id="generate-report-btn" class="secondary">生成报告</button>
+            <button id="query-report-btn">查询报告</button>
+            <button id="recent-reports-btn">最近报告</button>
+        </div>
+        
+        <div id="report-result-container" style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #fafafa; min-height: 100px;">
+            <h3>分析结果</h3>
+            <div id="report-result-content">
+                <p>在这里会显示AI分析报告的结果...</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 全局变量
         let currentSessionId = null;
@@ -170,6 +198,16 @@
         const sessionList = document.getElementById('session-list');
         const sessionsContainer = document.getElementById('sessions-container');
         
+        // AI分析报告相关DOM元素
+        const homeworkIdInput = document.getElementById('homework-id-input');
+        const studentIdInput = document.getElementById('student-id-input');
+        const analysisTypeSelect = document.getElementById('analysis-type-select');
+        const analysisQueryInput = document.getElementById('analysis-query-input');
+        const generateReportBtn = document.getElementById('generate-report-btn');
+        const queryReportBtn = document.getElementById('query-report-btn');
+        const recentReportsBtn = document.getElementById('recent-reports-btn');
+        const reportResultContent = document.getElementById('report-result-content');
+        
         // 事件监听器
         document.addEventListener('DOMContentLoaded', () => {
             // 按钮事件
@@ -185,6 +223,11 @@
                     sendMessage();
                 }
             });
+            
+            // AI分析报告按钮事件
+            generateReportBtn.addEventListener('click', generateAnalysisReport);
+            queryReportBtn.addEventListener('click', queryAnalysisReport);
+            recentReportsBtn.addEventListener('click', getRecentReports);
         });
         
         // 加载用户会话
@@ -476,6 +519,169 @@
         // 更新会话信息
         function updateSessionInfo() {
             // 这里可以添加更新会话信息的逻辑
+        }
+        
+        // AI分析报告相关函数
+        // 生成分析报告
+        async function generateAnalysisReport() {
+            const homeworkId = homeworkIdInput.value.trim();
+            const studentId = studentIdInput.value.trim();
+            
+            // 检查必要字段
+            if (!studentId) {
+                alert('请输入学生ID');
+                return;
+            }
+            
+            // 对于作业反馈类型，需要作业ID
+            if (analysisTypeSelect.value === 'homework_feedback' && !homeworkId) {
+                alert('作业反馈类型需要输入作业ID');
+                return;
+            }
+            
+            // 显示正在生成提示
+            reportResultContent.innerHTML = '<p>正在生成分析报告，请稍候...</p>';
+            
+            // 构造请求数据
+            const requestData = {
+                student_id: studentId,
+                analysis_type: analysisTypeSelect.value,
+                query: analysisQueryInput.value.trim()
+            };
+            
+            // 如果是作业反馈类型，添加作业ID
+            if (analysisTypeSelect.value === 'homework_feedback') {
+                requestData.homework_id = homeworkId;
+            }
+            
+            // 如果是个性化建议类型，添加学生信息
+            if (analysisTypeSelect.value === 'personalized_tips') {
+                // 这里可以添加更多学生信息字段
+                requestData.student_info = {
+                    // 示例字段，实际使用时可以根据需要添加
+                    height: parseFloat(document.getElementById('height-input')?.value || '0') || null,
+                    weight: parseFloat(document.getElementById('weight-input')?.value || '0') || null
+                };
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/analysis/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // 显示生成的报告
+                    reportResultContent.innerHTML = `
+                        <h4>分析报告 (${analysisTypeSelect.options[analysisTypeSelect.selectedIndex].text})</h4>
+                        <pre style="white-space: pre-wrap; background-color: #f0f0f0; padding: 10px; border-radius: 5px;">${result.data.report}</pre>
+                    `;
+                } else {
+                    reportResultContent.innerHTML = `<p style="color: red;">生成报告失败: ${result.error}</p>`;
+                }
+            } catch (error) {
+                console.error('生成分析报告错误:', error);
+                reportResultContent.innerHTML = `<p style="color: red;">生成分析报告时发生错误: ${error.message}</p>`;
+            }
+        }
+        
+        // 查询分析报告
+        async function queryAnalysisReport() {
+            const homeworkId = homeworkIdInput.value.trim();
+            const studentId = studentIdInput.value.trim();
+            
+            if (!studentId) {
+                alert('请输入学生ID');
+                return;
+            }
+            
+            // 显示正在查询提示
+            reportResultContent.innerHTML = '<p>正在查询分析报告，请稍候...</p>';
+            
+            try {
+                const queryParams = new URLSearchParams({
+                    student_id: studentId,
+                    analysis_type: analysisTypeSelect.value
+                });
+                
+                // 如果提供了作业ID，则添加到查询参数中
+                if (homeworkId) {
+                    queryParams.append('homework_id', homeworkId);
+                }
+                
+                const response = await fetch(`${API_BASE}/analysis/query?${queryParams}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.data && result.data.length > 0) {
+                        const report = result.data[0];
+                        reportResultContent.innerHTML = `
+                            <h4>查询到的分析报告</h4>
+                            <p><strong>分析类型:</strong> ${report.analysis_type}</p>
+                            <p><strong>创建时间:</strong> ${report.created_at}</p>
+                            <p><strong>查询内容:</strong> ${report.query_content || '无'}</p>
+                            <hr>
+                            <pre style="white-space: pre-wrap; background-color: #f0f0f0; padding: 10px; border-radius: 5px;">${report.report_content}</pre>
+                        `;
+                    } else {
+                        reportResultContent.innerHTML = '<p>未找到相关分析报告</p>';
+                    }
+                } else {
+                    reportResultContent.innerHTML = `<p style="color: red;">查询报告失败: ${result.error}</p>`;
+                }
+            } catch (error) {
+                console.error('查询分析报告错误:', error);
+                reportResultContent.innerHTML = `<p style="color: red;">查询分析报告时发生错误: ${error.message}</p>`;
+            }
+        }
+        
+        // 获取最近的分析报告
+        async function getRecentReports() {
+            const studentId = studentIdInput.value.trim();
+            
+            // 显示正在查询提示
+            reportResultContent.innerHTML = '<p>正在获取最近的分析报告，请稍候...</p>';
+            
+            try {
+                let url = `${API_BASE}/analysis/recent`;
+                if (studentId) {
+                    url += `?student_id=${encodeURIComponent(studentId)}`;
+                }
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (result.data && result.data.length > 0) {
+                        let reportsHtml = '<h4>最近的分析报告</h4>';
+                        result.data.forEach(report => {
+                            reportsHtml += `
+                                <div style="border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; border-radius: 5px;">
+                                    <p><strong>作业ID:</strong> ${report.homework_id || 'N/A'} | <strong>学生ID:</strong> ${report.student_id}</p>
+                                    <p><strong>分析类型:</strong> ${report.analysis_type} | <strong>创建时间:</strong> ${report.created_at}</p>
+                                    <details>
+                                        <summary>点击查看报告内容</summary>
+                                        <pre style="white-space: pre-wrap; background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-top: 10px;">${report.report_content}</pre>
+                                    </details>
+                                </div>
+                            `;
+                        });
+                        reportResultContent.innerHTML = reportsHtml;
+                    } else {
+                        reportResultContent.innerHTML = '<p>暂无分析报告</p>';
+                    }
+                } else {
+                    reportResultContent.innerHTML = `<p style="color: red;">获取报告失败: ${result.error}</p>`;
+                }
+            } catch (error) {
+                console.error('获取最近报告错误:', error);
+                reportResultContent.innerHTML = `<p style="color: red;">获取最近报告时发生错误: ${error.message}</p>`;
+            }
         }
     </script>
 </body>
