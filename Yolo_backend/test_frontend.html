@@ -153,9 +153,7 @@
                     <select id="directPoseType">
                         <option value="pushup">俯卧撑</option>
                         <option value="squat">深蹲</option>
-                        <option value="abworkout">腹肌训练</option>
                         <option value="deadlift">硬拉</option>
-                        <option value="benchpress">卧推</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -176,9 +174,7 @@
                     <select id="streamPoseType">
                         <option value="pushup">俯卧撑</option>
                         <option value="squat">深蹲</option>
-                        <option value="abworkout">腹肌训练</option>
                         <option value="deadlift">硬拉</option>
-                        <option value="benchpress">卧推</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -211,9 +207,7 @@
                     <select id="poseType">
                         <option value="pushup">俯卧撑</option>
                         <option value="squat">深蹲</option>
-                        <option value="abworkout">腹肌训练</option>
                         <option value="deadlift">硬拉</option>
-                        <option value="benchpress">卧推</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -277,9 +271,7 @@
                         <option value="">全部</option>
                         <option value="pushup">俯卧撑</option>
                         <option value="squat">深蹲</option>
-                        <option value="abworkout">腹肌训练</option>
                         <option value="deadlift">硬拉</option>
-                        <option value="benchpress">卧推</option>
                     </select>
                 </div>
                 <button type="submit" id="queryRecordBtn">查询记录</button>
@@ -989,6 +981,15 @@
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const records = await response.json();
+                    try {
+                        displayRecords(records);
+                    } catch (displayError) {
+                        console.error('显示记录时出错:', displayError);
                     }
                 });
 

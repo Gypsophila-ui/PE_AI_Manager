@@ -68,16 +68,12 @@ class VideoProcessor:
     def create_gym_object(self, session_id: str, pose_type: str, fps: int = 30):
         """创建AIGym对象"""
         # 根据姿势类型设定关键点
-        if pose_type in ["pushup", "pullup"]:
+        if pose_type in ["pushup"]:
             kpts_to_check = [6, 8, 10]
-        elif pose_type in ["squat", "burpees"]:
+        elif pose_type in ["squat"]:
             kpts_to_check = [12, 14, 16]
         elif pose_type in ["deadlift"]:
             kpts_to_check = [6, 12, 14]
-        elif pose_type in ["abworkout"]:
-            kpts_to_check = [6, 12, 16]
-        elif pose_type in ["benchpress"]:
-            kpts_to_check = [5, 7, 9]  # 左肩、左肘、左腕
         else:
             kpts_to_check = [6, 8, 10]  # 默认关键点
 
@@ -709,8 +705,7 @@ async def get_supported_poses():
     """获取支持的姿势类型"""
     return {
         "supported_poses": [
-            "pushup", "abworkout", "squat",
-            "deadlift", "benchpress"
+            "pushup", "squat", "deadlift"
         ]
     }
 

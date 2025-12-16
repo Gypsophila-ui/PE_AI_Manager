@@ -10,8 +10,6 @@ try:
     from squat import SquatTracker
     from deadlift import DeadliftTracker
     from pushup import PushupTracker
-    from abworkout import AbworkoutTracker
-    from benchpress import BenchPressTracker
 except ImportError as e:
     logging.error(f"Failed to import tracker modules: {e}")
 
@@ -60,10 +58,6 @@ class AIGym(BaseSolution):
             self.tracker = DeadliftTracker()  # 实例化 DeadliftTracker 类
         elif pose_type == "pushup":
             self.tracker = PushupTracker()  # 实例化 PushupTracker
-        elif pose_type == "abworkout":
-            self.tracker = AbworkoutTracker()  # 实例化 AbworkoutTracker 类
-        elif pose_type == "benchpress":
-            self.tracker = BenchPressTracker()  # 实例化 BenchPressTracker 类
         else:
             logger.warning(f"Unsupported pose type: {pose_type}. Using default tracker.")
             self.tracker = PushupTracker()  # 默认使用 PushupTracker
@@ -114,7 +108,7 @@ class AIGym(BaseSolution):
 
             # 使用跟踪器处理特定运动类型
 
-            if self.pose_type in {"deadlift", "pushup", "squat", "abworkout", "benchpress"}:
+            if self.pose_type in {"deadlift", "pushup", "squat"}:
                 # 调用 track 方法，传入一个只有一个元素的列表 [self.count]
                 try:
                     # 创建一个包含单个元素的列表传递给tracker
