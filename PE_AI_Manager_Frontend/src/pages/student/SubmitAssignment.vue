@@ -133,7 +133,7 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { assignments } from '../../data/mockData'
-import apiClient from '../../services/axios'
+import { apiClient, aiClient } from '../../services/axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -194,40 +194,62 @@ const submitAssignment = async () => {
     isUploading.value = true
     uploadProgress.value = 0
 
-    // 创建FormData对象，用于上传文件
-    const formData = new FormData()
-    formData.append('video', selectedFile.value)
-    formData.append('courseId', courseId)
-    formData.append('assignmentId', assignmentId)
-
     // 获取当前用户信息
     const user = JSON.parse(localStorage.getItem('user') || '{}')
-    formData.append('studentId', user.id || 'student1')
+    const studentId = user.id || 'student1'
 
-    // 调用API上传视频
-    const response = await apiClient.post('/submit_assignment_video', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    // 1. 先调用AI后端服务处理视频，获取AI评分结果
+    const aiFormData = new FormData()
+    aiFormData.append('file', selectedFile.value)
+    // 根据作业类型设置动作类型，统一使用深蹲动作类型
+    aiFormData.append('pose_type', 'squat') // 统一使用深蹲动作类型
+
+    // 调用AI后端API处理视频
+    const aiResponse = await aiClient.post('/process_and_save_video', aiFormData, {
+      params: {
+        homework_id: assignmentId,
+        student_id: studentId
       },
       onUploadProgress: (progressEvent) => {
         // 计算上传进度百分比
         if (progressEvent.total) {
           uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
         }
+      },
+      responseType: 'json'
+    })
+
+    // 获取AI评分结果
+    const aiResult = aiResponse.data
+    console.log('AI评分结果:', aiResult)
+
+    // 2. 调用主应用API保存作业提交信息和AI评分
+    const submitFormData = new FormData()
+    submitFormData.append('video', selectedFile.value)
+    submitFormData.append('courseId', courseId)
+    submitFormData.append('assignmentId', assignmentId)
+    submitFormData.append('studentId', studentId)
+    submitFormData.append('aiScore', aiResult.final_count) // 使用AI返回的动作计数作为评分
+    submitFormData.append('aiProcessedVideoUrl', aiResult.video_url)
+
+    // 调用主应用API保存作业提交
+    const submitResponse = await apiClient.post('/submit_assignment_video', submitFormData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
       }
     })
 
     // 上传成功处理
-    if (response.status === 200 || response.status === 201) {
-      alert('作业提交成功！AI正在评分，请稍后查看结果。')
+    if (submitResponse.status === 200 || submitResponse.status === 201) {
+      alert(`作业提交成功！AI评分结果：${aiResult.final_count}个动作。\n视频已处理完成，可在作业详情查看。`)
       // 跳转到课程详情页
       router.push(`/course/${courseId}`)
     } else {
       alert('作业提交失败，请稍后重试。')
     }
   } catch (error) {
-    console.error('视频上传失败:', error)
-    alert('视频上传失败，请稍后重试。')
+    console.error('视频上传和处理失败:', error)
+    alert('作业提交失败，请稍后重试。')
   } finally {
     // 重置上传状态
     isUploading.value = false

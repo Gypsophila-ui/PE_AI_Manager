@@ -1,11 +1,21 @@
 import axios from 'axios';
 
-// 创建axios实例
-const apiClient = axios.create({
+// 创建axios实例（用于主应用API）
+export const apiClient = axios.create({
   baseURL: '/api', // API基础URL
   timeout: 10000, // 请求超时时间
   headers: {
     'Content-Type': 'application/json'
+  }
+});
+
+// 创建AI后端服务axios实例
+// 根据YOLO.md文档，AI后端服务默认运行在 http://localhost:8000
+export const aiClient = axios.create({
+  baseURL: 'http://127.0.0.1:8000', // AI后端服务基础URL
+  timeout: 300000, // 视频处理可能需要较长时间，设置为5分钟
+  headers: {
+    'Content-Type': 'multipart/form-data'
   }
 });
 

@@ -1,44 +1,62 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
-      <!-- 顶部图片 -->
-      <div class="h-48 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-        <h1 class="text-4xl font-extrabold text-white drop-shadow-lg">体育作业平台</h1>
+  <div class="min-h-screen bg-white flex items-center justify-center p-4">
+    <div class="max-w-md w-full rounded-3xl shadow-2xl overflow-hidden">
+      <!-- 顶部樱花背景 -->
+      <div class="h-48 relative">
+        <!-- 同济大学樱花照片 -->
+        <img src="../assets/Login/1.jpg"
+             class="w-full h-full object-cover"
+             alt="同济大学樱花">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-center justify-center">
+          <h1 class="text-4xl font-bold text-white drop-shadow-lg">同济大学智慧体育课堂</h1>
+        </div>
       </div>
 
       <!-- 登录表单 -->
-      <div class="p-8">
+      <div class="p-8 bg-white">
         <h2 class="text-3xl font-bold mb-6 text-center text-gray-800">登录</h2>
 
-        <form @submit.prevent="login" class="space-y-4">
+        <form @submit.prevent="login" class="space-y-4 relative">
+          <!-- 校徽背景图片 - 整个表单共用 -->
+          <div class="absolute inset-0 opacity-20 flex items-center justify-center pointer-events-none">
+            <img src="../assets/Login/2.png"
+                 alt="同济大学校徽"
+                 class="w-120 h-120 object-contain">
+          </div>
           <!-- 角色选择 -->
           <div class="flex gap-4">
             <button type="button"
-                    :class="['flex-1 py-3 rounded-xl font-medium transition-all', role === 'student' ? 'bg-blue-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
+                    :class="['flex-1 py-3 rounded-xl font-medium transition-all', role === 'student' ? 'bg-sky-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
                     @click="role = 'student'">
               学生
             </button>
             <button type="button"
-                    :class="['flex-1 py-3 rounded-xl font-medium transition-all', role === 'teacher' ? 'bg-purple-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
+                    :class="['flex-1 py-3 rounded-xl font-medium transition-all', role === 'teacher' ? 'bg-sky-500 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200']"
                     @click="role = 'teacher'">
               教师
             </button>
           </div>
 
-          <!-- 用户名 -->
-          <div>
+          <!-- 用户名输入框 - 带校徽背景 -->
+          <div class="relative">
             <label class="block text-sm font-medium text-gray-700 mb-1">用户名</label>
-            <input type="text" v-model="username"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                   placeholder="请输入用户名" required>
+            <div class="relative">
+
+              <input type="text" v-model="username"
+                       class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white/90 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                       placeholder="请输入用户名" required>
+            </div>
           </div>
 
-          <!-- 密码 -->
-          <div>
+          <!-- 密码输入框 - 带校徽背景 -->
+          <div class="relative">
             <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
-            <input type="password" v-model="password"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                   placeholder="请输入密码" required>
+            <div class="relative">
+
+              <input type="password" v-model="password"
+                       class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white/90 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+                       placeholder="请输入密码" required>
+            </div>
           </div>
 
           <!-- 错误信息显示 -->
@@ -46,7 +64,7 @@
 
           <!-- 登录按钮 -->
           <button type="submit"
-                  class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                  class="w-full py-3 bg-sky-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                   :disabled="loading">
             <span v-if="loading">登录中...</span>
             <span v-else>登录</span>
@@ -54,23 +72,23 @@
         </form>
 
         <!-- 测试账户信息 -->
-        <div class="mt-6 p-4 bg-gray-50 rounded-xl">
-          <h3 class="text-lg font-semibold text-gray-800 mb-3">测试账户</h3>
+        <div class="mt-6 p-4 bg-sky-500/5 rounded-xl border border-sky-500/20">
+          <h3 class="text-lg font-semibold text-sky-500 mb-3">测试账户</h3>
           <div class="space-y-3">
             <div>
               <p class="text-sm text-gray-600">学生端：</p>
-              <p class="text-sm text-gray-800">用户名：student001 | 密码：123456</p>
+              <p class="text-sm font-medium">用户名：student001 | 密码：123456</p>
             </div>
             <div>
               <p class="text-sm text-gray-600">教师端：</p>
-              <p class="text-sm text-gray-800">用户名：teacher001 | 密码：123456</p>
+              <p class="text-sm font-medium">用户名：teacher001 | 密码：123456</p>
             </div>
           </div>
         </div>
 
         <!-- 注册链接 -->
         <div class="mt-6 text-center">
-          <p class="text-gray-600">还没有账号？ <a href="/register" class="text-blue-600 font-semibold hover:underline">立即注册</a></p>
+          <p class="text-gray-700">还没有账号？ <a href="/register" class="text-sky-500 font-semibold hover:underline">立即注册</a></p>
         </div>
       </div>
     </div>
