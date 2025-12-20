@@ -306,10 +306,10 @@
             <div class="form-group">
                 <label for="detailHomeworkId">作业ID:</label>
                 <input type="text" id="detailHomeworkId" placeholder="请输入作业ID">
-                
+
                 <label for="detailStudentId">学生ID:</label>
                 <input type="text" id="detailStudentId" placeholder="请输入学生ID">
-                
+
                 <button onclick="getRecordDetailsByHomeworkStudent()">查看详情</button>
             </div>
             <div id="recordDetailsByHomeworkStudent" class="result"></div>
@@ -353,7 +353,7 @@
 
     <script>
         // 设置基础URL
-        const BASE_URL = 'http://localhost:8000';
+        const BASE_URL = 'http://118.25.145.4:8000';
 
         // 直接处理视频
         document.getElementById('directProcessForm').addEventListener('submit', function(e) {
@@ -405,7 +405,9 @@
                 // 使用 Fetch API 和 ReadableStream 处理 SSE
                 fetch(url, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'omit'
                 }).then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -575,7 +577,9 @@
                 // 使用 Fetch API 和 ReadableStream 处理 SSE
                 fetch(url, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'omit'
                 }).then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -738,7 +742,9 @@
                 // 使用 Fetch API 和 ReadableStream 处理 SSE
                 fetch(url, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'omit'
                 }).then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -990,21 +996,6 @@
                         displayRecords(records);
                     } catch (displayError) {
                         console.error('显示记录时出错:', displayError);
-                    }
-                });
-
-                if (response.ok) {
-                    const records = await response.json();
-                    try {
-                        displayRecords(records);
-                    } catch (displayError) {
-                        console.error('显示记录时出错:', displayError);
-                        const queryResultElement = document.getElementById('queryResult');
-                        if (queryResultElement) {
-                            showResult(queryResultElement, '显示记录时出错', 'error');
-                        } else {
-                            alert('显示记录时出错');
-                        }
                     }
                 } else {
                     const errorText = await response.text();
