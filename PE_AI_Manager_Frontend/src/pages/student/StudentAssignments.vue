@@ -239,18 +239,11 @@ const goBack = () => {
   router.push(`/course/${courseId}`)
 }
 
-const goToAssistant = () => {
-  router.push('/student/assistant')
-}
 
 const goToSubmitAssignment = () => {
   router.push(`/course/${courseId}/submit/${assignmentId}`)
 }
 
-const logout = () => {
-  localStorage.removeItem('user')
-  router.push('/login')
-}
 
 // 组件挂载时获取作业详情
 onMounted(() => {
