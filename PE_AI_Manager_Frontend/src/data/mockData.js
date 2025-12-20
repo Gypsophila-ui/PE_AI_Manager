@@ -236,6 +236,87 @@ export const assignmentsSubmissions = [
   }
 ];
 
+// Courses data
+export const courses = [
+  {
+    id: 'PE101',
+    name: '体能训练课程',
+    description: '学习和掌握各种体能训练技巧，包括俯卧撑、仰卧起坐等基础动作',
+    subject: '体育',
+    status: '进行中',
+    classId: 1,
+    teacherId: 1,
+    assignments: [
+      {
+        id: 1,
+        title: '50米折返跑',
+        description: '完成50米折返跑测试，记录时间',
+        deadline: '2024-06-20T23:59:59',
+        create_time: '2024-06-10T10:30:00',
+        course_id: 'PE101',
+        subject: '体能测试',
+        status: '进行中',
+        points: 100
+      },
+      {
+        id: 2,
+        title: '仰卧起坐',
+        description: '完成1分钟仰卧起坐测试，记录数量',
+        deadline: '2024-06-25T23:59:59',
+        create_time: '2024-06-15T14:20:00',
+        course_id: 'PE101',
+        subject: '体能测试',
+        status: '进行中',
+        points: 100
+      }
+    ]
+  },
+  {
+    id: 'PE202',
+    name: '协调能力训练',
+    description: '通过跳绳、敏捷梯等训练提升身体协调性和反应能力',
+    subject: '体育',
+    status: '已完成',
+    classId: 1,
+    teacherId: 1,
+    assignments: [
+      {
+        id: 3,
+        title: '跳绳技巧练习',
+        description: '掌握基本跳绳技巧，提高协调性和耐力',
+        deadline: '2024-01-15T23:59:59',
+        create_time: '2024-01-05T14:20:00',
+        course_id: 'PE202',
+        subject: '协调训练',
+        status: '已完成',
+        points: 100
+      }
+    ]
+  },
+  {
+    id: 'PE303',
+    name: '田径基础训练',
+    description: '学习田径运动的基本技能，包括短跑、跳远等项目',
+    subject: '体育',
+    status: '进行中',
+    classId: 2,
+    teacherId: 2,
+    assignments: [
+      {
+        id: 4,
+        title: '50米短跑测试',
+        description: '进行50米短跑测试，记录成绩',
+        deadline: '2024-07-10T23:59:59',
+        create_time: '2024-06-20T09:00:00',
+        course_id: 'PE303',
+        subject: '田径',
+        status: '进行中',
+        points: 100
+      }
+    ]
+  }
+];
+
 // Teaching videos data
 export const teachingVideos = [
   {
