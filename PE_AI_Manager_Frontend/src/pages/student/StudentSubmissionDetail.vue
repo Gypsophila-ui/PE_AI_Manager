@@ -17,6 +17,20 @@
         </div>
       </div>
 
+      <!-- 加载状态 -->
+      <div v-if="loading" class="text-center py-32">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
+        <p class="mt-6 text-xl text-gray-600">加载提交详情中...</p>
+      </div>
+
+      <!-- 错误状态 -->
+      <div v-else-if="errorMsg" class="text-center py-32">
+        <p class="text-2xl text-red-600 mb-6">{{ errorMsg }}</p>
+        <button @click="reloadPage" class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg">
+          🔄 重试加载
+        </button>
+      </div>
+
       <!-- 作业基本信息卡片 -->
       <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8">
         <div class="flex justify-between items-start mb-6">
@@ -104,35 +118,159 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import apiClient from '../../services/axios.js'
 
-// 模拟数据（实际项目中调用 get_submit_info API 获取）
-const submission = ref({
-  submit_id: 'sub001',
-  title: '50米折返跑测试',
-  courseId: 'PE2025-01',
-  description: '请录制完整50米折返跑过程，确保计时准确，动作标准。',
-  deadline: '2025-12-20',
-  CREATE_TIME: '2025-12-15T14:30:00',
-  score: 92,
-  video_url: 'https://example.com/ai-analysis/sub001-processed.mp4',  // AI分析后视频
-  AI_feedback: `动作整体流畅，起跑爆发力优秀。\n优点：\n- 折返转体迅速，无多余停顿\n- 臂腿协调性好\n改进建议：\n- 最后5米冲刺时上身稍前倾，可进一步提升速度\n- 注意呼吸节奏，避免憋气`,
-  teacher_feedback: '很好！动作很标准，比上次进步明显，继续保持！下次可以尝试在折返时更低重心。',
+const route = useRoute()
+const router = useRouter()
+
+const submission = ref({})   // 提交记录详情
+const homework = ref({})     // 作业信息
+const course = ref({})       // 课程信息（新增）
+
+const loading = ref(true)
+const errorMsg = ref('')
+
+// 从路由获取参数
+const submitId = route.params.submitId
+const homeworkId = route.params.assignmentId
+const courseId = route.params.courseId
+
+// 当前登录学生信息
+const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+const studentId = currentUser.id || ''
+const jwt = currentUser.jwt || ''
+
+onMounted(async () => {
+  if (!submitId || !homeworkId || !courseId || !studentId || !jwt) {
+    errorMsg.value = '缺少必要参数或未登录'
+    loading.value = false
+    return
+  }
+
+  loading.value = true
+  errorMsg.value = ''
+
+  try {
+    // 并行发起三个请求，提高速度
+    const [submitResp, homeworkResp, courseResp] = await Promise.all([
+      apiClient.post('/api/get_submit_info', {
+        user_type: '0',       // 学生身份
+        user_id: studentId,
+        jwt: jwt,
+        submit_id: submitId
+      }),
+      apiClient.post('/api/get_info_by_homework_id', {
+        course_id: courseId,
+        homework_id: homeworkId
+      }),
+      apiClient.post('/api/get_info_by_course_id', {
+        course_id: courseId
+      })
+    ])
+
+    // 处理 get_submit_info
+    if (submitResp.data[0] < 0) {
+      handleSubmitError(submitResp.data[0])
+      return
+    }
+    submission.value = {
+      video_url: submitResp.data[0],
+      score: submitResp.data[1],
+      AI_feedback: submitResp.data[2] || '',
+      teacher_feedback: submitResp.data[3] || '',
+      CREATE_TIME: submitResp.data[4],
+    }
+
+    // 处理 get_info_by_homework_id
+    if (homeworkResp.data[0] < 0) {
+      errorMsg.value = getHomeworkErrorMsg(homeworkResp.data[0])
+      return
+    }
+    homework.value = {
+      title: homeworkResp.data[0],
+      description: homeworkResp.data[1],
+      deadline: homeworkResp.data[2],
+      create_time: homeworkResp.data[3],
+    }
+
+    // 处理 get_info_by_course_id（新增）
+    if (courseResp.data[0] < 0) {
+      errorMsg.value = getCourseErrorMsg(courseResp.data[0])
+      return
+    }
+    course.value = {
+      teacher_id: courseResp.data[0],
+      name: courseResp.data[1],
+      info: courseResp.data[2],
+      code: courseResp.data[3],
+      semester: courseResp.data[4],
+      is_active: courseResp.data[5],
+      created_time: courseResp.data[6],
+    }
+
+    // 合并数据供模板使用
+    Object.assign(submission.value, {
+      title: homework.value.title,
+      description: homework.value.description,
+      deadline: homework.value.deadline,
+      courseId: courseId,
+      courseName: course.value.name  // 直接用真实课程名
+    })
+
+  } catch (err) {
+    errorMsg.value = '网络请求失败，请检查网络连接'
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
 })
 
-const courses = ref([
-  { id: 'PE2025-01', name: '初三（1）班 体育' },
-  { id: 'PE2025-03', name: '游泳选修' },
-])
-
-// 实际项目中：调用 get_submit_info(submit_id = route.params.id)
-
-// 辅助方法
-const getCourseName = (courseId) => {
-  const c = courses.value.find(item => item.id === courseId)
-  return c ? c.name : '未知课程'
+// 错误处理函数
+const handleSubmitError = (code) => {
+  if ([ -21, -22, -23, -24 ].includes(code)) {
+    errorMsg.value = '登录已失效，请重新登录'
+    logout()
+  } else if (code === -25) {
+    errorMsg.value = '提交记录不存在'
+  } else {
+    errorMsg.value = '加载提交信息失败'
+  }
 }
+
+const getHomeworkErrorMsg = (code) => {
+  if (code === -21) return '作业不存在'
+  return '加载作业信息失败'
+}
+
+const getCourseErrorMsg = (code) => {
+  if (code === -21) return '课程不存在'
+  return '加载课程信息失败'
+}
+
+// 是否已截止
+const isDeadlinePassed = computed(() => {
+  if (!submission.value.deadline) return false
+  const deadlineDate = new Date(submission.value.deadline)
+  const now = new Date()
+  return now > deadlineDate
+})
+
+// 重新提交
+const reSubmit = () => {
+  router.push(`/course/${courseId}/submit/${homeworkId}`)
+}
+
+const goBack = () => router.push('/student/assignments')
+const goToHome = () => router.push('/student')
+
+const logout = () => {
+  localStorage.removeItem('user')
+  router.push('/login')
+}
+
+const getCourseName = () => submission.value.courseName || '加载中...'
 
 const formatFullDate = (dateStr) => {
   if (!dateStr) return '-'
@@ -146,36 +284,5 @@ const formatFullDate = (dateStr) => {
   })
 }
 
-const route = useRoute()
-const router = useRouter()
-
-// 从当前路由解析出 courseId 和 assignmentId 路由设计为'/course/:courseId/assignments/:assignmentId/submission/:submitId'
-const courseId = route.params.courseId
-const assignmentId = route.params.assignmentId
-
-// 判断是否截止
-const isDeadlinePassed = computed(() => {
-  if (!submission.value.deadline) return false
-  const deadlineDate = new Date(submission.value.deadline)
-  const now = new Date()
-  return now > deadlineDate
-})
-
-// 重新提交跳转
-const reSubmit = () => {
-  // 直接用当前路由中的参数跳转到提交页面
-  router.push(`/course/${courseId}/submit/${assignmentId}`)
-}
-
-const goBack = () => {
-  // 根据来源返回（可通过 router.options.history.state.back 判断，或固定返回一览页）
-  router.push('/student/assignments')
-}
-
-const goToHome = () => router.push('/student')
-
-const logout = () => {
-  localStorage.removeItem('user')
-  router.push('/login')
-}
+const reloadPage = () => window.location.reload()
 </script>

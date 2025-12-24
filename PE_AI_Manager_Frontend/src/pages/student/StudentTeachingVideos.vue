@@ -14,66 +14,83 @@
         </button>
       </div>
 
-      <!-- 标题 + 课程筛选 -->
-      <section class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
-        <div>
-          <h2 class="text-4xl font-bold text-gray-800 mb-2">🎥 教学视频</h2>
-          <p class="text-gray-600">观看教师发布的体育教学视频，提升技能</p>
-        </div>
-        <select v-model="selectedCourse"
-                class="px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all shadow-sm">
-          <option value="all">所有课程</option>
-          <option v-for="course in courses" :key="course.id" :value="course.id">
-            {{ course.name }}
-          </option>
-        </select>
-      </section>
+      <!-- 加载状态 -->
+      <div v-if="loading" class="text-center py-32">
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
+        <p class="mt-6 text-xl text-gray-600">加载教学视频中...</p>
+      </div>
 
-      <!-- 视频网格 -->
-      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div v-for="video in filteredVideos"
-             :key="video.id"
-             class="bg-white rounded-3xl shadow-xl overflow-hidden transition-all hover:shadow-2xl cursor-pointer"
-             @click="playVideo(video)">
-          <div class="relative">
-            <img :src="video.cover" class="w-full h-48 object-cover" alt="视频封面" />
-            <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
-              <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center text-3xl text-blue-600">
-                ▶️
+      <!-- 错误状态 -->
+      <div v-else-if="errorMsg" class="text-center py-32">
+        <p class="text-2xl text-red-600 mb-6">{{ errorMsg }}</p>
+        <button @click="loadData" class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 shadow-lg">
+          重试
+        </button>
+      </div>
+
+      <!-- 正常内容 -->
+      <div v-else>
+        <!-- 标题 + 课程筛选 -->
+        <section class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
+          <div>
+            <h2 class="text-4xl font-bold text-gray-800 mb-2">🎥 教学视频</h2>
+            <p class="text-gray-600">观看教师发布的体育教学视频，提升技能</p>
+          </div>
+          <select v-model="selectedCourse"
+                  @change="loadVideos"
+                  class="px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all shadow-sm">
+            <option value="all">所有课程</option>
+            <option v-for="course in courses" :key="course.id" :value="course.id">
+              {{ course.name }}
+            </option>
+          </select>
+        </section>
+
+        <!-- 视频网格 -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div v-for="video in videos"
+               :key="video.id"
+               class="bg-white rounded-3xl shadow-xl overflow-hidden transition-all hover:shadow-2xl cursor-pointer"
+               @click="playVideo(video)">
+            <div class="relative">
+              <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+                <span class="text-6xl">🎬</span>  <!-- 占位封面 -->
+              </div>
+              <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center text-3xl text-blue-600">
+                  ▶️
+                </div>
+              </div>
+              <div class="absolute top-3 left-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-lg">
+                {{ getCourseName(video.courseId) }}
               </div>
             </div>
-            <div class="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-lg">
-              {{ video.duration }}
-            </div>
-            <div class="absolute top-3 left-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-lg">
-              {{ getCourseName(video.courseId) }}
-            </div>
-          </div>
 
-          <div class="p-6">
-            <h3 class="text-xl font-bold text-gray-800 mb-2">{{ video.title }}</h3>
-            <p class="text-sm text-gray-600 mb-4 line-clamp-3">{{ video.description }}</p>
-            <div class="text-sm text-gray-500">
-              发布时间：{{ formatDate(video.createdAt) }}
+            <div class="p-6">
+              <h3 class="text-xl font-bold text-gray-800 mb-2">{{ video.title }}</h3>
+              <p class="text-sm text-gray-600 mb-4 line-clamp-3">{{ video.description }}</p>
+              <div class="text-sm text-gray-500">
+                发布时间：{{ formatDate(video.create_time) }}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- 空状态 -->
-      <section v-if="filteredVideos.length === 0" class="bg-white rounded-3xl shadow-xl p-16 text-center">
-        <div class="text-6xl text-gray-300 mb-4">📹</div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">暂无教学视频</h3>
-        <p class="text-gray-500">教师尚未发布视频，请耐心等待～</p>
-      </section>
+        <!-- 空状态 -->
+        <section v-if="videos.length === 0" class="bg-white rounded-3xl shadow-xl p-16 text-center">
+          <div class="text-6xl text-gray-300 mb-4">📹</div>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">暂无教学视频</h3>
+          <p class="text-gray-500">教师尚未发布视频，请耐心等待～</p>
+        </section>
+      </div>
 
-      <!-- 全屏视频播放器 -->
+      <!-- 全屏播放器 -->
       <div v-if="playingVideo" class="fixed inset-0 bg-black z-50 flex items-center justify-center p-8">
         <div class="relative w-full max-w-5xl">
           <button @click="playingVideo = null" class="absolute -top-12 right-0 text-white text-3xl hover:text-gray-300">
             ✕
           </button>
-          <video :src="playingVideo.url" controls autoplay class="w-full rounded-2xl shadow-2xl">
+          <video :src="playingVideo.content_url" controls autoplay class="w-full rounded-2xl shadow-2xl">
             您的浏览器不支持视频播放
           </video>
           <div class="mt-6 text-white">
@@ -87,39 +104,135 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import apiClient from '../../services/axios.js'  // 你的 axios 封装
 
 const router = useRouter()
 
-// 模拟数据（实际调用 get_class_id_by_course + get_info_by_class_id）
-const courses = ref([
-  { id: 'PE2025-01', name: '初三（1）班 体育' },
-  { id: 'PE2025-02', name: '初三（2）班 田径专项' },
-  { id: 'PE2025-03', name: '游泳选修' },
-])
-
-const allVideos = ref([
-  {
-    id: 1,
-    courseId: 'PE2025-01',
-    title: '50米折返跑标准动作示范',
-    description: '详细讲解折返跑的起跑、转体、冲刺技巧，帮助你跑出更好成绩',
-    cover: 'https://images.unsplash.com/photo-1570545887596-2a6c5cbcf9c3?w=800',
-    url: 'https://example.com/video1.mp4',
-    duration: '06:42',
-    createdAt: '2025-12-01'
-  },
-  // ...更多
-])
-
+const courses = ref([])      // 课程列表 {id, name}
+const videos = ref([])       // 视频列表
 const selectedCourse = ref('all')
 const playingVideo = ref(null)
+const loading = ref(true)
+const errorMsg = ref('')
 
-const filteredVideos = computed(() => {
-  if (selectedCourse.value === 'all') return allVideos.value
-  return allVideos.value.filter(v => v.courseId === selectedCourse.value)
-})
+// 当前登录学生
+const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+const studentId = currentUser.id || ''
+const jwt = currentUser.jwt || ''
+
+// 主加载函数
+const loadData = async () => {
+  loading.value = true
+  errorMsg.value = ''
+
+  if (!studentId || !jwt) {
+    errorMsg.value = '未登录或登录信息丢失'
+    loading.value = false
+    return
+  }
+
+  try {
+    // 1. 获取学生加入的所有课程ID
+    const courseIdResp = await apiClient.post('/api/get_course_id_by_student', {
+      student_id: studentId,
+      jwt: jwt
+    })
+
+    if (courseIdResp.data[0] < 0) {
+      errorMsg.value = '获取课程列表失败'
+      console.error('get_course_id_by_student error:', courseIdResp.data[0])
+      loading.value = false
+      return
+    }
+
+    const courseIdStr = courseIdResp.data[0]
+    const courseIds = courseIdStr ? courseIdStr.split('\t\r').filter(id => id) : []
+
+    if (courseIds.length === 0) {
+      errorMsg.value = '您尚未加入任何课程'
+      loading.value = false
+      return
+    }
+
+    // 2. 并行获取每个课程的详细信息（主要是 name）
+    const coursePromises = courseIds.map(id =>
+      apiClient.post('/api/get_info_by_course_id', { course_id: id })
+    )
+    const courseResps = await Promise.all(coursePromises)
+
+    courses.value = courseResps
+      .filter(resp => resp.data[0] >= 0)  // 过滤错误
+      .map((resp, index) => ({
+        id: courseIds[index],
+        name: resp.data[1]  // name 是第2个字段
+      }))
+
+    // 3. 默认选中第一个课程或'all'，加载视频
+    selectedCourse.value = 'all'
+    await loadVideos()
+
+  } catch (err) {
+    errorMsg.value = '网络错误，请检查连接'
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载视频（根据选中课程）
+const loadVideos = async () => {
+  videos.value = []
+
+  const targetIds = selectedCourse.value === 'all'
+    ? courses.value.map(c => c.id)
+    : [selectedCourse.value]
+
+  for (const courseId of targetIds) {
+    try {
+      // 获取该课程下所有教学任务ID
+      const classIdResp = await apiClient.post('/api/get_class_id_by_course', {
+        user_type: '0',       // 学生
+        user_id: studentId,
+        jwt: jwt,
+        course_id: courseId
+      })
+
+      if (classIdResp.data[0] < 0) continue
+
+      const classIdStr = classIdResp.data[0]
+      const classIds = classIdStr ? classIdStr.split('\t\r').filter(id => id) : []
+
+      // 获取每个视频详情
+      for (const classId of classIds) {
+        const infoResp = await apiClient.post('/api/get_info_by_class_id', {
+          course_id: courseId,
+          class_id: classId
+        })
+
+        if (infoResp.data[0] < 0) continue
+
+        const d = infoResp.data
+        videos.value.push({
+          id: classId,
+          courseId: courseId,
+          title: d[0],
+          description: d[1],
+          content_url: d[2],
+          create_time: d[3]
+        })
+      }
+    } catch (err) {
+      console.error('加载视频失败:', courseId, err)
+    }
+  }
+}
+
+onMounted(loadData)
+
+// 切换课程时重新加载视频
+watch(selectedCourse, loadVideos)
 
 const getCourseName = (courseId) => {
   const c = courses.value.find(item => item.id === courseId)
@@ -127,6 +240,7 @@ const getCourseName = (courseId) => {
 }
 
 const formatDate = (dateString) => {
+  if (!dateString) return '-'
   const date = new Date(dateString)
   return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
 }
