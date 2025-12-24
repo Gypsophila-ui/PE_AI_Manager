@@ -84,7 +84,7 @@ class VideoProcessor:
         gym_object = AIGym(
             kpts_to_check=kpts_to_check,
             line_thickness=2,
-            view_img=True,  # 开启显示图像
+            #view_img=True,  # 开启显示图像
             pose_type=pose_type,
             fps=fps
         )

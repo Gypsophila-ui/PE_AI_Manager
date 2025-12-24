@@ -19,7 +19,7 @@
         <form @submit.prevent="login" class="space-y-4 relative">
           <!-- 校徽背景图片 - 整个表单共用 -->
           <div class="absolute inset-0 opacity-20 flex items-center justify-center pointer-events-none">
-            <img src="../assets/Login/2.png"
+            <img src="../assets/Login/2.jpg"
                  alt="同济大学校徽"
                  class="w-120 h-120 object-contain">
           </div>
