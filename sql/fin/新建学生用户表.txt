@@ -1,0 +1,15 @@
+CREATE TABLE student (
+    id varchar2(50),
+    password varchar2(50) NOT NULL,
+    name varchar2(100) NOT NULL,
+    gender varchar2(50) NOT NULL,
+    college varchar2(100) NOT NULL,
+    department varchar2(100),
+    major varchar2(100),
+    created_time DATE,
+    login_time DATE,
+    PRIMARY KEY (id),
+    FOREIGN KEY (id)
+        REFERENCES std_student(id)
+        ON DELETE CASCADE
+)TABLESPACE SE_DATA;

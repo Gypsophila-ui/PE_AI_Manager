@@ -1,0 +1,14 @@
+CREATE TABLE submit (
+    id int,
+    homework_id int NOT NULL,
+    student_id varchar2(50) NOT NULL,
+    video_url varchar2(512) NOT NULL,
+    score int,
+    AI_feedback varchar2(3000),
+    teacher_feedback varchar2(3000),
+    create_time DATE,
+    PRIMARY KEY (id),
+    FOREIGN KEY (homework_id)
+        REFERENCES homework(id)
+        ON DELETE CASCADE
+)TABLESPACE SE_DATA;

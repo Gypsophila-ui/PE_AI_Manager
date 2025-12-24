@@ -1,0 +1,13 @@
+CREATE TABLE student_course (
+    id int,
+    student_id varchar2(50) NOT NULL,
+    course_id varchar2(50) NOT NULL,
+    joined_time DATE,
+    PRIMARY KEY (id),
+    FOREIGN KEY (student_id)
+        REFERENCES student(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (course_id)
+        REFERENCES course(id)
+        ON DELETE CASCADE
+)TABLESPACE SE_DATA;

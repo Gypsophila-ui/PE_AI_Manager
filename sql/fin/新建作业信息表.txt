@@ -1,0 +1,12 @@
+CREATE TABLE homework (
+    id int,
+    course_id varchar2(50) NOT NULL,
+    title varchar2(100) NOT NULL,
+    description varchar2(3000),
+    deadline DATE NOT NULL,
+    create_time DATE,
+    PRIMARY KEY (id),
+    FOREIGN KEY (course_id)
+        REFERENCES course(id)
+        ON DELETE CASCADE
+)TABLESPACE SE_DATA;

@@ -1,8 +1,0 @@
-CREATE TABLE ai_type (
-    type varchar2(50),
-    homework_id int,
-    PRIMARY KEY (homework_id),
-    FOREIGN KEY (homework_id)
-        REFERENCES homework(id)
-        ON DELETE CASCADE
-)TABLESPACE SE_DATA;

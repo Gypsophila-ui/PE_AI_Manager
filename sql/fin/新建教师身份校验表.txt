@@ -1,0 +1,5 @@
+CREATE TABLE std_teacher (
+    name varchar2(50),
+    id varchar2(50),
+    PRIMARY KEY (id)
+) TABLESPACE SE_DATA;
