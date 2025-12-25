@@ -87,10 +87,10 @@
             </div>
           </div>
         </div>
-        <!-- 作业描述与视频上传左右布局 -->
-        <div class="flex space-x-6">
+        <!-- 作业描述与视频上传上下布局 -->
+        <div class="space-y-6">
           <!-- 作业描述和AI评分说明 -->
-          <div class="w-1/2">
+          <div class="w-full">
             <!-- 作业描述 -->
             <div class="mt-4 p-4 bg-blue-50 rounded-xl">
               <div class="assignment-description-wrapper">
@@ -115,7 +115,7 @@
           </div>
 
           <!-- 视频上传区域 -->
-          <div class="w-1/2 bg-white rounded-3xl shadow-xl p-8">
+          <div class="w-full bg-white rounded-3xl shadow-xl p-8">
             <div class="flex flex-col items-center space-y-6">
               <!-- 上传区域 -->
           <div
@@ -191,7 +191,7 @@
           </div>
 
           <!-- 处理后的视频预览 -->
-          <div v-if="showProcessedVideo" class="w-full max-w-6xl mt-8">
+          <div v-if="showProcessedVideo" class="w-full mt-8">
             <div class="bg-gray-100 rounded-xl p-6">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
@@ -202,12 +202,12 @@
                   </div>
                 </div>
               </div>
-              <!-- AI处理后的视频预览 -->
-              <div class="rounded-lg overflow-hidden border border-gray-300">
+              <!-- AI处理后的视频预览 - 宽度充满整个容器 -->
+              <div class="rounded-lg overflow-hidden border border-gray-300 w-full">
                 <video
                   ref="processedVideoPreview"
                   controls
-                  class="w-full h-auto max-h-[1000px]"
+                  class="w-full h-auto"
                 ></video>
               </div>
               <div class="mt-4 flex justify-center">
@@ -351,12 +351,21 @@ const fetchAssignmentDetails = async () => {
       // 对于非示例作业ID，使用真实的API调用
       console.log('使用真实API请求获取作业详情')
 
-      const response = await axios.post('/api/get_info_by_homework_id', {
+      // 获取JWT token和用户信息
+      const token = localStorage.getItem('token')
+      const user = JSON.parse(localStorage.getItem('user') || '{}')
+      const studentId = user.id || 'student1'
+
+      if (!token) {
+        throw new Error('未找到认证token，请重新登录')
+      }
+
+      const response = await apiClient.post('/get_info_by_homework_id', {
         course_id: courseId, // 使用路由参数中的课程ID或默认值
         homework_id: assignmentId,
         user_type: '0', // 学生
-        user_id: 'user123', // 实际应该从登录信息中获取
-        jwt: 'mock_jwt_token' // 实际应该从登录信息中获取
+        user_id: studentId, // 从登录信息中获取
+        jwt: token // 从登录信息中获取
       })
 
       if (response.data.code === 0) {
@@ -684,25 +693,41 @@ const saveAssignmentSubmission = async (aiResult, studentId) => {
   try {
     console.log('开始保存作业提交信息...')
 
-    const submitFormData = new FormData()
-    submitFormData.append('video', selectedFile.value)
-    submitFormData.append('courseId', courseId)
-    submitFormData.append('assignmentId', assignmentId)
-    submitFormData.append('studentId', studentId)
-    submitFormData.append('aiScore', aiResult.final_count) // 使用AI返回的动作计数作为评分
-    submitFormData.append('aiProcessedVideoUrl', aiResult.video_url)
+    // 获取JWT token
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('未找到认证token，请重新登录')
+    }
 
-    // 调用主应用API保存作业提交
-    const submitResponse = await apiClient.post('/submit_assignment_video', submitFormData, {
+    // 准备视频URL - 优先使用AI处理后的视频URL，如果没有则使用原始视频
+    let videoUrl = aiResult.video_url
+    if (!videoUrl && processedVideoBlob.value) {
+      // 如果没有AI返回的视频URL但有Blob，创建临时URL
+      videoUrl = URL.createObjectURL(processedVideoBlob.value)
+    }
+
+    // 根据API文档构造请求参数
+    const submitData = {
+      student_id: studentId,
+      jwt: token,
+      course_id: courseId,
+      homework_id: assignmentId.toString(),
+      video_url: videoUrl
+    }
+
+    console.log('提交作业参数:', submitData)
+
+    // 调用submit_homework接口
+    const submitResponse = await apiClient.post('/submit_homework', submitData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/json'
       }
     })
 
     // 上传成功处理
     if (submitResponse.status === 200 || submitResponse.status === 201) {
       console.log('作业提交成功:', submitResponse.data)
-      alert(`作业提交成功！AI评分结果：${aiResult.final_count}个动作。\n视频已处理完成，可在作业详情查看。`)
+      alert(`作业提交成功！视频已处理完成。\n可在作业详情查看提交记录。`)
       // 更新作业状态为已完成
       if (assignment.value) {
         assignment.value.status = '已完成'
@@ -713,7 +738,13 @@ const saveAssignmentSubmission = async (aiResult, studentId) => {
     }
   } catch (error) {
     console.error('保存作业提交信息失败:', error)
-    alert('视频处理成功，但作业提交记录保存失败，请稍后重试。')
+    if (error.response) {
+      console.error('错误响应:', error.response.data)
+      const errorMsg = error.response.data?.message || '作业提交记录保存失败，请稍后重试。'
+      alert(errorMsg)
+    } else {
+      alert('作业提交记录保存失败，请稍后重试。')
+    }
   }
 }
 

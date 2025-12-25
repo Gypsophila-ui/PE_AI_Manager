@@ -140,8 +140,12 @@ const login = async () => {
     }
 
     if (result.success) {
-      // 登录成功，保存用户信息和JWT
+      // 登录成功，保存JWT token到localStorage
+      localStorage.setItem('token', result.data.jwt_ans)
+
+      // 保存用户信息
       localStorage.setItem('user', JSON.stringify({
+        id: username.value,
         role: role.value,
         username: username.value,
         token: result.data.jwt_ans
