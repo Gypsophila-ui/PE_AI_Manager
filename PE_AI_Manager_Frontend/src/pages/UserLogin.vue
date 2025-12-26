@@ -19,7 +19,7 @@
         <form @submit.prevent="login" class="space-y-4 relative">
           <!-- 校徽背景图片 - 整个表单共用 -->
           <div class="absolute inset-0 opacity-20 flex items-center justify-center pointer-events-none">
-            <img src="../assets/Login/2.png"
+            <img src="../assets/Login/2.jpg"
                  alt="同济大学校徽"
                  class="w-120 h-120 object-contain">
           </div>
@@ -140,8 +140,12 @@ const login = async () => {
     }
 
     if (result.success) {
-      // 登录成功，保存用户信息和JWT
+      // 登录成功，保存JWT token到localStorage
+      localStorage.setItem('token', result.data.jwt_ans)
+
+      // 保存用户信息
       localStorage.setItem('user', JSON.stringify({
+        id: username.value,
         role: role.value,
         username: username.value,
         token: result.data.jwt_ans
