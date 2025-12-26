@@ -94,7 +94,8 @@
                          message.role === 'user'
                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
                            : 'bg-white text-gray-800 border border-blue-200']">
-              <div class="whitespace-pre-wrap">{{ message.content }}</div>
+              <div v-if="message.role === 'user'" class="whitespace-pre-wrap">{{ message.content }}</div>
+              <div v-else class="prose prose-sm max-w-none" v-html="renderMarkdown(message.content)"></div>
               <div v-if="message.model" class="text-xs mt-2 opacity-70">
                 {{ message.model }}
               </div>
@@ -125,9 +126,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import * as aiChat from '../services/aiChat'
+import { marked } from 'marked'
 
 const router = useRouter()
 
@@ -143,6 +145,11 @@ const loadingMessages = ref(false)
 const sendingMessage = ref(false)
 const selectedModel = ref('Qwen')
 const availableModels = ref(['Qwen', 'ERNIE', 'Moonshot'])
+
+// Markdown渲染函数
+const renderMarkdown = (content) => {
+  return marked(content)
+}
 
 // 获取当前用户ID
 const getUserId = () => {
