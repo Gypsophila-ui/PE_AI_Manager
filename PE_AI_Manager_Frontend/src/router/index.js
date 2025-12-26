@@ -7,7 +7,7 @@ import Register from '../pages/UserRegister.vue'
 import UserProfile from '../pages/UserProfile.vue'
 import TeacherAssignments from '../pages/teacher/TeacherAssignments.vue'
 import StudentAssignments from '../pages/student/StudentAssignments.vue'
-import SubmitAssignment from '../pages/student/SubmitAssignment.vue'
+
 import PublishAssignment from '../pages/teacher/PublishAssignment.vue'
 import GradeManagement from '../pages/teacher/GradeManagement.vue'
 import TeachingVideos from '../pages/teacher/TeachingVideos.vue'
@@ -23,7 +23,6 @@ const routes = [
   { path: '/student', component: StudentHome },
   { path: '/course/:courseId', component: CourseDetails },
   { path: '/course/:courseId/assignments/:assignmentId', component: StudentAssignments },
-  { path: '/course/:courseId/submit/:assignmentId', component: SubmitAssignment },
   { path: '/student/assistant', component: Assistant },
 
   // 教师端路由
