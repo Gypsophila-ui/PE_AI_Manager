@@ -141,15 +141,18 @@ const login = async () => {
 
     if (result.success) {
       // 登录成功，保存JWT token到localStorage
-      localStorage.setItem('token', result.data.jwt_ans)
+      console.log('✅ hello登录成功:', result.data)
+      localStorage.setItem('token', result.data.data)
 
       // 保存用户信息
       localStorage.setItem('user', JSON.stringify({
         id: username.value,
         role: role.value,
         username: username.value,
-        token: result.data.jwt_ans
+        token: result.data.data
       }))
+
+
 
       // 根据角色跳转到对应首页
       if (role.value === 'student') {

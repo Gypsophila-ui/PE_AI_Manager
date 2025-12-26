@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 p-8 pt-28">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-8 pt-28">
     <div class="max-w-3xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
       <!-- 页面标题 -->
       <div class="p-8 border-b border-gray-100">
@@ -11,7 +11,7 @@
       <div class="p-8">
         <div class="flex items-center space-x-6 mb-8">
           <!-- 用户头像 -->
-          <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-4xl font-bold">
+          <div class="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-4xl font-bold">
             {{ userInitial }}
           </div>
           <!-- 用户信息 -->
@@ -43,9 +43,9 @@
         <!-- 修改密码区域 -->
         <div class="bg-gray-50 rounded-2xl p-6">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">账号安全</h3>
-          <button 
+          <button
             @click="showChangePasswordModal = true"
-            class="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+            class="w-full py-3 bg-blue-500 text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition-all"
           >
             修改密码
           </button>
@@ -66,8 +66,8 @@
           <!-- 旧密码 -->
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">旧密码</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               v-model="oldPassword"
               class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="请输入旧密码"
@@ -77,8 +77,8 @@
           <!-- 新密码 -->
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">新密码</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               v-model="newPassword"
               class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="请输入新密码"
@@ -88,8 +88,8 @@
           <!-- 确认新密码 -->
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1">确认新密码</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               v-model="confirmPassword"
               class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="请再次输入新密码"
@@ -108,15 +108,15 @@
 
           <!-- 操作按钮 -->
           <div class="flex space-x-4">
-            <button 
+            <button
               @click="showChangePasswordModal = false"
               class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-xl hover:bg-gray-300 transition-all"
             >
               取消
             </button>
-            <button 
+            <button
               @click="handleChangePassword"
-              class="flex-1 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+              class="flex-1 py-3 bg-blue-500 text-white font-bold rounded-xl shadow-lg hover:bg-blue-600 transition-all"
               :disabled="passwordLoading"
             >
               <span v-if="passwordLoading">修改中...</span>

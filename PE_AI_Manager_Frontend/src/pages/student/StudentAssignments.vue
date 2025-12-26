@@ -1,14 +1,14 @@
 <template>
   <div class="min-h-screen bg-gray-100">
     <!-- 同济大学校徽 -->
-    <div class="fixed  inset-0 z-10 flex items-center justify-center opacity-5 pointer-events-none">
+    <div class="fixed inset-0 z-10 flex items-center justify-center opacity-5 pointer-events-none">
       <img src="@/assets/Login/2.jpg" alt="同济大学校徽" class="w-21 h-21 object-contain" />
     </div>
     <div class="max-w-4xl mx-auto p-6 space-y-10">
 
       <!-- 页面标题 -->
       <section>
-        <h2 class="text-4xl font-bold text-gray-800 mb-4">📚 作业详情</h2>
+        <h2 class="text-4xl font-bold text-gray-800 mb-4">作业详情</h2>
         <p class="text-gray-600">查看作业要求和提交状态</p>
       </section>
 
@@ -20,7 +20,6 @@
       <!-- 错误信息 -->
       <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-3xl p-6">
         <div class="flex items-center gap-3 mb-3">
-          <div class="text-3xl text-red-500">❌</div>
           <h3 class="text-xl font-bold text-red-800">加载失败</h3>
         </div>
         <p class="text-red-700">{{ errorMessage }}</p>
@@ -34,28 +33,24 @@
         <h3 class="text-2xl font-bold text-gray-800 mb-4">{{ assignment.title }}</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div class="flex items-center gap-2 text-gray-600">
-            <span class="text-gray-400">📅</span>
             <div>
               <div class="text-xs text-gray-400">创建时间</div>
               <div>{{ formatDate(assignment.create_time) }}</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
-            <span class="text-gray-400">⏰</span>
             <div>
               <div class="text-xs text-gray-400">截止时间</div>
               <div>{{ formatDate(assignment.deadline) }}</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
-            <span class="text-gray-400">📚</span>
             <div>
               <div class="text-xs text-gray-400">科目</div>
               <div>{{ assignment.subject }}</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
-            <span class="text-gray-400">📋</span>
             <div>
               <div class="text-xs text-gray-400">状态</div>
               <div>
@@ -73,20 +68,19 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div class="flex items-center gap-2 text-gray-600">
-            <span class="text-gray-400">🏫</span>
             <div>
               <div class="text-xs text-gray-400">课程ID</div>
               <div>{{ assignment.course_id }}</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
-            <span class="text-gray-400">💯</span>
             <div>
               <div class="text-xs text-gray-400">分值</div>
               <div>{{ assignment.points }}分</div>
             </div>
           </div>
         </div>
+
         <!-- 作业描述与视频上传上下布局 -->
         <div class="space-y-6">
           <!-- 作业描述和AI评分说明 -->
@@ -101,15 +95,12 @@
 
             <!-- AI评分说明 -->
             <div class="mt-4 p-4 bg-purple-50 rounded-xl">
-              <div class="flex items-start gap-3">
-                <div class="text-2xl text-purple-500">🤖</div>
-                <div>
-                  <h4 class="font-medium text-purple-800 mb-1">AI评分说明：</h4>
-                  <p class="text-sm text-purple-700">
-                    提交视频后，AI将自动分析你的动作规范度、完成度和技术要点，给出初步评分和详细反馈。
-                    教师将根据AI评分和实际情况进行最终评分。
-                  </p>
-                </div>
+              <div>
+                <h4 class="font-medium text-purple-800 mb-1">AI评分说明：</h4>
+                <p class="text-sm text-purple-700">
+                  提交视频后，AI将自动分析你的动作规范度、完成度和技术要点，给出初步评分和详细反馈。
+                  教师将根据AI评分和实际情况进行最终评分。
+                </p>
               </div>
             </div>
           </div>
@@ -118,146 +109,137 @@
           <div class="w-full bg-white rounded-3xl shadow-xl p-8">
             <div class="flex flex-col items-center space-y-6">
               <!-- 上传区域 -->
-          <div
-            class="w-full max-w-2xl border-2 border-dashed rounded-2xl p-6 text-center transition-all hover:bg-gray-50"
-            :disabled="assignment.status === '已完成'"
-            :class="assignment.status === '已完成' ? 'opacity-50 cursor-not-allowed' : ''"
-          >
-            <div class="text-6xl text-gray-300 mb-4">🎥</div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2">上传作业视频</h3>
-            <p class="text-gray-500 mb-4">支持 MP4、AVI、MOV 格式，文件大小不超过 200MB</p>
-            <button
-              @click="triggerFileInput"
-              class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow"
-            >
-              选择视频文件
-            </button>
-            <input
-              ref="fileInput"
-              type="file"
-              accept="video/*"
-              class="hidden"
-              @change="handleFileChange"
-              :disabled="assignment.status === '已完成'"
-            />
-          </div>
+              <div
+                class="w-full max-w-2xl border-2 border-dashed rounded-2xl p-6 text-center transition-all hover:bg-gray-50"
+                :disabled="assignment.status === '已完成'"
+                :class="assignment.status === '已完成' ? 'opacity-50 cursor-not-allowed' : ''"
+              >
+                <div class="text-6xl text-gray-300 mb-4">🎥</div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">上传作业视频</h3>
+                <p class="text-gray-500 mb-4">支持 MP4、AVI、MOV 格式，文件大小不超过 200MB</p>
+                <button
+                  @click="triggerFileInput"
+                  class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow"
+                >
+                  选择视频文件
+                </button>
+                <input
+                  ref="fileInput"
+                  type="file"
+                  accept="video/*"
+                  class="hidden"
+                  @change="handleFileChange"
+                  :disabled="assignment.status === '已完成'"
+                />
+              </div>
 
-          <!-- 已选择视频预览 -->
-          <div v-if="selectedFile" class="w-full max-w-2xl">
-            <div class="bg-gray-100 rounded-xl p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3">
-                  <div class="text-3xl text-blue-500">📹</div>
-                  <div>
-                    <h4 class="font-medium text-gray-800">{{ selectedFile.name }}</h4>
-                    <p class="text-sm text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+              <!-- 已选择视频预览 -->
+              <div v-if="selectedFile" class="w-full max-w-2xl">
+                <div class="bg-gray-100 rounded-xl p-6 mb-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 class="font-medium text-gray-800">{{ selectedFile.name }}</h4>
+                      <p class="text-sm text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+                    </div>
+                  </div>
+                  <button
+                    @click="removeFile"
+                    class="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow"
+                  >
+                    移除
+                  </button>
+                </div>
+                <!-- 视频预览 -->
+                <div class="rounded-lg overflow-hidden border border-gray-300">
+                  <video
+                    ref="videoPreview"
+                    controls
+                    class="w-full h-auto max-h-60"
+                  ></video>
+                </div>
+              </div>
+
+              <!-- 上传进度显示 -->
+              <div v-if="isUploading" class="w-full max-w-2xl">
+                <div class="bg-gray-100 rounded-xl p-6">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-700 font-medium">上传进度</span>
+                    <span class="text-blue-600 font-bold">{{ uploadProgress }}%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                      :style="{ width: uploadProgress + '%' }"
+                    ></div>
+                  </div>
+                  <p class="text-sm text-gray-500 mt-2 text-center">视频正在上传，请不要关闭页面...</p>
+                </div>
+              </div>
+
+              <!-- 处理后的视频预览 -->
+              <div v-if="showProcessedVideo" class="w-full mt-8">
+                <div class="bg-gray-100 rounded-xl p-6 mb-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <div>
+                      <h4 class="font-medium text-gray-800">AI处理后的视频</h4>
+                      <p class="text-sm text-gray-500">AI已完成评分并生成处理后的视频</p>
+                    </div>
                   </div>
                 </div>
-                <button
-                  @click="removeFile"
-                  class="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow"
-                >
-                  移除
-                </button>
+                <!-- AI处理后的视频预览 - 宽度充满整个容器 -->
+                <div class="rounded-lg overflow-hidden border border-gray-300 w-full">
+                  <video
+                    ref="processedVideoPreview"
+                    controls
+                    class="w-full h-auto"
+                  ></video>
+                </div>
+                <div class="mt-4 flex justify-center">
+                  <button
+                    @click="downloadProcessedVideo"
+                    class="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow"
+                  >
+                    下载处理后的视频
+                  </button>
+                </div>
               </div>
-              <!-- 视频预览 -->
-              <div class="rounded-lg overflow-hidden border border-gray-300">
-                <video
-                  ref="videoPreview"
-                  controls
-                  class="w-full h-auto max-h-60"
-                ></video>
-              </div>
-            </div>
-          </div>
 
-
-
-          <!-- 上传进度显示 -->
-          <div v-if="isUploading" class="w-full max-w-2xl">
-            <div class="bg-gray-100 rounded-xl p-6">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-gray-700 font-medium">上传进度</span>
-                <span class="text-blue-600 font-bold">{{ uploadProgress }}%</span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
+              <!-- 视频处理状态区域 -->
+              <div v-if="isProcessing" class="w-full max-w-2xl space-y-4">
+                <!-- 处理状态信息 -->
                 <div
-                  class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                  :style="{ width: uploadProgress + '%' }"
+                  id="processingStats"
+                  class="p-4 rounded-xl bg-gray-50 border border-gray-200"
+                  v-html="processingStats"
                 ></div>
-              </div>
-              <p class="text-sm text-gray-500 mt-2 text-center">视频正在上传，请不要关闭页面...</p>
-            </div>
-          </div>
 
-          <!-- 处理后的视频预览 -->
-          <div v-if="showProcessedVideo" class="w-full mt-8">
-            <div class="bg-gray-100 rounded-xl p-6">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-3">
-                  <div class="text-3xl text-green-500">✅</div>
-                  <div>
-                    <h4 class="font-medium text-gray-800">AI处理后的视频</h4>
-                    <p class="text-sm text-gray-500">AI已完成评分并生成处理后的视频</p>
-                  </div>
+                <!-- 处理中的视频帧预览 -->
+                <div v-if="processingVideoFrame" class="flex justify-center">
+                  <img
+                    :src="processingVideoFrame"
+                    alt="处理过程预览"
+                    class="max-w-full max-h-64 rounded-lg shadow"
+                  />
                 </div>
               </div>
-              <!-- AI处理后的视频预览 - 宽度充满整个容器 -->
-              <div class="rounded-lg overflow-hidden border border-gray-300 w-full">
-                <video
-                  ref="processedVideoPreview"
-                  controls
-                  class="w-full h-auto"
-                ></video>
-              </div>
-              <div class="mt-4 flex justify-center">
-                <button
-                  @click="downloadProcessedVideo"
-                  class="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow"
-                >
-                  下载处理后的视频
-                </button>
-              </div>
+
+              <!-- 提交按钮 -->
+              <button
+                @click="submitAssignment"
+                :disabled="!selectedFile || isUploading || assignment.status === '已完成'"
+                class="px-10 py-4 rounded-2xl bg-blue-500 text-white font-bold text-lg hover:bg-blue-600 transition-all shadow-lg"
+                :class="{ 'opacity-50 cursor-not-allowed': !selectedFile || isUploading || assignment.status === '已完成' }"
+              >
+                {{ isUploading ? '上传中...' : '提交作业' }}
+              </button>
             </div>
           </div>
-
-          <!-- 视频处理状态区域 -->
-          <div v-if="isProcessing" class="w-full max-w-2xl space-y-4">
-            <!-- 处理状态信息 -->
-            <div
-              id="processingStats"
-              class="p-4 rounded-xl bg-gray-50 border border-gray-200"
-              v-html="processingStats"
-            ></div>
-
-            <!-- 处理中的视频帧预览 -->
-            <div v-if="processingVideoFrame" class="flex justify-center">
-              <img
-                :src="processingVideoFrame"
-                alt="处理过程预览"
-                class="max-w-full max-h-64 rounded-lg shadow"
-              />
-            </div>
-          </div>
-
-          <!-- 提交按钮 -->
-          <button
-            @click="submitAssignment"
-            :disabled="!selectedFile || isUploading || assignment.status === '已完成'"
-            class="px-10 py-4 rounded-2xl bg-blue-500 text-white font-bold text-lg hover:bg-blue-600 transition-all shadow-lg"
-            :class="{ 'opacity-50 cursor-not-allowed': !selectedFile || isUploading || assignment.status === '已完成' }"
-          >
-            {{ isUploading ? '上传中...' : '提交作业' }}
-          </button>
         </div>
-      </div>
-    </div>
-  </section>
+      </section>
 
       <!-- 未找到作业 -->
       <section v-else class="bg-white rounded-3xl shadow-xl p-10 text-center">
-        <div class="text-6xl text-gray-300 mb-4">🔍</div>
-        <h3 class="text-2xl font-bold text-gray-800 mb-2">未找到作业</h3>
+        <h3 v-if="!assignment && !loading && !error" class="text-2xl font-bold text-gray-800 mb-2">未找到作业</h3>
         <p class="text-gray-500 mb-6">无法找到指定ID的作业信息</p>
         <button @click="goBack" class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow">
           返回上一页
@@ -297,92 +279,52 @@ const showProcessedVideo = ref(false)
 const courseId = route.params.courseId || 'PE101' // 默认为PE101课程
 const assignmentId = route.params.assignmentId || route.params.id
 
-// 获取作业详情
+// 获取作业详情（直接显示示例数据，不调用API）
 const fetchAssignmentDetails = async () => {
   loading.value = true
   error.value = false
   errorMessage.value = ''
 
   try {
-    // 定义示例作业ID列表
-    const exampleAssignmentIds = ['1', '2', '3']
+    // 直接加载示例作业数据，不调用API
+    console.log('直接加载示例作业数据，作业ID:', assignmentId)
 
-    // 如果是示例作业ID，直接使用mock数据，不发出真实API请求
-    if (exampleAssignmentIds.includes(assignmentId)) {
-      console.log('使用示例作业数据，跳过真实API请求')
-
-      // 使用mock数据，根据不同的作业ID返回不同的作业详情
-      const mockAssignments = {
-        '1': {
-          title: '俯卧撑标准动作练习',
-          description: '完成标准俯卧撑动作，要求动作规范，身体保持直线。注意：1. 双手与肩同宽；2. 身体从头部到脚踝保持一条直线；3. 下降时胸部接近地面；4. 上升时手臂完全伸直。',
-          deadline: '2024-01-20T23:59:59',
-          create_time: '2024-01-10T08:00:00',
-          course_id: 'PE101',
-          subject: '体能训练',
-          status: '进行中',
-          points: 100
-        },
-        '2': {
-          title: '仰卧起坐耐力测试',
-          description: '在规定时间内完成尽可能多的仰卧起坐，测试核心力量。要求：1. 双腿弯曲90度；2. 双手交叉抱头；3. 起身时肘部触及膝盖；4. 躺下时肩部完全接触地面。',
-          deadline: '2024-01-25T23:59:59',
-          create_time: '2024-01-15T10:30:00',
-          course_id: 'PE101',
-          subject: '体能测试',
-          status: '进行中',
-          points: 100
-        },
-        '3': {
-          title: '跳绳技巧练习',
-          description: '掌握基本跳绳技巧，提高协调性和耐力。练习内容：1. 单摇跳绳（每分钟至少120次）；2. 双摇跳绳（尝试完成10次连续双摇）；3. 交叉跳绳（左右交叉各50次）。',
-          deadline: '2024-01-15T23:59:59',
-          create_time: '2024-01-05T14:20:00',
-          course_id: 'PE101',
-          subject: '协调训练',
-          status: '已完成',
-          points: 100
-        }
-      }
-
-      // 获取对应的作业详情
-      assignment.value = mockAssignments[assignmentId]
-    } else {
-      // 对于非示例作业ID，使用真实的API调用
-      console.log('使用真实API请求获取作业详情')
-
-      // 获取JWT token和用户信息
-      const token = localStorage.getItem('token')
-      const user = JSON.parse(localStorage.getItem('user') || '{}')
-      const studentId = user.id || 'student1'
-
-      if (!token) {
-        throw new Error('未找到认证token，请重新登录')
-      }
-
-      const response = await apiClient.post('/get_info_by_homework_id', {
-        course_id: courseId, // 使用路由参数中的课程ID或默认值
-        homework_id: assignmentId,
-        user_type: '0', // 学生
-        user_id: studentId, // 从登录信息中获取
-        jwt: token // 从登录信息中获取
-      })
-
-      if (response.data.code === 0) {
-        // 成功获取作业详情
-        assignment.value = response.data.data
-      } else {
-        // 处理API错误
-        throw new Error(`API错误：${response.data.message || '获取作业详情失败'}`)
+    // 使用mock数据，根据不同的作业ID返回不同的作业详情
+    const mockAssignments = {
+      '1': {
+        title: '俯卧撑标准动作练习',
+        description: '完成标准俯卧撑动作，要求动作规范，身体保持直线。注意：1. 双手与肩同宽；2. 身体从头部到脚踝保持一条直线；3. 下降时胸部接近地面；4. 上升时手臂完全伸直。',
+        deadline: '2024-01-20T23:59:59',
+        create_time: '2024-01-10T08:00:00',
+        course_id: 'PE101',
+        subject: '体能训练',
+        status: '进行中',
+        points: 100
+      },
+      '2': {
+        title: '仰卧起坐耐力测试',
+        description: '在规定时间内完成尽可能多的仰卧起坐，测试核心力量。要求：1. 双腿弯曲90度；2. 双手交叉抱头；3. 起身时肘部触及膝盖；4. 躺下时肩部完全接触地面。',
+        deadline: '2024-01-25T23:59:59',
+        create_time: '2024-01-15T10:30:00',
+        course_id: 'PE101',
+        subject: '体能测试',
+        status: '进行中',
+        points: 100
+      },
+      '3': {
+        title: '跳绳技巧练习',
+        description: '掌握基本跳绳技巧，提高协调性和耐力。练习内容：1. 单摇跳绳（每分钟至少120次）；2. 双摇跳绳（尝试完成10次连续双摇）；3. 交叉跳绳（左右交叉各50次）。',
+        deadline: '2024-01-15T23:59:59',
+        create_time: '2024-01-05T14:20:00',
+        course_id: 'PE101',
+        subject: '协调训练',
+        status: '已完成',
+        points: 100
       }
     }
-  } catch (err) {
-    console.error('获取作业详情失败:', err)
-    error.value = true
-    errorMessage.value = err.message
 
-    // 如果API请求失败，使用默认的mock数据作为 fallback
-    assignment.value = {
+    // 获取对应的作业详情，如果找不到则使用默认作业
+    assignment.value = mockAssignments[assignmentId] || {
       title: '默认作业',
       description: '这是一个默认作业的描述。',
       deadline: '2024-01-30T23:59:59',
@@ -392,6 +334,12 @@ const fetchAssignmentDetails = async () => {
       status: '进行中',
       points: 100
     }
+
+    console.log('示例作业加载成功:', assignment.value)
+  } catch (err) {
+    console.error('加载示例作业失败:', err)
+    error.value = true
+    errorMessage.value = err.message
   } finally {
     loading.value = false
   }
@@ -466,7 +414,7 @@ const getProcessedVideo = async (homeworkId, studentId) => {
     console.log('开始获取处理后的视频...')
 
     // 构建请求URL
-    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/get_processed_video`;
+    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}/get_processed_video`;
 
     const response = await fetch(url + `?homework_id=${homeworkId}&student_id=${studentId}`);
 
@@ -532,11 +480,21 @@ const submitAssignment = async () => {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
 
-    // 根据作业类型设置动作类型，统一使用深蹲动作类型
-    const poseType = 'squat' // 统一使用深蹲动作类型
+    // 从后端获取AI类型（动作类型）根据作业ID
+     const aiTypeResponse = await apiClient.post('/Homework/get_AI_type', {
+      first: assignmentId
+    })
+    let poseType = 'squat'; // 默认值
+
+    if (aiTypeResponse.success) {
+      poseType = aiTypeResponse.data.data || 'squat'; // 使用返回的动作类型，或默认为squat
+      console.log('获取到的动作类型:', poseType);
+    } else {
+      console.warn('获取AI类型失败，使用默认动作类型: squat');
+    }
 
     // 构造请求URL，将pose_type作为URL查询参数传递
-    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'}/process_video?pose_type=${encodeURIComponent(poseType)}`
+    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}/process_video?pose_type=${encodeURIComponent(poseType)}`
 
     console.log('开始上传视频到AI后端服务...')
     processingStats.value = '正在连接到流式处理服务...'
