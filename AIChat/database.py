@@ -17,7 +17,20 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    
+
+    # 创建消息表
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER NOT NULL,
+                role TEXT NOT NULL,  -- user/assistant/system
+                content TEXT NOT NULL,
+                model TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE CASCADE
+            )
+        ''')
+
     # 检查messages表是否已有model字段，如果没有则添加
     try:
         cursor.execute("ALTER TABLE messages ADD COLUMN model TEXT")

@@ -34,14 +34,15 @@ from report_module import (
 # ================= FastAPI应用 =================
 app = FastAPI(title="AI Chat API", description="AI聊天后端API")
 
-# 允许跨域请求 - 更详细的配置
+# 允许跨域请求
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:63342", "http://127.0.0.1:63342", "http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
+    max_age=3600,
 )
 
 chat_mgr = ChatManager()

@@ -121,10 +121,10 @@ class SquatTracker:
     def _get_error_type_by_id(self, error_id):
         """根据错误ID返回错误类型"""
         error_types = {
-            0: '姿势倾斜',
-            1: '姿势倾斜', 
-            2: '膝盖位置',
-            3: '下蹲深度'
+            0: '姿势倾斜，臀部向后突出过多，背部过度后仰，身体重心偏后',
+            1: '姿势倾斜，身体过度前倾，重心过于靠前，胸部下沉',
+            2: '膝盖位置， 膝盖过度前移超出脚尖位置，小腿与地面角度过小',
+            3: '下蹲深度，下蹲深度超过安全范围，大腿与小腿角度过小'
         }
         return error_types.get(error_id, '未知错误')
 
@@ -275,17 +275,17 @@ class SquatTracker:
         # 髋关节角度指示器
         if hip_vertical_angle is not None:
             cv2.ellipse(im0, right_hip, (30, 30), angle=0, startAngle=-90, 
-                       endAngle=-90+hip_vertical_angle, color=(255, 255, 255), thickness=3)
+                       endAngle=-90-hip_vertical_angle, color=(255, 255, 255), thickness=3)
         
         # 膝关节角度指示器
         if knee_vertical_angle is not None:
             cv2.ellipse(im0, right_knee, (20, 20), angle=0, startAngle=-90, 
-                       endAngle=-90-knee_vertical_angle, color=(255, 255, 255), thickness=3)
+                       endAngle=-90+knee_vertical_angle, color=(255, 255, 255), thickness=3)
         
         # 踝关节角度指示器
         if ankle_vertical_angle is not None:
             cv2.ellipse(im0, right_ankle, (30, 30), angle=0, startAngle=-90, 
-                       endAngle=-90+ankle_vertical_angle, color=(255, 255, 255), thickness=3)
+                       endAngle=-90-ankle_vertical_angle, color=(255, 255, 255), thickness=3)
 
         # 绘制计数
         draw_text(
