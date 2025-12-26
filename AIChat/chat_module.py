@@ -104,8 +104,11 @@ class ChatManager:
             conn.close()
             return None
             
-        # 获取会话消息
-        cursor.execute("SELECT role, content, model FROM messages WHERE session_id = ? ORDER BY timestamp", (session_row["id"],))
+        # 获取会话消息 - 过滤掉system消息
+        cursor.execute(
+            "SELECT role, content, model FROM messages WHERE session_id = ? AND role IN ('user', 'assistant') ORDER BY timestamp",
+            (session_row["id"],)
+        )
         messages = [{"role": row[0], "content": row[1], "model": row[2]} for row in cursor.fetchall()]
         
         conn.close()
@@ -135,8 +138,11 @@ class ChatManager:
             conn.close()
             return None
             
-        # 获取会话消息
-        cursor.execute("SELECT role, content, model FROM messages WHERE session_id = ? ORDER BY timestamp", (session_id,))
+        # 获取会话消息 - 过滤掉system消息
+        cursor.execute(
+            "SELECT role, content, model FROM messages WHERE session_id = ? AND role IN ('user', 'assistant') ORDER BY timestamp",
+            (session_id,)
+        )
         messages = [{"role": row[0], "content": row[1], "model": row[2]} for row in cursor.fetchall()]
         
         conn.close()
