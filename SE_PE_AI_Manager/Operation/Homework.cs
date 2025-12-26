@@ -120,7 +120,7 @@ namespace SE_PE_AI_Manager.Operation
                 return return_result;
             }
             return_result.Code = 0;
-            return_result.Message = "";
+            return_result.Message = Convert.ToString(count);
             return return_result;
         }
 

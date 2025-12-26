@@ -98,3 +98,4 @@ C:\Users\15787\Desktop\2026-1\SE\project\SE_PE_AI_Manager\obj\Debug\net8.0\refin
 C:\Users\15787\Desktop\2026-1\SE\project\SE_PE_AI_Manager\obj\Debug\net8.0\SE_PE_AI_Manager.pdb
 C:\Users\15787\Desktop\2026-1\SE\project\SE_PE_AI_Manager\obj\Debug\net8.0\SE_PE_AI_Manager.genruntimeconfig.cache
 C:\Users\15787\Desktop\2026-1\SE\project\SE_PE_AI_Manager\obj\Debug\net8.0\ref\SE_PE_AI_Manager.dll
+C:\Users\15787\Desktop\2026-1\SE\project\SE_PE_AI_Manager\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
