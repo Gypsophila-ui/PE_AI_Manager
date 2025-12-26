@@ -21,9 +21,8 @@ const routes = [
 
   // 学生端路由
   { path: '/student', component: StudentHome },
-  { path: '/course/:courseId', component: CourseDetails },
-  { path: '/course/:courseId/assignments/:assignmentId', component: StudentAssignments },
-  { path: '/student/assistant', component: Assistant },
+  { path: '/student/course/:courseId', component: CourseDetails },
+  { path: '/student/course/:courseId/assignments/:assignmentId', component: StudentAssignments },
 
   // 教师端路由
   { path: '/teacher', component: TeacherHome },
@@ -31,7 +30,6 @@ const routes = [
   { path: '/teacher/publish', component: PublishAssignment },
   { path: '/teacher/grade/:id', component: GradeManagement },
   { path: '/teacher/videos', component: TeachingVideos },
-  { path: '/teacher/assistant', component: Assistant },
   { path: '/teacher/course/:courseId', component: TeacherCourseDetails },
 
   // 公共路由
