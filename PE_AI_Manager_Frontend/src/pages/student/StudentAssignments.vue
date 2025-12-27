@@ -359,7 +359,7 @@ const formatDate = (dateString) => {
 
 // 导航函数
 const goBack = () => {
-  router.push(`/course/${courseId}`)
+  router.push(`/student/course/${courseId}`)
 }
 
 // 文件上传相关函数（集成提交作业功能）

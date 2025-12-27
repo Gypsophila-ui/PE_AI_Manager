@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建axios实例（用于主应用API）
 export const apiClient = axios.create({
-  baseURL: 'http://localhost:5001', // 后端API基础URL
+  baseURL: '', // 使用相对路径，通过Vite代理转发
   timeout: 10000, // 请求超时时间
   headers: {
     'Content-Type': 'application/json'
@@ -10,9 +10,9 @@ export const apiClient = axios.create({
 });
 
 // 创建AI后端服务axios实例
-// 根据YOLO.md文档，AI后端服务默认运行在 http://localhost:8000
+// 根据YOLO.md文档，AI后端服务默认运行在 http://118.25.145.4:8000
 export const aiClient = axios.create({
-  baseURL: 'http://127.0.0.1:8000', // AI后端服务基础URL
+  baseURL: 'http://118.25.145.4:8000', // AI后端服务基础URL
   timeout: 300000, // 视频处理可能需要较长时间，设置为5分钟
   headers: {
     'Content-Type': 'multipart/form-data'

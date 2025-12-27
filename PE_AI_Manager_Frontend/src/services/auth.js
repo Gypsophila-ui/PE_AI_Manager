@@ -8,6 +8,18 @@ const handleApiError = (error, operationType) => {
 
     // 只处理特定的用户友好错误
     const specificErrors = {
+      '-10': {
+        password_change: '参数错误'
+      },
+      '-11': {
+        password_change: '查询id是否存在的sql操作执行失败'
+      },
+      '-12': {
+        password_change: '查询id对应密码的sql操作执行失败'
+      },
+      '-13': {
+        password_change: '修改用户密码的sql操作失败'
+      },
       '-21': {
         login: '用户不存在',
         register: '该用户已经注册过账号',
@@ -85,13 +97,35 @@ export const loginTeacher = async (teacher_id, password) => {
     // 将密码转换为SHA-256
     const passwordHash = await sha256(password);
 
-    const response = await apiClient.post('/login_teacher', {
+    const requestData = {
+      first: teacher_id,
+      second: passwordHash
+    };
+
+    console.log('📤 发送教师登录请求:', {
+      url: '/User/login_teacher',
       teacher_id,
-      password: passwordHash
+      passwordHash: passwordHash.substring(0, 20) + '...' // 只显示部分哈希值
     });
 
-    return { success: true, data: response.data };
+    const response = await apiClient.post('/User/login_teacher', requestData);
+
+    console.log('✅ 教师登录成功:', response.data);
+
+    const loginData = response.data;
+
+    if (loginData) {
+      localStorage.setItem('token', loginData.data);
+    }
+
+    return { success: true, data: loginData };
   } catch (error) {
+    console.error('❌ 教师登录失败:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    });
     return handleApiError(error, 'login');
   }
 };
@@ -102,13 +136,31 @@ export const loginStudent = async (student_id, password) => {
     // 将密码转换为SHA-256
     const passwordHash = await sha256(password);
 
-    const response = await apiClient.post('/login_student', {
+    const requestData = {
+      first: student_id,
+      second: passwordHash
+    };
+
+    console.log('📤 发送学生登录请求:', {
+      url: '/User/login_student',
       student_id,
-      password: passwordHash
+      passwordHash: passwordHash.substring(0, 20) + '...' // 只显示部分哈希值
     });
 
-    return { success: true, data: response.data };
+    const response = await apiClient.post('/User/login_student', requestData);
+
+    console.log('✅ 学生登录成功:', response.data);
+
+    const loginData = response.data;
+
+    return { success: true, data: loginData };
   } catch (error) {
+    console.error('❌ 学生登录失败:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    });
     return handleApiError(error, 'login');
   }
 };
@@ -116,14 +168,17 @@ export const loginStudent = async (student_id, password) => {
 // 教师注册
 export const registerTeacher = async (id, password, name, gender, title, college, department) => {
   try {
-    const response = await apiClient.post('/new_teacher', {
-      id,
-      password,
-      name,
-      gender,
-      title,
-      college,
-      department
+    // 将密码转换为SHA-256
+    const passwordHash = await sha256(password);
+
+    const response = await apiClient.post('/User/new_teacher', {
+      first: id,
+      second: passwordHash,
+      third: name,
+      fourth: gender,
+      fifth: title,
+      sixth: college,
+      seventh: department
     });
 
     return { success: true, data: response.data };
@@ -135,18 +190,35 @@ export const registerTeacher = async (id, password, name, gender, title, college
 // 学生注册
 export const registerStudent = async (id, password, name, gender, major, college, department) => {
   try {
-    const response = await apiClient.post('/new_student', {
-      id,
-      password,
-      name,
-      gender,
-      major,
-      college,
-      department
+    // 将密码转换为SHA-256
+    const passwordHash = await sha256(password);
+
+    const requestData = {
+      first: id,
+      second: passwordHash,
+      third: name,
+      fourth: gender,
+      fifth: major,
+      sixth: college,
+      seventh: department
+    };
+
+    console.log('📤 发送学生注册请求:', {
+      url: '/User/new_student',
+      data: requestData
     });
 
+    const response = await apiClient.post('/User/new_student', requestData);
+
+    console.log('✅ 学生注册成功:', response.data);
     return { success: true, data: response.data };
   } catch (error) {
+    console.error('❌ 学生注册失败:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message
+    });
     return handleApiError(error, 'register');
   }
 };
@@ -158,10 +230,10 @@ export const changeTeacherPassword = async (id, oldPassword, newPassword) => {
     const oldPasswordHash = await sha256(oldPassword);
     const newPasswordHash = await sha256(newPassword);
 
-    const response = await apiClient.post('/change_teacher_password', {
-      id,
-      old_password: oldPasswordHash,
-      new_password: newPasswordHash
+    const response = await apiClient.post('/User/change_teacher_password', {
+      first: id,
+      second: oldPasswordHash,
+      third: newPasswordHash
     });
 
     return { success: true, data: response.data };
@@ -177,10 +249,10 @@ export const changeStudentPassword = async (id, oldPassword, newPassword) => {
     const oldPasswordHash = await sha256(oldPassword);
     const newPasswordHash = await sha256(newPassword);
 
-    const response = await apiClient.post('/change_student_password', {
-      id,
-      old_password: oldPasswordHash,
-      new_password: newPasswordHash
+    const response = await apiClient.post('/User/change_student_password', {
+      first: id,
+      second: oldPasswordHash,
+      third: newPasswordHash
     });
 
     return { success: true, data: response.data };
