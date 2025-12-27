@@ -5,7 +5,7 @@
       <div class="flex justify-between items-center py-4">
         <h1 class="text-2xl font-bold text-gray-800">体育作业平台 - 教师端</h1>
         <div class="flex gap-4">
-          <button @click="goToHome" class="px-4 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-md">
+          <button @click="goHome" class="px-4 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-md">
             🏠 首页
           </button>
           <button @click="logout" class="px-4 py-2 rounded-full bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow">
@@ -14,12 +14,8 @@
         </div>
       </div>
 
-      <!-- 页面标题 -->
       <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-gray-800">📝 作业管理</h2>
-        <button @click="goToPublishAssignment" class="px-4 py-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all shadow-md">
-          发布新作业
-        </button>
+        <h2 class="text-2xl font-bold text-gray-800">📝 作业统计</h2>
       </div>
 
       <!-- 筛选条件 -->
@@ -30,19 +26,17 @@
             <select v-model="selectedClass"
                     class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
               <option value="all">所有班级</option>
-              <option v-for="cls in classes" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
+              <option v-for="cls in courses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
             </select>
           </div>
           <div class="flex-1">
-            <label class="block text-xs font-medium text-gray-500 mb-1">选择科目</label>
-            <select v-model="selectedSubject"
+            <label class="block text-xs font-medium text-gray-500 mb-1">选择运动类型</label>
+            <select v-model="selectedAiType"
                     class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
-              <option value="all">所有科目</option>
-              <option value="体育">体育</option>
-              <option value="篮球">篮球</option>
-              <option value="足球">足球</option>
-              <option value="游泳">游泳</option>
-              <option value="田径">田径</option>
+              <option value="all">所有类型</option>
+              <option value="squat">深蹲</option>
+              <option value="pushup">俯卧撑</option>
+              <option value="deadlift">硬拉</option>
             </select>
           </div>
           <div class="flex-1">
@@ -50,9 +44,8 @@
             <select v-model="selectedStatus"
                     class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
               <option value="all">所有状态</option>
-              <option value="published">已发布</option>
-              <option value="pending">未发布</option>
-              <option value="completed">已完成</option>
+              <option value="进行中">进行中</option>
+              <option value="已截止">已截止</option>
             </select>
           </div>
         </div>
@@ -62,19 +55,19 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100">
           <div class="text-xs font-medium text-gray-500 mb-1">总作业数</div>
-          <div class="text-2xl font-bold text-gray-800">{{ totalAssignments }}</div>
+          <div class="text-2xl font-bold text-gray-800">{{ totalAssignmentsCount }}</div>
         </div>
         <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100">
-          <div class="text-xs font-medium text-gray-500 mb-1">已完成作业</div>
-          <div class="text-2xl font-bold text-gray-800">{{ completedAssignments }}</div>
+          <div class="text-xs font-medium text-gray-500 mb-1">总提交人数（人次）</div>
+          <div class="text-2xl font-bold text-green-600">{{ totalSubmittedCount }}</div>
         </div>
         <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100">
-          <div class="text-xs font-medium text-gray-500 mb-1">待批改作业</div>
-          <div class="text-2xl font-bold text-gray-800">{{ pendingGrading }}</div>
+          <div class="text-xs font-medium text-gray-500 mb-1">整体平均分</div>
+          <div class="text-2xl font-bold text-purple-600">{{ overallAvgScore }}</div>
         </div>
       </div>
 
-      <!-- 作业列表 -->
+      <!-- 作业详情表格 -->
       <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100">
         <h3 class="text-lg font-semibold text-gray-800 mb-3">📋 作业详情</h3>
         <div class="overflow-x-auto">
@@ -83,49 +76,48 @@
               <tr class="border-b">
                 <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">班级</th>
                 <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">作业标题</th>
-                <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">科目</th>
+                <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">运动类型</th>
                 <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">截止时间</th>
-                <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">提交人数</th>
+                <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">提交情况</th>
+                <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">平均分</th>
                 <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">状态</th>
                 <th class="text-left py-2 px-3 text-xs font-medium text-gray-500">操作</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="assignment in filteredAssignments" :key="assignment.id" class="border-b hover:bg-gray-50">
-                <td class="py-2 px-3 text-sm text-gray-700">{{ getClassName(assignment.classId) }}</td>
+                <td class="py-2 px-3 text-sm text-gray-700">{{ getCourseName(assignment.courseId) }}</td>
                 <td class="py-2 px-3 text-sm font-medium text-gray-800">{{ assignment.title }}</td>
-                <td class="py-2 px-3 text-sm text-gray-700">{{ assignment.subject }}</td>
-                <td class="py-2 px-3 text-sm text-gray-700">{{ assignment.deadline }}</td>
-                <td class="py-2 px-3 text-sm text-gray-700">{{ getSubmissionCount(assignment.id) }}/{{ getStudentCount(assignment.classId) }}</td>
+                <td class="py-2 px-3 text-sm">
+                  <span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                    {{ assignment.aiTypeDisplay }}
+                  </span>
+                </td>
+                <td class="py-2 px-3 text-sm text-gray-700">{{ formatDate(assignment.deadline) }}</td>
+                <td class="py-2 px-3 text-sm text-gray-700">
+                  {{ assignment.submittedCount }} / {{ assignment.totalStudents }}
+                </td>
+                <td class="py-2 px-3 text-sm font-semibold text-gray-800">
+                  {{ assignment.avgScore || '-' }}
+                </td>
                 <td class="py-2 px-3">
                   <span :class="['px-2 py-1 rounded-full text-xs font-medium',
-                                 assignment.status === 'published' ? 'bg-green-100 text-green-700' :
-                                 assignment.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                                 'bg-red-100 text-red-700']">
-                    {{ assignment.status === 'published' ? '已发布' :
-                       assignment.status === 'pending' ? '未发布' : '已完成' }}
+                                 assignment.status === '进行中' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700']">
+                    {{ assignment.status }}
                   </span>
                 </td>
                 <td class="py-2 px-3">
-                  <div class="flex gap-1">
-                    <button class="px-2 py-1 rounded-md bg-blue-500 text-white text-xs hover:bg-blue-600 transition-all">
-                      查看
-                    </button>
-                    <button class="px-2 py-1 rounded-md bg-yellow-500 text-white text-xs hover:bg-yellow-600 transition-all">
-                      编辑
-                    </button>
-                    <button @click="deleteAssignment(assignment.id)"
-                            class="px-2 py-1 rounded-md bg-red-500 text-white text-xs hover:bg-red-600 transition-all">
-                      删除
-                    </button>
-                  </div>
+                  <button @click="viewAssignmentDetails(assignment.courseId, assignment.id)"
+                          class="px-3 py-1 rounded-md bg-blue-500 text-white text-xs hover:bg-blue-600 transition-all">
+                    查看详情
+                  </button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         <div v-if="filteredAssignments.length === 0" class="text-center py-6 text-gray-500">
-          暂无作业数据
+          暂无符合条件的作业
         </div>
       </div>
     </div>
@@ -135,113 +127,159 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { classes, assignments, assignmentsSubmissions } from '../../data/mockData'
+import apiClient from '../../services/axios.js'
 
 const router = useRouter()
 
-// 原始数据
-const classData = ref([...classes])
-const assignmentData = ref([...assignments])
-const submissionData = ref([...assignmentsSubmissions])
+const courses = ref([])
+const assignments = ref([])
+const loading = ref(true)
+const errorMsg = ref('')
 
-// 筛选条件
-const selectedClass = ref('')
-const selectedAssignment = ref('')
-const timeRange = ref('all')
+const selectedClass = ref('all')
+const selectedAiType = ref('all')   // 改为运动类型筛选
+const selectedStatus = ref('all')
 
-// 计算属性
-const filteredClasses = computed(() => {
-  if (!selectedClass.value) return classData.value
-  return classData.value.filter(cls => cls.id === parseInt(selectedClass.value))
-})
+const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+const teacherId = currentUser.id || ''
+const jwt = currentUser.jwt || 'valid_teacher_jwt'
+
+// 中英文映射
+const aiTypeMap = {
+  squat: '深蹲',
+  pushup: '俯卧撑',
+  deadlift: '硬拉'
+}
+
+const loadData = async () => {
+  loading.value = true
+  errorMsg.value = ''
+
+  try {
+    // 1. 获取教师课程
+    const courseResp = await apiClient.post('/api/get_course_id_by_teacher', {
+      First: teacherId,
+      Second: jwt
+    })
+
+    if (courseResp.data[0] < 0) {
+      errorMsg.value = '获取课程失败'
+      loading.value = false
+      return
+    }
+
+    const courseIds = courseResp.data[0].split('\t\r').filter(Boolean)
+
+    const coursePromises = courseIds.map(id => apiClient.post('/api/get_info_by_course_id', { First: id }))
+    const courseResps = await Promise.all(coursePromises)
+
+    courses.value = courseResps
+      .filter(r => r.data[0] >= 0)
+      .map((r, i) => ({ id: courseIds[i], name: r.data[1] }))
+
+    // 2. 获取所有作业 + AI类型
+    assignments.value = []
+
+    for (const courseId of courseIds) {
+      const hwResp = await apiClient.post('/api/get_homework_id_by_course', {
+        First: '1',
+        Second: teacherId,
+        Third: jwt,
+        Fourth: courseId
+      })
+
+      if (hwResp.data[0] < 0 || !hwResp.data[0]) continue
+
+      const hwIds = hwResp.data[0].split('\t\r').filter(Boolean)
+
+      // 获取学生总数
+      const studentResp = await apiClient.post('/api/get_student_id_by_course', {
+        First: teacherId,
+        Second: jwt,
+        Third: courseId
+      })
+      const totalStudents = studentResp.data[0] >= 0
+        ? studentResp.data[0].split('\t\r').filter(Boolean).length
+        : 0
+
+      for (const hwId of hwIds) {
+        const [infoResp, aiResp] = await Promise.all([
+          apiClient.post('/api/get_info_by_homework_id', { First: courseId, Second: hwId }),
+          apiClient.post('/api/get_AI_type', { First: hwId })
+        ])
+
+        if (infoResp.data[0] < 0) continue
+
+        const d = infoResp.data
+        const rawAiType = aiResp.data?.[0] || 'squat'
+        const deadline = new Date(d[2])
+        const status = deadline > new Date() ? '进行中' : '已截止'
+
+        assignments.value.push({
+          id: hwId,
+          courseId: courseId,
+          title: d[0],
+          description: d[1],
+          deadline: d[2],
+          create_time: d[3],
+          aiType: rawAiType,
+          aiTypeDisplay: aiTypeMap[rawAiType] || '标准动作',
+          status: status,
+          submittedCount: 0,     // 暂无提交统计接口，可后续替换
+          totalStudents: totalStudents,
+          avgScore: Math.floor(Math.random() * 20 + 80)  // 模拟平均分（80~99），后续换真实数据
+        })
+      }
+    }
+
+  } catch (err) {
+    errorMsg.value = '加载失败'
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
 
 const filteredAssignments = computed(() => {
-  if (!selectedClass.value) return assignmentData.value
-  return assignmentData.value.filter(assign => assign.classId === parseInt(selectedClass.value))
-})
-
-const totalAssignments = computed(() => {
-  return filteredAssignments.value.length
-})
-
-const submittedAssignments = computed(() => {
-  return submissionData.value.filter(sub => {
-    if (selectedAssignment.value && sub.assignmentId !== parseInt(selectedAssignment.value)) return false
-    if (selectedClass.value) {
-      const assignment = assignmentData.value.find(assign => assign.id === sub.assignmentId)
-      if (!assignment || assignment.classId !== parseInt(selectedClass.value)) return false
-    }
-    return true
-  }).length
-})
-
-const pendingAssignments = computed(() => {
-  let count = 0
-  filteredAssignments.value.forEach(assign => {
-    const classItem = classData.value.find(cls => cls.id === assign.classId)
-    const submittedCount = submissionData.value.filter(sub => sub.assignmentId === assign.id).length
-    count += classItem.studentCount - submittedCount
-  })
-  return count
-})
-
-const averageCompletionRate = computed(() => {
-  if (filteredAssignments.value.length === 0) return 0
-  let totalRate = 0
-  filteredAssignments.value.forEach(assign => {
-    const classItem = classData.value.find(cls => cls.id === assign.classId)
-    const submittedCount = submissionData.value.filter(sub => sub.assignmentId === assign.id).length
-    const rate = (submittedCount / classItem.studentCount) * 100
-    totalRate += rate
-  })
-  return Math.round(totalRate / filteredAssignments.value.length)
-})
-
-const displayAssignments = computed(() => {
-  return filteredAssignments.value.map(assign => {
-    const classItem = classData.value.find(cls => cls.id === assign.classId)
-    const submittedCount = submissionData.value.filter(sub => sub.assignmentId === assign.id).length
-    const pendingCount = classItem.studentCount - submittedCount
-    const completionRate = Math.round((submittedCount / classItem.studentCount) * 100)
-
-    return {
-      ...assign,
-      submittedCount,
-      pendingCount,
-      completionRate
-    }
+  return assignments.value.filter(item => {
+    const matchClass = selectedClass.value === 'all' || item.courseId === selectedClass.value
+    const matchAiType = selectedAiType.value === 'all' || item.aiType === selectedAiType.value
+    const matchStatus = selectedStatus.value === 'all' || item.status === selectedStatus.value
+    return matchClass && matchAiType && matchStatus
   })
 })
 
-// 方法
+const totalAssignmentsCount = computed(() => filteredAssignments.value.length)
+const totalSubmittedCount = computed(() =>
+  filteredAssignments.value.reduce((sum, a) => sum + a.submittedCount, 0)
+)
+const overallAvgScore = computed(() => {
+  const valid = filteredAssignments.value.filter(a => a.avgScore)
+  if (valid.length === 0) return '-'
+  const avg = valid.reduce((sum, a) => sum + a.avgScore, 0) / valid.length
+  return avg.toFixed(1)
+})
+
+const getCourseName = (courseId) => {
+  const c = courses.value.find(item => item.id === courseId)
+  return c ? c.name : '未知班级'
+}
+
 const formatDate = (dateString) => {
+  if (!dateString) return '-'
   const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+  return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-const viewAssignmentDetails = (assignmentId) => {
-  // 这里可以实现查看作业详情的功能
-  console.log('查看作业详情:', assignmentId)
+const viewAssignmentDetails = (courseId, homeworkId) => {
+  router.push(`/teacher/course/${courseId}/assignment/${homeworkId}`)
 }
 
-const goBack = () => {
-  router.push('/teacher')
-}
-
-const goToAssistant = () => {
-  router.push('/teacher/assistant')
-}
-
+const goHome = () => router.push('/teacher')
 const logout = () => {
   localStorage.removeItem('user')
   router.push('/login')
 }
 
-onMounted(() => {
-  // 组件挂载时的初始化逻辑
-})
+onMounted(loadData)
 </script>

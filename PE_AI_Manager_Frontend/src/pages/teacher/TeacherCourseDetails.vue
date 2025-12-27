@@ -43,33 +43,55 @@
 
       <!-- 课程信息卡片 -->
       <section v-else-if="course" class="bg-white rounded-3xl shadow-xl p-6">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-6">
+          <div class="flex-1">
             <h3 class="text-3xl font-bold text-gray-800 mb-2">{{ course.name }}</h3>
-            <p class="text-gray-600 mb-4">{{ course.description }}</p>
-            <div class="flex items-center gap-4">
+            <p class="text-gray-600 mb-4">{{ course.info || '暂无描述' }}</p>
+
+            <!-- 课程基本信息 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <div class="flex items-center gap-2 text-gray-600">
                 <span class="text-gray-400">📚</span>
                 <span>{{ course.subject }}</span>
               </div>
               <div class="flex items-center gap-2 text-gray-600">
                 <span class="text-gray-400">📊</span>
-                <span>{{ course.status }}</span>
+                <span>{{ course.is_active === '1' ? '进行中' : '未发布' }}</span>
               </div>
               <div class="flex items-center gap-2 text-gray-600">
                 <span class="text-gray-400">📝</span>
                 <span>{{ course.assignments.length }} 个作业</span>
               </div>
+              <div class="flex items-center gap-2">
+                <span class="text-gray-400">🔑</span>
+                <span class="font-mono text-sm bg-gray-100 px-3 py-1 rounded-lg">
+                  {{ course.code || '加载中...' }}
+                </span>
+                <button
+                  @click="copyCode"
+                  class="ml-2 text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
+                  title="复制邀请码"
+                >
+                  复制
+                </button>
+              </div>
             </div>
           </div>
-          <!-- 教师操作按钮 -->
-          <div class="flex gap-4 mt-4 md:mt-0">
-            <button @click="showPublishAssignment = true" class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg">
-              📝 发布作业
-            </button>
-          </div>
-        </div>
-      </section>
+
+    <!-- 操作按钮组 -->
+    <div class="flex flex-wrap gap-3">
+      <button @click="editCourse" class="px-5 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow">
+        ✏️ 编辑课程
+      </button>
+      <button @click="manageStudents" class="px-5 py-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow">
+        👥 学生管理
+      </button>
+      <button @click="showPublishAssignment = true" class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg">
+        📝 发布作业
+      </button>
+    </div>
+  </div>
+</section>
 
       <!-- 作业列表 -->
       <section v-if="course && course.assignments.length > 0" class="bg-white rounded-3xl shadow-xl p-6">
@@ -80,21 +102,22 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between">
               <div class="flex-1">
                 <h4 class="text-lg font-semibold text-gray-800 mb-1">{{ assignment.title }}</h4>
-                <p class="text-sm text-gray-600 mb-2">{{ assignment.description }}</p>
+                <p class="text-sm text-gray-600 mb-2">{{ assignment.description || '暂无描述' }}</p>
                 <div class="flex items-center space-x-4">
-                  <span class="text-xs text-gray-500">{{ assignment.subject }}</span>
+                  <span class="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-800">
+                    {{ assignment.aiTypeDisplay }}
+                  </span>
                   <span :class="['text-xs px-2 py-1 rounded-full',
                                 assignment.status === '进行中' ? 'bg-blue-100 text-blue-800' :
-                                assignment.status === '已完成' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800']">
+                                'bg-red-100 text-red-800']">
                     {{ assignment.status }}
                   </span>
-                  <span class="text-xs text-gray-500">截止时间: {{ formatDate(assignment.deadline) }}</span>
+                  <span class="text-xs text-gray-500">截止: {{ formatDate(assignment.deadline) }}</span>
                 </div>
               </div>
-              <router-link :to="`/teacher/assignments/${assignment.id}`"
-                          class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">
-                查看详情
+              <router-link :to="`${course.id}/assignment/${assignment.id}`"
+                           class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">
+                查看详情 →
               </router-link>
             </div>
           </div>
@@ -120,120 +143,92 @@
           返回首页
         </button>
       </section>
-    </div>
 
-    <!-- 发布作业弹窗 -->
-    <div v-if="showPublishAssignment" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-3xl shadow-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-2xl font-bold text-gray-800">📝 发布新作业</h3>
-          <button @click="showPublishAssignment = false" class="text-2xl text-gray-400 hover:text-gray-600 transition-colors">
-            ×
-          </button>
-        </div>
+      <!-- 发布作业弹窗 -->
+      <div v-if="showPublishAssignment" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-3xl shadow-xl p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-bold text-gray-800">📝 发布新作业</h3>
+            <button @click="showPublishAssignment = false" class="text-2xl text-gray-400 hover:text-gray-600 transition-colors">
+              ×
+            </button>
+          </div>
 
-        <form @submit.prevent="submitForm">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- 作业标题 -->
-            <div class="col-span-1 md:col-span-2">
-              <label for="title" class="block text-sm font-medium text-gray-700 mb-2">作业标题</label>
-              <input
-                id="title"
-                v-model="assignment.title"
-                type="text"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                placeholder="例如：50米折返跑测试"
-                required
-              />
+          <form @submit.prevent="submitForm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- 作业标题 -->
+              <div class="col-span-1 md:col-span-2">
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">作业标题</label>
+                <input
+                  id="title"
+                  v-model="newAssignment.title"
+                  type="text"
+                  required
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm"
+                  placeholder="例如：深蹲标准动作测试"
+                />
+              </div>
+
+              <!-- AI识别运动类型 -->
+              <div>
+                <label for="aiType" class="block text-sm font-medium text-gray-700 mb-2">AI识别运动类型</label>
+                <select
+                  id="aiType"
+                  v-model="newAssignment.aiType"
+                  required
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm"
+                >
+                  <option value="">请选择运动类型</option>
+                  <option value="squat">深蹲 (Squat)</option>
+                  <option value="pushup">俯卧撑 (Push-up)</option>
+                  <option value="deadlift">硬拉 (Deadlift)</option>
+                </select>
+              </div>
+
+              <!-- 截止日期 -->
+              <div>
+                <label for="deadline" class="block text-sm font-medium text-gray-700 mb-2">截止日期</label>
+                <input
+                  id="deadline"
+                  v-model="newAssignment.deadline"
+                  type="datetime-local"
+                  required
+                  max="2999-12-31T23:59"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm"
+                />
+              </div>
             </div>
 
-            <!-- 作业科目 -->
-            <div>
-              <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">作业科目</label>
-              <select
-                id="subject"
-                v-model="assignment.subject"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                required
+            <!-- 作业描述 -->
+            <div class="mt-6">
+              <label for="description" class="block text-sm font-medium text-gray-700 mb-2">作业描述</label>
+                <textarea
+                  id="description"
+                  v-model="newAssignment.description"
+                  rows="4"
+                  required
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm"
+                  placeholder="详细描述动作要求、次数、评分标准等"
+                ></textarea>
+            </div>
+
+            <div class="mt-10 flex gap-4 justify-end">
+              <button
+                type="button"
+                @click="showPublishAssignment = false"
+                class="px-8 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all shadow"
               >
-                <option value="">请选择科目</option>
-                <option value="田径">田径</option>
-                <option value="力量">力量</option>
-                <option value="弹跳">弹跳</option>
-                <option value="柔韧性">柔韧性</option>
-                <option value="球类">球类</option>
-              </select>
+                取消
+              </button>
+              <button
+                type="submit"
+                class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg"
+              >
+                发布作业
+              </button>
             </div>
-
-            <!-- 作业分值 -->
-            <div>
-              <label for="points" class="block text-sm font-medium text-gray-700 mb-2">作业分值</label>
-              <input
-                id="points"
-                v-model.number="assignment.points"
-                type="number"
-                min="0"
-                max="100"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                placeholder="100"
-                required
-              />
-            </div>
-
-            <!-- 截止日期 -->
-            <div>
-              <label for="deadline" class="block text-sm font-medium text-gray-700 mb-2">截止日期</label>
-              <input
-                id="deadline"
-                v-model="assignment.deadline"
-                type="datetime-local"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                required
-              />
-            </div>
-
-            <!-- 视频要求 -->
-            <div class="flex items-center gap-3">
-              <input
-                id="videoRequired"
-                v-model="assignment.videoRequired"
-                type="checkbox"
-                class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <label for="videoRequired" class="text-sm font-medium text-gray-700">要求提交视频</label>
-            </div>
-          </div>
-
-          <!-- 作业描述 -->
-          <div class="mt-6">
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">作业描述</label>
-            <textarea
-              id="description"
-              v-model="assignment.description"
-              rows="4"
-              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-              placeholder="详细描述作业要求、评分标准等信息"
-              required
-            ></textarea>
-          </div>
-
-          <!-- 提交按钮 -->
-          <div class="mt-10 flex gap-4 justify-end">
-            <button
-              type="button"
-              @click="showPublishAssignment = false"
-              class="px-8 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all shadow"
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg"
-            >
-              发布作业
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -242,115 +237,188 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import axios from '../../services/axios'
-import { classes, courses } from '../../data/mockData'
+import apiClient from '../../services/axios.js'
 
 const router = useRouter()
 const route = useRoute()
 
-// 课程和作业相关
 const course = ref(null)
 const loading = ref(true)
 const error = ref(false)
 const errorMessage = ref('')
 const showPublishAssignment = ref(false)
 
-// 作业表单数据
-const assignment = ref({
+const newAssignment = ref({
   title: '',
-  subject: '',
+  aiType: '',
   description: '',
-  deadline: '',
-  points: 100,
-  videoRequired: true,
-  courseId: route.params.courseId || route.params.id
+  deadline: ''
 })
 
-// 获取课程ID
-const courseId = route.params.courseId || route.params.id
+const courseId = route.params.courseId
 
-// 获取课程详情和作业列表
+const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+const teacherId = currentUser.id || ''
+const jwt = currentUser.jwt || 'valid_teacher_jwt'
+
+// AI类型中英文映射
+const aiTypeMap = {
+  squat: '深蹲',
+  pushup: '俯卧撑',
+  deadlift: '硬拉'
+}
+
+const copyCode = async () => {
+  if (!course.value?.code) {
+    alert('邀请码尚未加载')
+    return
+  }
+  try {
+    await navigator.clipboard.writeText(course.value.code)
+    alert('邀请码已复制到剪贴板！')
+  } catch (err) {
+    alert('复制失败，请手动选中复制')
+  }
+}
+
+const editCourse = () => {
+  router.push({
+    path: `/teacher/course/${courseId}/edit`,
+  })
+}
+
+const manageStudents = () => {
+  router.push(`/teacher/course/${courseId}/students`)
+}
+
 const fetchCourseDetails = async () => {
   loading.value = true
   error.value = false
-  errorMessage.value = ''
 
   try {
-    // 从mock数据中获取课程详情
-    const foundCourse = courses.find(c => c.id === courseId)
-    if (foundCourse) {
-      course.value = foundCourse
-    } else {
-      // 对于非示例课程ID，使用默认mock数据
-      console.log('课程不存在，使用默认数据')
-      course.value = {
-        id: courseId,
-        name: '默认课程',
-        description: '这是一个默认课程的描述。',
-        subject: '体育',
-        status: '进行中',
-        assignments: []
-      }
+    // 1. 获取课程基本信息
+    const courseResp = await apiClient.post('/api/get_info_by_course_id', { First: courseId })
+    if (courseResp.data[0] < 0) {
+      errorMessage.value = '课程不存在或已被删除'
+      error.value = true
+      return
     }
+
+    const c = courseResp.data
+    course.value = {
+      id: courseId,
+      name: c[1],
+      info: c[2] || '',
+      code: c[3],
+      subject: '体育',
+      is_active: c[5],
+      assignments: []
+    }
+
+    // 2. 获取作业ID列表
+    const homeworkResp = await apiClient.post('/api/get_homework_id_by_course', {
+      First: '1',
+      Second: teacherId,
+      Third: jwt,
+      Fourth: courseId
+    })
+
+    if (!homeworkResp.data || typeof homeworkResp.data[0] !== 'string' || !homeworkResp.data[0].trim()) {
+      course.value.assignments = []
+      loading.value = false
+      return
+    }
+
+    const homeworkIds = homeworkResp.data[0].split('\t\r').filter(Boolean)
+
+    // 3. 并行获取每个作业的详情 + AI类型
+    const assignmentPromises = homeworkIds.map(async (id) => {
+      const [infoResp, aiResp] = await Promise.all([
+        apiClient.post('/api/get_info_by_homework_id', { First: courseId, Second: id }),
+        apiClient.post('/api/get_AI_type', { First: id })  // 获取AI类型
+      ])
+
+      if (!Array.isArray(infoResp.data) || infoResp.data.length < 4) return null
+
+      const d = infoResp.data
+      const rawAiType = aiResp.data?.[0] || ''  // 假设返回 [ai_type]
+      const aiTypeDisplay = aiTypeMap[rawAiType] || '未知动作'
+
+      return {
+        id,
+        title: d[0],
+        description: d[1],
+        deadline: d[2],
+        create_time: d[3],
+        status: new Date(d[2]) > new Date() ? '进行中' : '已截止',
+        aiType: rawAiType,
+        aiTypeDisplay
+      }
+    })
+
+    const assignments = (await Promise.all(assignmentPromises)).filter(Boolean)
+    course.value.assignments = assignments
+
   } catch (err) {
-    console.error('获取课程详情失败:', err)
+    console.error(err)
     error.value = true
-    errorMessage.value = err.message
+    errorMessage.value = '加载失败，请检查网络'
   } finally {
     loading.value = false
   }
 }
 
-// 提交表单
-const submitForm = () => {
-  // 验证表单
-  if (!assignment.value.title || !assignment.value.description || !assignment.value.deadline) {
-    alert('请填写所有必填字段')
+const submitForm = async () => {
+  if (!newAssignment.value.title || !newAssignment.value.description || !newAssignment.value.deadline || !newAssignment.value.aiType) {
+    alert('请完整填写所有字段')
     return
   }
 
-  // 模拟发布作业
-  console.log('发布作业:', assignment.value)
+  try {
+    // 1. 创建作业
+    const addResp = await apiClient.post('/api/add_homework', {
+      First: teacherId,
+      Second: jwt,
+      Third: courseId,
+      Fourth: newAssignment.value.title,
+      Fifth: newAssignment.value.description,
+      Sixth: newAssignment.value.deadline
+    })
 
-  // 在真实环境中，这里应该调用API发布作业
-  // 模拟成功后更新课程作业列表
-  const newAssignment = {
-    id: Date.now(),
-    ...assignment.value,
-    status: '进行中',
-    create_time: new Date().toISOString()
+    const homeworkId = addResp.data?.data?.trim()
+    if (!homeworkId) {
+      alert('作业创建失败：未返回ID')
+      return
+    }
+
+    // 2. 设置AI类型
+    const setResp = await apiClient.post('/api/set_AI_type', {
+      First: teacherId,
+      Second: jwt,
+      Third: courseId,
+      Fourth: homeworkId,
+      Fifth: newAssignment.value.aiType
+    })
+
+    if (setResp.data?.errorCode !== 0) {
+      alert('警告：AI识别模型设置失败，但作业已创建')
+    }
+
+    alert('作业发布成功！')
+    showPublishAssignment.value = false
+    newAssignment.value = { title: '', aiType: '', description: '', deadline: '' }
+    await fetchCourseDetails()  // 刷新列表，显示新作业和正确运动类型
+
+  } catch (err) {
+    console.error(err)
+    alert('发布失败，请重试')
   }
-
-  // 更新本地课程作业列表
-  if (course.value) {
-    course.value.assignments.push(newAssignment)
-  }
-
-  // 显示发布成功
-  alert('作业发布成功！')
-
-  // 关闭弹窗并重置表单
-  showPublishAssignment.value = false
-  resetForm()
 }
 
-// 重置表单
-const resetForm = () => {
-  assignment.value = {
-    title: '',
-    subject: '',
-    description: '',
-    deadline: '',
-    points: 100,
-    videoRequired: true,
-    courseId: courseId
-  }
-}
-
-// 格式化日期
 const formatDate = (dateString) => {
+  if (!dateString) return '-'
   const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN', {
+  return date.toLocaleString('zh-CN', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -359,22 +427,12 @@ const formatDate = (dateString) => {
   })
 }
 
-// 导航函数
-const goBack = () => {
-  router.push('/teacher')
-}
-
-const goToAssistant = () => {
-  router.push('/teacher/assistant')
-}
-
+const goBack = () => router.push('/teacher')
+const goToAssistant = () => router.push('/teacher/assistant')
 const logout = () => {
   localStorage.removeItem('user')
   router.push('/login')
 }
 
-// 组件挂载时获取课程详情
-onMounted(() => {
-  fetchCourseDetails()
-})
+onMounted(fetchCourseDetails)
 </script>
