@@ -126,7 +126,7 @@
                   <span class="text-xs text-gray-500">截止时间: {{ formatDate(assignment.deadline) }}</span>
                 </div>
               </div>
-              <router-link :to="`/course/${course.id}/assignments/${assignment.id}`"
+              <router-link :to="`/student/course/${course.id}/assignments/${assignment.id}`"
                           class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium">
                 查看详情
               </router-link>
@@ -194,6 +194,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { apiClient } from '../services/axios'
+import StudentAssignments from './student/StudentAssignments.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -220,7 +221,7 @@ const fetchCourseDetails = async () => {
   loading.value = true
   error.value = false
   errorMessage.value = ''
-
+  const Student_id = localStorage.getItem('user')
   try {
     // 获取JWT token
     const token = localStorage.getItem('token')
@@ -228,80 +229,103 @@ const fetchCourseDetails = async () => {
       throw new Error('未找到认证token，请重新登录')
     }
 
+    // 获取当前用户信息
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const studentId = currentUser ? currentUser.id : 'student1'
+
     // 调用get_info_by_course_id接口获取课程详情
-    const courseResponse = await apiClient.post('/get_info_by_course_id', {
-      course_id: courseId,
-      jwt: token
+    const courseResponse = await apiClient.post('/Course/get_info_by_course_id', {
+      first: courseId,
     })
 
-    if (courseResponse.data.code === 0 && courseResponse.data.data) {
-      const courseData = courseResponse.data.data
+    if (courseResponse.data.success && courseResponse.data.data) {
+      // 解析课程数据字符串，格式为: 教师id\t\r课程名字\t\r课程描述\t\r课程码\t\r课程所在学期\t\r课程是否正在进行(1是0否)\t\r课程创建时间
+      const courseDataArray = courseResponse.data.data.split('\t\r').filter(item => item.trim());
 
-      // 调用get_homework_id_by_course接口获取作业列表
-      const homeworkResponse = await apiClient.post('/get_homework_id_by_course', {
-        course_id: courseId,
-        user_type: '0', // 学生
-        jwt: token
-      })
+      if (courseDataArray.length <= 7) {
+        const [
+          teacherId,      // 教师ID
+          courseName,     // 课程名字
+          courseDescription, // 课程描述
+          courseCode,     // 课程码
+          courseTerm,     // 课程所在学期
+          isActive,       // 课程是否正在进行 (1是 0否)
+          createTime     // 课程创建时间
+        ] = courseDataArray;
 
-      let assignments = []
-      if (homeworkResponse.data.code === 0 && homeworkResponse.data.data) {
-        // 解析作业ID列表（用\t\r分隔）
-        const homeworkIdList = homeworkResponse.data.data.split('\t\r').filter(id => id.trim())
-
-        // 为每个作业ID获取作业详情
-        const assignmentDetailsPromises = homeworkIdList.map(async (homeworkId) => {
-          try {
-            const assignmentResponse = await apiClient.post('/get_info_by_homework_id', {
-              homework_id: homeworkId.trim(),
-              jwt: token
-            })
-
-            if (assignmentResponse.data.code === 0 && assignmentResponse.data.data) {
-              const assignmentData = assignmentResponse.data.data
-              return {
-                id: homeworkId.trim(),
-                title: assignmentData.name || `作业 ${homeworkId.trim()}`,
-                description: assignmentData.info || '暂无描述',
-                deadline: assignmentData.deadline || '待定',
-                create_time: assignmentData.create_time || '',
-                course_id: courseId,
-                subject: assignmentData.subject || '体育',
-                status: assignmentData.is_active === '1' ? '进行中' : '未发布',
-                points: assignmentData.points || 100
-              }
-            }
-          } catch (error) {
-            console.error(`获取作业 ${homeworkId} 详情失败:`, error)
-            return {
-              id: homeworkId.trim(),
-              title: `作业 ${homeworkId.trim()}`,
-              description: '暂无描述',
-              deadline: '待定',
-              create_time: '',
-              course_id: courseId,
-              subject: '体育',
-              status: '进行中',
-              points: 100
-            }
-          }
+        // 调用get_homework_id_by_course接口获取作业列表
+        const homeworkResponse = await apiClient.post('/Homework/get_homework_id_by_course', {
+          first: '0', // 学生
+          second: studentId ,
+          third: token,
+          fourth:courseId
         })
 
-        // 等待所有作业详情获取完成
-        assignments = await Promise.all(assignmentDetailsPromises)
-      }
+        let assignments = []
+        if (homeworkResponse.data.success && homeworkResponse.data.data) {
+          // 解析作业ID列表（用\t\r分隔）
+          const homeworkIdList = homeworkResponse.data.data.split('\t\r').filter(id => id.trim())
 
-      // 构造课程对象
-      course.value = {
-        id: courseId,
-        name: courseData.name || '未命名课程',
-        description: courseData.info || '暂无描述',
-        subject: '体育',
-        status: courseData.is_active === '1' ? '进行中' : '未发布',
-        assignments: assignments
-      }
+          // 为每个作业ID获取作业详情
+          const assignmentDetailsPromises = homeworkIdList.map(async (homeworkId) => {
+            try {
+              const assignmentResponse = await apiClient.post('/Homework/get_info_by_homework_id', {
+                second: homeworkId.trim(),
+                first: courseId
+              })
 
-      console.log('课程详情加载成功:', course.value)
+              if (assignmentResponse.data.success && assignmentResponse.data.data) {
+                // 解析作业数据字符串，格式可能与课程类似
+                const assignmentData = assignmentResponse.data.data;
+                return {
+                  id: homeworkId.trim(),
+                  title: assignmentData.name || `作业 ${homeworkId.trim()}`,
+                  description: assignmentData.info || '暂无描述',
+                  deadline: assignmentData.deadline || '待定',
+                  create_time: assignmentData.create_time || '',
+                  course_id: courseId,
+                  subject: assignmentData.subject || '体育',
+                  status: assignmentData.is_active === '1' ? '进行中' : '未发布',
+                  points: assignmentData.points || 100
+                }
+              }
+            } catch (error) {
+              console.error(`获取作业 ${homeworkId} 详情失败:`, error)
+              return {
+                id: homeworkId.trim(),
+                title: `作业 ${homeworkId.trim()}`,
+                description: '暂无描述',
+                deadline: '待定',
+                create_time: '',
+                course_id: courseId,
+                subject: '体育',
+                status: '进行中',
+                points: 100
+              }
+            }
+          })
+
+          // 等待所有作业详情获取完成
+          assignments = await Promise.all(assignmentDetailsPromises)
+        }
+
+        // 构造课程对象
+        course.value = {
+          id: courseId,
+          name: courseName || '未命名课程',
+          description: courseDescription || '暂无描述',
+          subject: '体育',
+          status: isActive === '1' ? '进行中' : '未发布',
+          assignments: assignments,
+          teacherId: teacherId,
+          courseTerm: courseTerm,
+          createTime: createTime
+        }
+
+        console.log('课程详情加载成功:', course.value)
+      } else {
+        throw new Error('课程数据格式不正确');
+      }
     } else {
       throw new Error(courseResponse.data.message || '获取课程详情失败')
     }
@@ -320,7 +344,63 @@ const fetchCourseDetails = async () => {
       description: '这是一个默认课程的描述。',
       subject: '体育',
       status: '进行中',
-      assignments: []
+      assignments: [
+        {
+          id: 'HW101',
+          title: '俯卧撑训练',
+          description: '完成3组俯卧撑，每组15个，注意保持身体平直',
+          deadline: '2025-01-15',
+          create_time: '2025-01-01',
+          course_id: courseId,
+          subject: '体育',
+          status: '进行中',
+          points: 100
+        },
+        {
+          id: 'HW102',
+          title: '仰卧起坐训练',
+          description: '完成3组仰卧起坐，每组20个，注意动作规范',
+          deadline: '2025-01-20',
+          create_time: '2025-01-02',
+          course_id: courseId,
+          subject: '体育',
+          status: '已完成',
+          points: 100
+        },
+        {
+          id: 'HW103',
+          title: '深蹲训练',
+          description: '完成4组深蹲，每组15个，注意膝盖不要超过脚尖',
+          deadline: '2025-01-25',
+          create_time: '2025-01-03',
+          course_id: courseId,
+          subject: '体育',
+          status: '进行中',
+          points: 100
+        },
+        {
+          id: 'HW104',
+          title: '平板支撑训练',
+          description: '完成3组平板支撑，每组60秒，保持核心稳定',
+          deadline: '2025-01-30',
+          create_time: '2025-01-04',
+          course_id: courseId,
+          subject: '体育',
+          status: '进行中',
+          points: 100
+        },
+        {
+          id: 'HW105',
+          title: '引体向上训练',
+          description: '完成3组引体向上，每组8个，注意动作完整',
+          deadline: '2025-02-05',
+          create_time: '2025-01-05',
+          course_id: courseId,
+          subject: '体育',
+          status: '进行中',
+          points: 100
+        }
+      ]
     }
   } finally {
     loading.value = false

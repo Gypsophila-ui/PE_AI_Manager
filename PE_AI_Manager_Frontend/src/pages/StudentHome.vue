@@ -70,7 +70,7 @@
                 </div>
               </div>
               <router-link
-                :to="`/course/${course.id}`"
+                :to="`/student/course/${course.id}`"
                 class="mt-3 md:mt-0 text-blue-500 hover:text-blue-700 text-sm font-medium"
               >
                 查看
@@ -168,7 +168,7 @@ const fetchCourseList = async () => {
       second: token.trim()
     })
 
-    if (response.data.code === 0) {
+    if (response.data.success) {
       if (!response.data.data || response.data.data.trim() === '' || response.data.data === 'NULL') {
         courses.value = []
         console.log('暂无课程')
@@ -179,23 +179,24 @@ const fetchCourseList = async () => {
         // 为每个课程ID获取课程详情
         const courseDetailsPromises = courseIdList.map(async (courseId) => {
           try {
-            const detailResponse = await apiClient.post('/Course_student/get_info_by_course_id', {
+            const detailResponse = await apiClient.post('/Course/get_info_by_course_id', {
               first: courseId.trim(),
               second: token
             })
 
-            if (detailResponse.data.code === 0 && detailResponse.data.data) {
+            if (detailResponse.data.success && detailResponse.data.data) {
               const courseData = detailResponse.data.data
 
               // 获取该课程的作业列表
-              const homeworkResponse = await apiClient.post('/get_homework_id_by_course', {
-                first: courseId.trim(),
-                second: '0', // 学生
-                third: token
+              const homeworkResponse = await apiClient.post('/Homework/get_homework_id_by_course', {
+                first: '0', // 学生
+                second:  studentId,
+                third: token,
+                fourth:courseId.trim()
               })
 
               let assignments = []
-              if (homeworkResponse.data.code === 0 && homeworkResponse.data.data) {
+              if (homeworkResponse.data.success && homeworkResponse.data.data) {
                 const homeworkIdList = homeworkResponse.data.data.split('\t\r').filter(id => id.trim())
                 assignments = homeworkIdList.map(homeworkId => ({
                   id: homeworkId.trim(),
@@ -238,13 +239,15 @@ const fetchCourseList = async () => {
   } catch (err) {
     console.error('获取课程列表失败:', err)
 
-    if (err.message && (err.message.includes('NULL') || err.message.includes('暂无课程'))) {
+    // Check if the error contains NULL or 暂无课程 in the response message or error message
+    const errorMessage = err.response?.data?.message || err.message || '';
+    if (errorMessage.includes('NULL') || errorMessage.includes('暂无课程')) {
       coursesError.value = false
       coursesErrorMessage.value = ''
       courses.value = []
     } else {
       coursesError.value = true
-      coursesErrorMessage.value = err.message || '获取课程列表失败，请稍后重试'
+      coursesErrorMessage.value = err.response?.data?.message || err.message || '获取课程列表失败，请稍后重试'
       courses.value = []
     }
   } finally {
@@ -260,7 +263,7 @@ const openAddCourseModal = () => {
   addCourseSuccess.value = false
 }
 
-const handleAddCourse = () => {
+const handleAddCourse = async () => {
   if (!courseCodeInput.value.trim()) {
     addCourseMessage.value = '请输入课程码'
     addCourseSuccess.value = false
@@ -279,7 +282,22 @@ const handleAddCourse = () => {
   const studentId = currentUser ? currentUser.id : 'student1'
 
   // 添加学生到课程
-  addStudentToClass(studentId, validationResult.courseCode.className)
+  try {
+    const token = currentUser.token
+    const response = await apiClient.post('/Course_student/add_student', {
+      first: studentId,
+      second: token,
+      third: validationResult.courseCode.id
+    })
+
+    if (response.data.code !== 0) {
+      throw new Error(response.data.message || '加入课程失败')
+    }
+  } catch (err) {
+    addCourseMessage.value = err.message || '加入课程失败，请稍后重试'
+    addCourseSuccess.value = false
+    return
+  }
 
   addCourseMessage.value = `成功加入课程：${validationResult.courseCode.className}`
   addCourseSuccess.value = true
@@ -291,6 +309,26 @@ const handleAddCourse = () => {
     fetchCourseList()
   }, 1500)
 };
+
+// 验证课程码格式：6位只包含数字
+const validateCourseCode = (code) => {
+  // 检查是否为6位字符
+  if (code.length !== 6) {
+    return {
+      valid: false,
+      message: '课程码必须为6位字符'
+    }
+  }
+
+  // 检查是否只包含字母和数字
+  const alphanumericRegex = /^[0-9]+$/
+  if (!alphanumericRegex.test(code)) {
+    return {
+      valid: false,
+      message: '课程码只能包含字母和数字'
+    }
+  }
+}
 
 // 组件挂载时获取课程列表
 onMounted(() => {

@@ -259,7 +259,7 @@ const isDeadlinePassed = computed(() => {
 
 // 重新提交
 const reSubmit = () => {
-  router.push(`/course/${courseId}/submit/${homeworkId}`)
+  router.push(`/student/course/${courseId}/submit/${homeworkId}`)
 }
 
 const goBack = () => router.push('/student/assignments')
