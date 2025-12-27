@@ -12,23 +12,17 @@
             </h1>
             <p class="mt-4 text-xl text-white font-medium">记录每一次进步，见证运动的力量</p>
           </div>
-          <div class="absolute bottom-5 left-0 right-0 flex justify-center gap-6">
-            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105">
-              查看课程
-            </button>
-            <button class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105">
-              查看总分
-            </button>
-            <button @click="openAddCourseModal" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105">
-              加入课程
-            </button>
-          </div>
         </div>
       </div>
 
       <!-- 我的课程 -->
       <section>
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">我的课程</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-2xl font-bold text-gray-800">我的课程</h2>
+          <button @click="openAddCourseModal" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105">
+            加入课程
+          </button>
+        </div>
 
         <!-- 加载状态 -->
         <div v-if="loadingCourses" class="flex flex-col items-center justify-center py-12">
@@ -47,7 +41,7 @@
         <!-- 空状态 -->
         <div v-else-if="courses.length === 0" class="bg-gray-50 border border-gray-200 rounded-xl p-12 text-center">
           <p class="text-gray-600 text-lg mb-2">暂无课程</p>
-          <p class="text-gray-500 text-sm">点击上方"加入课程"按钮开始学习</p>
+          <p class="text-gray-500 text-sm">点击右侧"加入课程"按钮开始学习</p>
         </div>
 
         <!-- 课程列表 -->
@@ -161,120 +155,98 @@ const fetchCourseList = async () => {
     const studentId = currentUser ? currentUser.id : 'student1'
 
     // 获取JWT token
-    const token = localStorage.getItem('token')
-    if (!token) {
+    const user = JSON.parse(localStorage.getItem('user'))
+    const token = user.token
+    console.log('user:', user)
+    if (!token || token.trim() === '') {
       throw new Error('未找到认证token，请重新登录')
     }
 
     // 调用get_course_id_by_student接口获取课程ID列表
-    const response = await apiClient.post('/get_course_id_by_student', {
-      student_id: studentId,
-      jwt: token
+    const response = await apiClient.post('/Course_student/get_course_id_by_student', {
+      first: studentId,
+      second: token.trim()
     })
 
-    if (response.data.code === 0 && response.data.data) {
-      // 解析课程ID列表（用\t\r分隔）
-      const courseIdList = response.data.data.split('\t\r').filter(id => id.trim())
+    if (response.data.code === 0) {
+      if (!response.data.data || response.data.data.trim() === '' || response.data.data === 'NULL') {
+        courses.value = []
+        console.log('暂无课程')
+      } else {
+        // 解析课程ID列表（用\t\r分隔）
+        const courseIdList = response.data.data.split('\t\r').filter(id => id.trim())
 
-      // 为每个课程ID获取课程详情
-      const courseDetailsPromises = courseIdList.map(async (courseId) => {
-        try {
-          const detailResponse = await apiClient.post('/get_info_by_course_id', {
-            course_id: courseId.trim(),
-            jwt: token
-          })
-
-          if (detailResponse.data.code === 0 && detailResponse.data.data) {
-            const courseData = detailResponse.data.data
-
-            // 获取该课程的作业列表
-            const homeworkResponse = await apiClient.post('/get_homework_id_by_course', {
-              course_id: courseId.trim(),
-              user_type: '0', // 学生
-              jwt: token
+        // 为每个课程ID获取课程详情
+        const courseDetailsPromises = courseIdList.map(async (courseId) => {
+          try {
+            const detailResponse = await apiClient.post('/Course_student/get_info_by_course_id', {
+              first: courseId.trim(),
+              second: token
             })
 
-            let assignments = []
-            if (homeworkResponse.data.code === 0 && homeworkResponse.data.data) {
-              const homeworkIdList = homeworkResponse.data.data.split('\t\r').filter(id => id.trim())
-              assignments = homeworkIdList.map(homeworkId => ({
-                id: homeworkId.trim(),
-                title: `作业 ${homeworkId.trim()}`,
-                description: '作业描述',
-                deadline: '待定',
-                status: '进行中'
-              }))
-            }
+            if (detailResponse.data.code === 0 && detailResponse.data.data) {
+              const courseData = detailResponse.data.data
 
-            return {
-              id: courseId.trim(),
-              name: courseData.name || '未命名课程',
-              description: courseData.info || '暂无描述',
-              subject: '体育',
-              status: courseData.is_active === '1' ? '进行中' : '未发布',
-              assignments: assignments,
-              totalAssignments: assignments.length,
-              completedAssignments: assignments.filter(a => a.status === '已完成').length,
-              completionRate: assignments.length > 0
-                ? Math.round((assignments.filter(a => a.status === '已完成').length / assignments.length) * 100)
-                : 0
+              // 获取该课程的作业列表
+              const homeworkResponse = await apiClient.post('/get_homework_id_by_course', {
+                first: courseId.trim(),
+                second: '0', // 学生
+                third: token
+              })
+
+              let assignments = []
+              if (homeworkResponse.data.code === 0 && homeworkResponse.data.data) {
+                const homeworkIdList = homeworkResponse.data.data.split('\t\r').filter(id => id.trim())
+                assignments = homeworkIdList.map(homeworkId => ({
+                  id: homeworkId.trim(),
+                  title: `作业 ${homeworkId.trim()}`,
+                  description: '作业描述',
+                  deadline: '待定',
+                  status: '进行中'
+                }))
+              }
+
+              return {
+                id: courseId.trim(),
+                name: courseData.name || '未命名课程',
+                description: courseData.info || '暂无描述',
+                subject: '体育',
+                status: courseData.is_active === '1' ? '进行中' : '未发布',
+                assignments: assignments,
+                totalAssignments: assignments.length,
+                completedAssignments: assignments.filter(a => a.status === '已完成').length,
+                completionRate: assignments.length > 0
+                  ? Math.round((assignments.filter(a => a.status === '已完成').length / assignments.length) * 100)
+                  : 0
+              }
             }
+          } catch (error) {
+            console.error(`获取课程 ${courseId} 详情失败:`, error)
+            return null
           }
-        } catch (error) {
-          console.error(`获取课程 ${courseId} 详情失败:`, error)
-          return null
-        }
-      })
+        })
 
-      // 等待所有课程详情获取完成
-      const courseDetails = await Promise.all(courseDetailsPromises)
-      courses.value = courseDetails.filter(course => course !== null)
+        // 等待所有课程详情获取完成
+        const courseDetails = await Promise.all(courseDetailsPromises)
+        courses.value = courseDetails.filter(course => course !== null)
 
-      console.log('课程列表加载成功:', courses.value)
+        console.log('课程列表加载成功:', courses.value)
+      }
     } else {
       throw new Error(response.data.message || '获取课程列表失败')
     }
   } catch (err) {
     console.error('获取课程列表失败:', err)
-    coursesError.value = true
-    coursesErrorMessage.value = err.message
 
-    // 如果API请求失败，使用默认的mock数据作为 fallback
-    courses.value = [
-      {
-        id: 'PE101',
-        name: '体能训练课程',
-        description: '学习和掌握各种体能训练技巧，包括俯卧撑、仰卧起坐等基础动作',
-        subject: '体育',
-        status: '进行中',
-        assignments: [],
-        totalAssignments: 5,
-        completedAssignments: 2,
-        completionRate: 40
-      },
-      {
-        id: 'PE202',
-        name: '协调能力训练',
-        description: '通过跳绳、敏捷梯等训练提升身体协调性和反应能力',
-        subject: '体育',
-        status: '已完成',
-        assignments: [],
-        totalAssignments: 3,
-        completedAssignments: 3,
-        completionRate: 100
-      },
-      {
-        id: 'PE303',
-        name: '田径基础训练',
-        description: '学习田径运动的基本技能，包括短跑、跳远等项目',
-        subject: '体育',
-        status: '进行中',
-        assignments: [],
-        totalAssignments: 4,
-        completedAssignments: 1,
-        completionRate: 25
-      }
-    ]
+    if (err.message && (err.message.includes('NULL') || err.message.includes('暂无课程'))) {
+      coursesError.value = false
+      coursesErrorMessage.value = ''
+      courses.value = []
+    } else {
+      coursesError.value = true
+      coursesErrorMessage.value = err.message || '获取课程列表失败，请稍后重试'
+      courses.value = []
+    }
   } finally {
     loadingCourses.value = false
   }
