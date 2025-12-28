@@ -1,0 +1,15 @@
+CREATE OR REPLACE VIEW final_grade AS
+SELECT id,
+       homework_id,
+       student_id,
+       score,
+       create_time
+FROM (
+    SELECT s.*,
+           ROW_NUMBER() OVER (
+               PARTITION BY homework_id, student_id 
+               ORDER BY score DESC, create_time DESC, id DESC
+           ) as rn
+    FROM submit s
+) 
+WHERE rn = 1;

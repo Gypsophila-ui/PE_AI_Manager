@@ -50,13 +50,21 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "CsvHelper": {
+              "target": "Package",
+              "version": "[33.1.0, )"
+            },
+            "OfficeOpenXml.Extends": {
+              "target": "Package",
+              "version": "[1.0.6, )"
+            },
             "Oracle.ManagedDataAccess.Core": {
               "target": "Package",
-              "version": "[23.9.1, )"
+              "version": "[23.26.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
-              "version": "[6.6.2, )"
+              "version": "[10.1.0, )"
             }
           },
           "imports": [
