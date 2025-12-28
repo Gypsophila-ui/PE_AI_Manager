@@ -62,9 +62,30 @@ namespace SE_PE_AI_Manager.Operation
                 return_result.Message = "SQL Error";
                 return return_result;
             }
+            check = "SELECT max(id) FROM student_course";
+            int now_id = 0;
+            try
+            {
+                using (OracleCommand command = new OracleCommand(check, connection))
+                {
+                    object result = command.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)//如果result非空
+                    {
+                        now_id = Convert.ToInt32(result);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -15;//-15表示查询当前最大ID的操作错误
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            now_id++;
             //以下为数据库插入操作
-            string action = "INSERT INTO student_course(student_id, course_id, joined_TIME)\n";
-            action = action + "values('" + student_id + "',";
+            string action = "INSERT INTO student_course(id, student_id, course_id, joined_TIME)\n";
+            action = action + "values('" + Convert.ToString(now_id) + "',";
+            action = action + "'" + student_id + "',";
             action = action + "'" + ans + "',";
             action = action + "SYSDATE)\n";
             try
@@ -76,7 +97,7 @@ namespace SE_PE_AI_Manager.Operation
             }
             catch (Exception)
             {
-                return_result.Code = -15;//-15表示插入课程的sql操作无法顺利执行
+                return_result.Code = -16;//-16表示插入课程的sql操作无法顺利执行
                 return_result.Message = "SQL Error";
                 return return_result;
             }

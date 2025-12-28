@@ -3,6 +3,7 @@ using SE_PE_AI_Manager.Basic;
 using System;
 using System.Globalization;
 using System.Reflection;
+using static System.Collections.Specialized.BitVector32;
 
 namespace SE_PE_AI_Manager.Operation
 {
@@ -223,7 +224,7 @@ namespace SE_PE_AI_Manager.Operation
             string action = "update homework\n";
             action = action + "set title = '" + title + "',\n";
             action = action + "description = '" + description + "',\n";
-            action = action + "to_date ('" + deadline + "','YYYY/MM/DD HH24:MI:SS'),";
+            action = action + "deadline = to_date ('" + deadline + "','YYYY/MM/DD HH24:MI:SS')\n";
             action = action + "where course_id = '" + course_id + "'\n";
             action = action + "and id = '" + homework_id + "'\n";
             try
@@ -1698,7 +1699,7 @@ namespace SE_PE_AI_Manager.Operation
             }
             catch (Exception)
             {
-                return_result.Code = -13;//-14表示查询课程开课人的SQL操作错误
+                return_result.Code = -11;//-11表示查询课程开课人的SQL操作错误
                 return_result.Message = "SQL Error";
                 return return_result;
             }
@@ -1725,13 +1726,13 @@ namespace SE_PE_AI_Manager.Operation
             }
             catch (Exception)
             {
-                return_result.Code = -14;//-14表示查询学生数量的sql操作无法顺利执行
+                return_result.Code = -12;//-12表示查询学生数量的sql操作无法顺利执行
                 return_result.Message = "SQL Error";
                 return return_result;
             }
             if (count == 0)
             {
-                return_result.Code = 0;//为0就直接返回值，不用后续查询，因为没有
+                return_result.Code = -26;//-26表示这个课程就没有人加入，查询无意义
                 return_result.Message = "";
                 return return_result;
             }
@@ -1740,7 +1741,7 @@ namespace SE_PE_AI_Manager.Operation
             check = "SELECT student_id FROM student_course WHERE course_id = '" + course_id + "'";
             string[] student = new string[count+5];//新建一个用于存储学号的数组
             int cnt = 0;
-            Console.WriteLine(check);
+            //Console.WriteLine(check);
             try
             {
                 using (OracleCommand cmd = new OracleCommand(check, connection))
@@ -1757,59 +1758,69 @@ namespace SE_PE_AI_Manager.Operation
             }
             catch (Exception)
             {
-                return_result.Code = -15;//-15表示查询学生ID的sql操作无法顺利执行
+                return_result.Code = -13;//-13表示查询学生ID的sql操作无法顺利执行
                 return_result.Message = "SQL Error";
                 return return_result;
             }
 
-            for(int i = 0; i < count; i++)//查询每个学生的情况
+            ans = "";//初始化返回结果数组
+            for (int i = 1; i <= count; i++)//查询每个学生的情况
             {
-
+                string action = "SELECT \n";
+                action = action + "    CASE\n";
+                action = action + "        WHEN cnt = 0 THEN -1\n";
+                action = action + "        WHEN max_score IS NULL THEN -2\n";
+                action = action + "        ELSE (\n";
+                action = action + "            SELECT id\n";
+                action = action + "            FROM submit\n";
+                action = action + "            WHERE student_id = '" + student[i] + "'\n";
+                action = action + "              AND homework_id = '" + homework_id + "'\n";
+                action = action + "              AND score = max_score\n";
+                action = action + "            ORDER BY id ASC\n";
+                action = action + "            FETCH FIRST 1 ROW ONLY\n";
+                action = action + "        )\n";
+                action = action + "    END AS result_id\n";
+                action = action + "FROM (\n";
+                action = action + "    SELECT \n";
+                action = action + "        COUNT(*) AS cnt, \n";
+                action = action + "        MAX(score) AS max_score \n";
+                action = action + "    FROM submit\n";
+                action = action + "    WHERE student_id = '" + student[i] + "'\n";
+                action = action + "      AND homework_id = '" + homework_id + "'\n";
+                action = action + ")";
+                //Console.WriteLine(action);
+                try
+                {
+                    using (OracleCommand cmd = new OracleCommand(action, connection))
+                    {
+                        using (OracleDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                ans += student[i];
+                                ans += "\n";
+                                ans += reader["result_id"].ToString();
+                                ans += "\t\r";
+                            }
+                            else
+                            {
+                                return_result.Code = -27;//为0表示当前查询结果不存在
+                                return_result.Message = "Homework Not found";
+                                return return_result;
+                            }
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    return_result.Code = -14;//-14表示当前查询某个学生的提交记录的sql无法正常执行
+                    return_result.Message = "SQL Error";
+                    return return_result;
+                }
             }
-            //string action = "select id,score from final_grade\n";
-            //action = action + "where student_id = '" + student_id + "'\n";
-            //action = action + "and homework_id = '" + homework_id + "'\n";
-            //int count = 0;
-            //string id = "";
-            //string ans = "";
-            //try
-            //{
-            //    using (OracleCommand cmd = new OracleCommand(action, connection))
-            //    {
-            //        using (OracleDataReader reader = cmd.ExecuteReader())
-            //        {
-            //            if (reader.Read())
-            //            {
-            //                id = reader["ID"].ToString();
-            //                ans = reader["score"].ToString();
-            //            }
-            //            else
-            //            {
-            //                return_result.Code = -25;//为0表示当前作业不存在
-            //                return_result.Message = "Homework Not found";
-            //                return return_result;
-            //            }
-            //        }
-            //        if (ans != null)//如果ans非空
-            //        {
-            //            count = Convert.ToInt32(ans);//尝试转化为数字
-            //        }
-            //        else
-            //        {
-            //            return_result.Code = -26;//ans为空表示当前作业还没有被批阅过的作业
-            //            return_result.Message = "No Judgement";
-            //            return return_result;
-            //        }
-            //    }
-            //}
-            //catch (Exception)
-            //{
-            //    return_result.Code = -13;//-13表示当前查询成绩的sql操作无法顺利执行
-            //    return_result.Message = "SQL Error";
-            //    return return_result;
-            //}
-            //return_result.Code = 0;
-            //return_result.Message = id + "\t\r" + Convert.ToString(count);
+
+            return_result.Code = 0;
+            return_result.Message = ans;
             return return_result;
         }
     }

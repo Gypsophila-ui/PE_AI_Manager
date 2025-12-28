@@ -599,6 +599,32 @@
   },
   {
     "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
+    "Method": "Get_final_submit",
+    "RelativePath": "Homework/get_final_submit",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SE_PE_AI_Manager.Basic.Request_four",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SE_PE_AI_Manager.Basic.API_result",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "SE_PE_AI_Manager.Controllers.HomeworkController",
     "Method": "Get_homework_id_by_course",
     "RelativePath": "Homework/get_homework_id_by_course",
     "HttpMethod": "POST",
