@@ -546,7 +546,6 @@ const submitAssignment = async () => {
           if (aiResult) {
             saveAssignmentSubmission(aiResult, studentId)
           }
-
           return
         }
 
@@ -672,25 +671,41 @@ const saveAssignmentSubmission = async (aiResult, studentId) => {
 
     // 根据API文档构造请求参数
     const submitData = {
-      student_id: studentId,
-      jwt: token,
-      course_id: courseId,
-      homework_id: assignmentId.toString(),
-      video_url: videoUrl
+      first: studentId,
+      second: token,
+      third: courseId,
+      fourth: assignmentId.toString(),
+      fifth: videoUrl
     }
 
     console.log('提交作业参数:', submitData)
 
     // 调用submit_homework接口
-    const submitResponse = await apiClient.post('/submit_homework', submitData, {
+    const submitResponse = await apiClient.post('/Homework/submit_homework', submitData, {
       headers: {
         'Content-Type': 'application/json'
       }
     })
 
     // 上传成功处理
-    if (submitResponse.status === 200 || submitResponse.status === 201) {
+    if (submitResponse.data.success) {
       console.log('作业提交成功:', submitResponse.data)
+
+      // 获取submit_id - 从响应数据中提取
+      let submitId = null
+      if (submitResponse.data && submitResponse.data.data) {
+        submitId = submitResponse.data.data
+      } else if (submitResponse.data && typeof submitResponse.data === 'string') {
+        submitId = submitResponse.data
+      }
+
+      console.log('获取到的submit_id:', submitId)
+
+      // 如果有submit_id，调用AI_test API保存AI评价结果
+      if (submitId) {
+        await saveAIEvaluation(submitId, aiResult, studentId)
+      }
+
       alert(`作业提交成功！视频已处理完成。\n可在作业详情查看提交记录。`)
       // 更新作业状态为已完成
       if (assignment.value) {
@@ -710,6 +725,94 @@ const saveAssignmentSubmission = async (aiResult, studentId) => {
       alert('作业提交记录保存失败，请稍后重试。')
     }
   }
+}
+
+// 保存AI评价结果到数据库
+const saveAIEvaluation = async (submitId, aiResult, studentId) => {
+  try {
+    console.log('开始保存AI评价结果...')
+    console.log('submit_id:', submitId)
+    console.log('aiResult:', aiResult)
+
+    // 获取JWT token
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('未找到认证token，请重新登录')
+    }
+
+    // 准备视频URL - 优先使用AI处理后的视频URL
+    let videoUrl = aiResult.video_url
+    if (!videoUrl && processedVideoBlob.value) {
+      videoUrl = URL.createObjectURL(processedVideoBlob.value)
+    }
+
+    // 准备AI评价数据
+    const aiEvaluationData = {
+      submit_id: submitId,
+      video_url: videoUrl,
+      score: aiResult.score || 0,
+      AI_feedback: aiResult.AI_feedback || ''
+    }
+
+    console.log('AI评价数据:', aiEvaluationData)
+
+    // 调用AI_test接口
+    const aiTestResponse = await apiClient.post('/AI_test', aiEvaluationData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    console.log('AI_test API响应:', aiTestResponse.data)
+
+    // 处理API返回结果
+    if (aiTestResponse.status === 200) {
+      const result = aiTestResponse.data
+      console.log('AI评价保存成功:', result)
+
+      // 检查返回状态码
+      if (result.code === 0) {
+        console.log('AI评价记录保存成功')
+      } else {
+        console.warn('AI评价保存返回警告状态码:', result.code)
+        handleAIError(result.code)
+      }
+    } else {
+      console.error('AI_test API返回异常状态码:', aiTestResponse.status)
+    }
+  } catch (error) {
+    console.error('保存AI评价结果失败:', error)
+    if (error.response) {
+      console.error('错误响应:', error.response.data)
+      const errorCode = error.response.data?.code || error.response.status
+      handleAIError(errorCode)
+    }
+  }
+}
+
+// 处理AI评价API错误码
+const handleAIError = (code) => {
+  let errorMessage = ''
+  switch (code) {
+    case -1:
+      errorMessage = '参数错误'
+      break
+    case -11:
+      errorMessage = '查询提交记录存在性的SQL操作无法执行'
+      break
+    case -12:
+      errorMessage = '修改评价的SQL操作无法正常执行'
+      break
+    case -21:
+      errorMessage = '当前提交记录不存在'
+      break
+    case -99:
+      errorMessage = '意料之外的错误'
+      break
+    default:
+      errorMessage = `未知错误码: ${code}`
+  }
+  console.error('AI评价错误:', errorMessage)
 }
 
 // 下载处理后的视频

@@ -250,18 +250,17 @@ const fetchCourseDetails = async () => {
               })
 
               if (assignmentResponse.data.success && assignmentResponse.data.data) {
-                // 解析作业数据字符串，格式可能与课程类似
-                const assignmentData = assignmentResponse.data.data;
+                const assignmentData = assignmentResponse.data.data.split('\t\r');
                 return {
                   id: homeworkId.trim(),
-                  title: assignmentData.name || `作业 ${homeworkId.trim()}`,
-                  description: assignmentData.info || '暂无描述',
-                  deadline: assignmentData.deadline || '待定',
-                  create_time: assignmentData.create_time || '',
+                  title: assignmentData[0] || `作业 ${homeworkId.trim()}`,
+                  description: assignmentData[1] || '暂无描述',
+                  deadline: assignmentData[2] || '待定',
+                  create_time: assignmentData[3] || '',
                   course_id: courseId,
-                  subject: assignmentData.subject || '体育',
-                  status: assignmentData.is_active === '1' ? '进行中' : '未发布',
-                  points: assignmentData.points || 100
+                  subject: '体育',
+                  status: new Date(assignmentData[2]) > new Date() ? '进行中' : '已截止',
+                  points: 100
                 }
               }
             } catch (error) {
