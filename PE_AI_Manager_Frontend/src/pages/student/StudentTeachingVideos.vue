@@ -1,18 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
     <div class="max-w-6xl mx-auto p-6 space-y-10">
-      <!-- 顶部导航 -->
-      <div class="flex justify-between items-center py-4">
-        <div class="flex items-center gap-2">
-          <button @click="goBack" class="text-2xl text-gray-600 hover:text-gray-800 transition-colors">
-            ←
-          </button>
-          <h1 class="text-2xl font-bold text-gray-800">体育作业平台</h1>
-        </div>
-        <button @click="logout" class="px-4 py-2 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow">
-          退出登录
-        </button>
-      </div>
 
       <!-- 加载状态 -->
       <div v-if="loading" class="text-center py-32">
@@ -104,15 +92,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import apiClient from '../../services/axios.js'  // 你的 axios 封装
 
 const router = useRouter()
+const route = useRoute()
+
+// 获取路由中的 courseId 参数
+const courseIdFromRoute = route.params.courseId || ''
 
 const courses = ref([])      // 课程列表 {id, name}
 const videos = ref([])       // 视频列表
-const selectedCourse = ref('all')
+const selectedCourse = ref(courseIdFromRoute || 'all')
 const playingVideo = ref(null)
 const loading = ref(true)
 const errorMsg = ref('')
@@ -120,7 +112,7 @@ const errorMsg = ref('')
 // 当前登录学生
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const studentId = currentUser.id || ''
-const jwt = currentUser.jwt || ''
+const jwt = currentUser.token || ''
 
 // 主加载函数
 const loadData = async () => {
@@ -134,45 +126,68 @@ const loadData = async () => {
   }
 
   try {
-    // 1. 获取学生加入的所有课程ID
-    const courseIdResp = await apiClient.post('/api/get_course_id_by_student', {
-      student_id: studentId,
-      jwt: jwt
-    })
+    // 如果路由中有courseId参数，只加载该课程的视频
+    if (courseIdFromRoute) {
+      // 获取课程信息
+      const courseResp = await apiClient.post('/Course/get_info_by_course_id', {
+        first: courseIdFromRoute
+      })
 
-    if (courseIdResp.data[0] < 0) {
-      errorMsg.value = '获取课程列表失败'
-      console.error('get_course_id_by_student error:', courseIdResp.data[0])
-      loading.value = false
-      return
+      if (courseResp.data.success && courseResp.data.data) {
+        const courseDataArray = courseResp.data.data.split('\t\r')
+        if (courseDataArray.length >= 2) {
+          courses.value = [{
+            id: courseIdFromRoute,
+            name: courseDataArray[1] || '未知课程'
+          }]
+          selectedCourse.value = courseIdFromRoute
+          await loadVideos()
+        } else {
+          errorMsg.value = '课程数据格式不正确'
+        }
+      } else {
+        errorMsg.value = '获取课程信息失败'
+      }
+    } else {
+      // 1. 获取学生加入的所有课程ID
+      const courseIdResp = await apiClient.post('/api/get_course_id_by_student', {
+        student_id: studentId,
+        jwt: jwt
+      })
+
+      if (courseIdResp.data[0] < 0) {
+        errorMsg.value = '获取课程列表失败'
+        console.error('get_course_id_by_student error:', courseIdResp.data[0])
+        loading.value = false
+        return
+      }
+
+      const courseIdStr = courseIdResp.data[0]
+      const courseIds = courseIdStr ? courseIdStr.split('\t\r').filter(id => id) : []
+
+      if (courseIds.length === 0) {
+        errorMsg.value = '您尚未加入任何课程'
+        loading.value = false
+        return
+      }
+
+      // 2. 并行获取每个课程的详细信息（主要是 name）
+      const coursePromises = courseIds.map(id =>
+        apiClient.post('/api/get_info_by_course_id', { course_id: id })
+      )
+      const courseResps = await Promise.all(coursePromises)
+
+      courses.value = courseResps
+        .filter(resp => resp.data[0] >= 0)  // 过滤错误
+        .map((resp, index) => ({
+          id: courseIds[index],
+          name: resp.data[1]  // name 是第2个字段
+        }))
+
+      // 3. 默认选中第一个课程或'all'，加载视频
+      selectedCourse.value = 'all'
+      await loadVideos()
     }
-
-    const courseIdStr = courseIdResp.data[0]
-    const courseIds = courseIdStr ? courseIdStr.split('\t\r').filter(id => id) : []
-
-    if (courseIds.length === 0) {
-      errorMsg.value = '您尚未加入任何课程'
-      loading.value = false
-      return
-    }
-
-    // 2. 并行获取每个课程的详细信息（主要是 name）
-    const coursePromises = courseIds.map(id =>
-      apiClient.post('/api/get_info_by_course_id', { course_id: id })
-    )
-    const courseResps = await Promise.all(coursePromises)
-
-    courses.value = courseResps
-      .filter(resp => resp.data[0] >= 0)  // 过滤错误
-      .map((resp, index) => ({
-        id: courseIds[index],
-        name: resp.data[1]  // name 是第2个字段
-      }))
-
-    // 3. 默认选中第一个课程或'all'，加载视频
-    selectedCourse.value = 'all'
-    await loadVideos()
-
   } catch (err) {
     errorMsg.value = '网络错误，请检查连接'
     console.error(err)
@@ -192,11 +207,11 @@ const loadVideos = async () => {
   for (const courseId of targetIds) {
     try {
       // 获取该课程下所有教学任务ID
-      const classIdResp = await apiClient.post('/Homework/get_homework_id_by_course', {
-        first: '0',       // 学生
-        second: studentId,
-        third: jwt,
-        fourth: courseId
+      const classIdResp = await apiClient.post('/Class/get_class_id_by_course', {
+        first: '0',       // user_type: 学生
+        second: studentId, // user_id
+        third: jwt,       // jwt
+        fourth: courseId  // course_id
       })
 
       if (classIdResp.data[0] < 0) continue
@@ -217,10 +232,10 @@ const loadVideos = async () => {
         videos.value.push({
           id: classId,
           courseId: courseId,
-          title: d[0],
-          description: d[1],
-          content_url: d[2],
-          create_time: d[3]
+          title: d[0],         // title: 教学任务的标题
+          description: d[1],   // description: 教学任务的描述
+          content_url: d[2],   // content_url: 教学任务对应的视频地址
+          create_time: d[3]   // create_time: 教学任务的创建时间
         })
       }
     } catch (err) {
@@ -249,7 +264,13 @@ const playVideo = (video) => {
   playingVideo.value = video
 }
 
-const goBack = () => router.push('/student')
+const goBack = () => {
+  if (courseIdFromRoute) {
+    router.push(`/student/course/${courseIdFromRoute}`)
+  } else {
+    router.push('/student')
+  }
+}
 const logout = () => {
   localStorage.removeItem('user')
   router.push('/login')

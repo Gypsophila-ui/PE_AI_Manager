@@ -7,6 +7,7 @@ import Register from '../pages/UserRegister.vue'
 import UserProfile from '../pages/UserProfile.vue'
 import TeacherAssignments from '../pages/teacher/TeacherAssignments.vue'
 import StudentAssignments from '../pages/student/StudentAssignments.vue'
+import StudentTeachingVideos from '../pages/student/StudentTeachingVideos.vue'
 
 import PublishAssignment from '../pages/teacher/PublishAssignment.vue'
 import GradeManagement from '../pages/teacher/GradeManagement.vue'
@@ -23,6 +24,7 @@ const routes = [
   { path: '/student', component: StudentHome },
   { path: '/student/course/:courseId', component: CourseDetails },
   { path: '/student/course/:courseId/assignments/:assignmentId', component: StudentAssignments },
+  { path: '/student/course/:courseId/teaching-videos', component: StudentTeachingVideos },
 
   // 教师端路由
   { path: '/teacher', component: TeacherHome },
@@ -52,16 +54,17 @@ router.beforeEach((to, from, next) => {
   // 定义需要认证的路由
   const requiresAuth = [
     '/student',
+    '/student/course',
+    '/student/teaching-videos',
     '/teacher',
     '/teacher/assignments',
     '/teacher/publish',
-    '/teacher/grade/:id',
+    '/teacher/grade',
     '/teacher/videos',
     '/teacher/assistant',
     '/teacher/course',
-    '/student/assignments/:id',
-    '/student/submit/:id',
-    '/student/assistant',
+    '/student/assignments',
+    '/student/submit',
     '/course',
     '/profile'
   ]
