@@ -3,7 +3,7 @@
     <div class="max-w-6xl mx-auto p-6 space-y-8">
       <!-- 页面标题 -->
       <section>
-        <h2 class="text-4xl font-bold text-gray-800 mb-4">📚 课程详情</h2>
+        <h2 class="text-4xl font-bold text-gray-800 mb-4">课程详情</h2>
       </section>
 
       <!-- 加载状态 -->
@@ -31,16 +31,20 @@
             <p class="text-gray-600 mb-4">{{ course.description }}</p>
             <div class="flex items-center gap-4">
               <div class="flex items-center gap-2 text-gray-600">
-                <span class="text-gray-400">📚</span>
+                <span class="text-gray-400">学科:</span>
                 <span>{{ course.subject }}</span>
               </div>
               <div class="flex items-center gap-2 text-gray-600">
-                <span class="text-gray-400">📊</span>
+                <span class="text-gray-400">教师:</span>
+                <span>{{ course.teacherName }}</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-600">
+                <span class="text-gray-400">状态:</span>
                 <span>{{ course.status }}</span>
               </div>
               <div class="flex items-center gap-2 text-gray-600">
-                <span class="text-gray-400">📝</span>
-                <span>{{ course.assignments.length }} 个作业</span>
+                <span class="text-gray-400">作业:</span>
+                <span>{{ course.assignments.length }} 个</span>
               </div>
             </div>
           </div>
@@ -240,9 +244,9 @@ const fetchCourseDetails = async () => {
 
     if (courseResponse.data.success && courseResponse.data.data) {
       // 解析课程数据字符串，格式为: 教师id\t\r课程名字\t\r课程描述\t\r课程码\t\r课程所在学期\t\r课程是否正在进行(1是0否)\t\r课程创建时间
-      const courseDataArray = courseResponse.data.data.split('\t\r').filter(item => item.trim());
+      const courseDataArray = courseResponse.data.data.split('\t\r');
 
-      if (courseDataArray.length <= 7) {
+      if (courseDataArray.length >= 7) {
         const [
           teacherId,      // 教师ID
           courseName,     // 课程名字
@@ -309,6 +313,29 @@ const fetchCourseDetails = async () => {
           assignments = await Promise.all(assignmentDetailsPromises)
         }
 
+        // 首先获取教师信息
+        let teacherName = '未知教师'; // 默认值
+        try {
+          // 尝试获取教师信息 - 使用可能的API端点
+          const teacherResponse = await apiClient.post('/User/get_teacher_info', {
+            first: studentId,
+            second: token,  // 需要认证token
+            third: '0',
+            fourth: teacherId
+          });
+
+          if (teacherResponse.data.success && teacherResponse.data.data) {
+            // 解析教师数据字符串，格式为: 教师姓名\t\r其他信息...
+            const teacherDataArray = teacherResponse.data.data.split('\t\r');
+            if (teacherDataArray.length > 0) {
+              teacherName = teacherDataArray[0] || '未知教师';  // 第一个字段是教师姓名
+            }
+          }
+        } catch (teacherError) {
+          console.warn(`获取教师信息失败 (ID: ${teacherId}):`, teacherError.message);
+          // 如果获取教师信息失败，使用默认值
+        }
+
         // 构造课程对象
         course.value = {
           id: courseId,
@@ -318,6 +345,7 @@ const fetchCourseDetails = async () => {
           status: isActive === '1' ? '进行中' : '未发布',
           assignments: assignments,
           teacherId: teacherId,
+          teacherName: teacherName,  // 添加教师姓名
           courseTerm: courseTerm,
           createTime: createTime
         }

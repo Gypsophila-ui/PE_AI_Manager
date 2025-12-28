@@ -196,6 +196,7 @@
                 </div>
                 <div class="mt-4 flex justify-center">
                   <button
+                    v-if="processedVideoUrl || processedVideoBlob"
                     @click="downloadProcessedVideo"
                     class="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow"
                   >
@@ -275,75 +276,72 @@ const processedVideoUrl = ref(null)
 const showProcessedVideo = ref(false)
 
 // 获取课程ID和作业ID
-// 支持两种路由格式：/course/:courseId/assignments/:assignmentId 和 /assignment/:id
+// 支持路由格式：/course/:courseId/assignments/:assignmentId
 const courseId = route.params.courseId || 'PE101' // 默认为PE101课程
 const assignmentId = route.params.assignmentId || route.params.id
 
-// 获取作业详情（直接显示示例数据，不调用API）
+// 获取作业详情（调用后端API）
 const fetchAssignmentDetails = async () => {
   loading.value = true
   error.value = false
   errorMessage.value = ''
 
   try {
-    // 直接加载示例作业数据，不调用API
-    console.log('直接加载示例作业数据，作业ID:', assignmentId)
+    // 获取JWT token
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = user.token;
 
-    // 使用mock数据，根据不同的作业ID返回不同的作业详情
-    const mockAssignments = {
-      '1': {
-        title: '俯卧撑标准动作练习',
-        description: '完成标准俯卧撑动作，要求动作规范，身体保持直线。注意：1. 双手与肩同宽；2. 身体从头部到脚踝保持一条直线；3. 下降时胸部接近地面；4. 上升时手臂完全伸直。',
-        deadline: '2024-01-20T23:59:59',
-        create_time: '2024-01-10T08:00:00',
-        course_id: 'PE101',
-        subject: '体能训练',
-        status: '进行中',
-        points: 100
-      },
-      '2': {
-        title: '仰卧起坐耐力测试',
-        description: '在规定时间内完成尽可能多的仰卧起坐，测试核心力量。要求：1. 双腿弯曲90度；2. 双手交叉抱头；3. 起身时肘部触及膝盖；4. 躺下时肩部完全接触地面。',
-        deadline: '2024-01-25T23:59:59',
-        create_time: '2024-01-15T10:30:00',
-        course_id: 'PE101',
-        subject: '体能测试',
-        status: '进行中',
-        points: 100
-      },
-      '3': {
-        title: '跳绳技巧练习',
-        description: '掌握基本跳绳技巧，提高协调性和耐力。练习内容：1. 单摇跳绳（每分钟至少120次）；2. 双摇跳绳（尝试完成10次连续双摇）；3. 交叉跳绳（左右交叉各50次）。',
-        deadline: '2024-01-15T23:59:59',
-        create_time: '2024-01-05T14:20:00',
-        course_id: 'PE101',
-        subject: '协调训练',
-        status: '已完成',
-        points: 100
+    if (!token) {
+      throw new Error('未找到认证token，请重新登录');
+    }
+
+    // 调用后端API获取作业详情
+    const response = await apiClient.post('/Homework/get_info_by_homework_id', {
+      first: courseId,
+      second: assignmentId
+    });
+    console.log('请求数据:', { courseId, assignmentId });
+    console.log('响应数据:', response.data);
+
+    if (response.data.success) {
+      // 解析API返回的数据
+      const homeworkDataArray = response.data.data.split('\t\r');
+
+      if (homeworkDataArray.length >= 4) {
+        const [
+          title,         // 作业标题
+          description,   // 作业描述
+          deadline,      // 截至时间
+          createTime    // 创建时间
+        ] = homeworkDataArray;
+
+        assignment.value = {
+          id: assignmentId,
+          title: title || `作业 ${assignmentId}`,
+          description: description || '暂无描述',
+          deadline: deadline || '待定',
+          create_time: createTime || '',
+          course_id: courseId,
+          subject: '体育',
+          status: new Date(deadline) > new Date() ? '进行中' : '已截止',
+          points: 100
+        };
+      } else {
+        throw new Error('作业数据格式不正确');
       }
+    } else {
+      throw new Error(response.data.message || '获取作业详情失败');
     }
 
-    // 获取对应的作业详情，如果找不到则使用默认作业
-    assignment.value = mockAssignments[assignmentId] || {
-      title: '默认作业',
-      description: '这是一个默认作业的描述。',
-      deadline: '2024-01-30T23:59:59',
-      create_time: '2024-01-10T08:00:00',
-      course_id: 'PE101',
-      subject: '体育',
-      status: '进行中',
-      points: 100
-    }
-
-    console.log('示例作业加载成功:', assignment.value)
+    console.log('作业详情加载成功:', assignment.value);
   } catch (err) {
-    console.error('加载示例作业失败:', err)
-    error.value = true
-    errorMessage.value = err.message
+    console.error('获取作业详情失败:', err);
+    error.value = true;
+    errorMessage.value = err.message || '获取作业详情失败，请稍后重试';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 格式化日期
 const formatDate = (dateString) => {
@@ -591,7 +589,12 @@ const submitAssignment = async () => {
                 case 'final_stats':
                   // 保存处理后的视频URL
                   if (data.data.download_url) {
-                    processedVideoUrl.value = data.data.download_url
+                    // 确保URL是完整的
+                    let downloadUrl = data.data.download_url
+                    if (!downloadUrl.startsWith('http')) {
+                      downloadUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}${downloadUrl}`
+                    }
+                    processedVideoUrl.value = downloadUrl
                   }
 
                   aiResult = {
@@ -609,6 +612,9 @@ const submitAssignment = async () => {
                   if (data.data.download_url || data.data.video_size || processedVideoBlob.value) {
                     processingStats.value += `<button @click="downloadProcessedVideo" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-2">下载处理后视频</button>`
                   }
+
+                  // 显示处理后的视频区域
+                  showProcessedVideo.value = true
                   break
 
                 case 'error':
