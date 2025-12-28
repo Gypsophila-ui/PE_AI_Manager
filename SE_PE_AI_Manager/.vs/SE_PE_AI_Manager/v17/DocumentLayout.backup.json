@@ -3,28 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\operation\\homework.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:operation\\homework.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\basic\\basic_link.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:basic\\basic_link.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\operation\\course.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:operation\\course.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\controllers\\test_controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:controllers\\test_controller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\test\\upload_std.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:test\\upload_std.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|c:\\users\\15787\\desktop\\2026-1\\se\\project\\se_pe_ai_manager\\operation\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F8386E7D-E7F9-46D3-A534-AC835E4D121B}|SE_PE_AI_Manager.csproj|solutionrelative:operation\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -43,76 +27,27 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Homework.cs",
-              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\Homework.cs",
-              "RelativeDocumentMoniker": "Operation\\Homework.cs",
-              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\Homework.cs*",
-              "RelativeToolTip": "Operation\\Homework.cs*",
-              "ViewState": "AgIAAEwAAAAAAAAAAAAQwHsAAAAhAAAAAAAAAA==",
+              "Title": "Course.cs",
+              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\Course.cs",
+              "RelativeDocumentMoniker": "Operation\\Course.cs",
+              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\Course.cs*",
+              "RelativeToolTip": "Operation\\Course.cs*",
+              "ViewState": "AgIAACsAAAAAAAAAAAAQwDUAAAAtAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-26T15:50:22.531Z",
+              "WhenOpened": "2025-12-28T06:14:29.509Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
               "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Program.cs",
               "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAhAAAAAAAAAA==",
+              "ViewState": "AgIAABcAAAAAAAAAAAAAAE8AAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-12-26T11:17:58.582Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "User.cs",
-              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\User.cs",
-              "RelativeDocumentMoniker": "Operation\\User.cs",
-              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Operation\\User.cs",
-              "RelativeToolTip": "Operation\\User.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-25T10:01:34.088Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "Test_controller.cs",
-              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Controllers\\Test_controller.cs",
-              "RelativeDocumentMoniker": "Controllers\\Test_controller.cs",
-              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Controllers\\Test_controller.cs",
-              "RelativeToolTip": "Controllers\\Test_controller.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAJMAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-25T09:55:39.175Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "Upload_std.cs",
-              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Test\\Upload_std.cs",
-              "RelativeDocumentMoniker": "Test\\Upload_std.cs",
-              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Test\\Upload_std.cs",
-              "RelativeToolTip": "Test\\Upload_std.cs",
-              "ViewState": "AgIAAEEAAAAAAAAAAAAAAD4AAAAZAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-25T09:23:08.242Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "Basic_link.cs",
-              "DocumentMoniker": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Basic\\Basic_link.cs",
-              "RelativeDocumentMoniker": "Basic\\Basic_link.cs",
-              "ToolTip": "C:\\Users\\15787\\Desktop\\2026-1\\SE\\project\\SE_PE_AI_Manager\\Basic\\Basic_link.cs",
-              "RelativeToolTip": "Basic\\Basic_link.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAADIAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-25T09:10:57.698Z",
               "EditorCaption": ""
             }
           ]

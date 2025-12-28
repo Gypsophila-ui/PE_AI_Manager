@@ -31,10 +31,6 @@ app.MapControllers();
 
 app.Run();
 
-//app.Run();
-
-
-
 //var builder = WebApplication.CreateBuilder(args);
 
 //// Add services to the container.
