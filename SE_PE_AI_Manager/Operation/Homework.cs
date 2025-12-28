@@ -607,9 +607,8 @@ namespace SE_PE_AI_Manager.Operation
                 return_result.Message = "SQL Error";
                 return return_result;
             }
-            DateTime deadline = DateTime.ParseExact(
+            DateTime deadline = DateTime.Parse(
                 ans,
-                "yyyy/MM/dd HH:mm:ss",
                 CultureInfo.InvariantCulture
             );
             if (currentTime > deadline)
