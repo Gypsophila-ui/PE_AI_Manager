@@ -36,7 +36,7 @@ const routes = [
   { path: '/student/course/:courseId', component: CourseDetails },
   { path: '/student/course/:courseId/assignments/:assignmentId', component: StudentAssignments },
   { path: '/student/course/:courseId/teaching-videos', component: StudentTeachingVideos },
-  { path: '/student/course/:courseId/submission-history', component: StudentSubmissionHistory },
+  { path: '/student/course/:courseId/assignments/:assignmentId/submission-history', component: StudentSubmissionHistory },
   { path: '/student/course/:courseId/submission/:submitId', component: StudentSubmissionDetail },
 
   // 教师端路由
