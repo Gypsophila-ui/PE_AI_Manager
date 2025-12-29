@@ -132,7 +132,7 @@ const errorMessage = ref('')
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
-const jwt = currentUser.jwt || ''
+const jwt = currentUser.token || ''
 
 const fetchStudents = async () => {
   loading.value = true
@@ -141,18 +141,18 @@ const fetchStudents = async () => {
 
   try {
     // 1. 获取学生ID列表
-    const idResp = await apiClient.post('/api/get_student_id_by_course', {
+    const idResp = await apiClient.post('/Course_student/get_student_id_by_course', {
       First: teacherId,
       Second: jwt,
       Third: courseId
     })
 
-    if (idResp.data[0] < 0 || !idResp.data[1]) {
+    if (!idResp.data.success) {
       loading.value = false
       return
     }
 
-    const studentIdStr = idResp.data[1].trim()
+    const studentIdStr = idResp.data.data
     if (studentIdStr === '') {
       loading.value = false
       return
@@ -163,25 +163,27 @@ const fetchStudents = async () => {
     // 2. 并行获取每个学生的个人信息
     const studentPromises = studentIds.map(async (id) => {
       try {
-        const infoResp = await apiClient.post('/api/get_student_info', {
+        const infoResp = await apiClient.post('/User/get_student_info', {
           First: teacherId,      // 查询者ID
           Second: jwt,
           Third: '1',            // user_type: 1=教师
           Fourth: id             // student_id
         })
 
-        if (infoResp.data[0] < 0 || infoResp.data.length < 5) {
+        if (!infoResp.data.success) {
           return { id, name: null, gender: null, major: null, college: null, department: null }
         }
 
-        const d = infoResp.data
+
+        const infoRespData = infoResp.data.data.trim().replace(/\t\r$/g, '');
+        const infoRespDataArray = infoRespData.split(/\t\r/).filter(item => item !== '');
         return {
           id,
-          name: d[1] || '未知',
-          gender: d[2] || '未知',
-          major: d[3] || null,
-          college: d[4] || null,
-          department: d[5] || null
+          name: infoRespDataArray[1] || '未知',
+          gender: infoRespDataArray[2] || '未知',
+          major: infoRespDataArray[3] || null,
+          college: infoRespDataArray[4] || null,
+          department: infoRespDataArray[5] || null
         }
       } catch (err) {
         console.error(`获取学生 ${id} 信息失败`, err)
@@ -206,18 +208,18 @@ const removeStudent = async (studentId) => {
   }
 
   try {
-    const resp = await apiClient.post('/api/exit_course_by_teacher', {
+    const resp = await apiClient.post('/Course_student/exit_course_by_teacher', {
       First: teacherId,
       Second: jwt,
       Third: courseId,
       Fourth: studentId
     })
 
-    if (resp.data[0] >= 0 || resp.data[0] === '1') {
+    if (resp.data.success) {
       alert('学生已成功移除')
       students.value = students.value.filter(s => s.id !== studentId)
     } else {
-      alert('移除失败：' + (resp.data[1] || '未知错误'))
+      alert('移除失败：' + (resp.data.message || '未知错误'))
     }
   } catch (err) {
     console.error(err)

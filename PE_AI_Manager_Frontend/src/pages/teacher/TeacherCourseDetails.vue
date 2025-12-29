@@ -64,6 +64,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-gray-400">🔑</span>
+                <span>邀请码</span>
                 <span class="font-mono text-sm bg-gray-100 px-3 py-1 rounded-lg">
                   {{ course.code || '加载中...' }}
                 </span>
@@ -179,9 +180,9 @@
                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm"
                 >
                   <option value="">请选择运动类型</option>
-                  <option value="squat">深蹲 (Squat)</option>
-                  <option value="pushup">俯卧撑 (Push-up)</option>
-                  <option value="deadlift">硬拉 (Deadlift)</option>
+                  <option value="squat">深蹲</option>
+                  <option value="pushup">俯卧撑</option>
+                  <option value="deadlift">硬拉</option>
                 </select>
               </div>
 
@@ -237,6 +238,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import dayjs from 'dayjs';
 import apiClient from '../../services/axios.js'
 
 const router = useRouter()
@@ -259,7 +261,7 @@ const courseId = route.params.courseId
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
-const jwt = currentUser.jwt || 'valid_teacher_jwt'
+const jwt = currentUser.token || 'valid_teacher_jwt'
 
 // AI类型中英文映射
 const aiTypeMap = {
@@ -297,14 +299,16 @@ const fetchCourseDetails = async () => {
 
   try {
     // 1. 获取课程基本信息
-    const courseResp = await apiClient.post('/api/get_info_by_course_id', { First: courseId })
-    if (courseResp.data[0] < 0) {
+    const courseResp = await apiClient.post('/Course/get_info_by_course_id', { First: courseId })
+    if (!courseResp.data.success) {
       errorMessage.value = '课程不存在或已被删除'
       error.value = true
       return
     }
+    const courseRespData = courseResp.data.data.trim().replace(/\t\r$/g, '');
+    const courseRespDataArray = courseRespData.split(/\t\r/).filter(item => item !== '');
 
-    const c = courseResp.data
+    const c = courseRespDataArray
     course.value = {
       id: courseId,
       name: c[1],
@@ -316,32 +320,37 @@ const fetchCourseDetails = async () => {
     }
 
     // 2. 获取作业ID列表
-    const homeworkResp = await apiClient.post('/api/get_homework_id_by_course', {
+    const homeworkResp = await apiClient.post('/Homework/get_homework_id_by_course', {
       First: '1',
       Second: teacherId,
       Third: jwt,
       Fourth: courseId
     })
 
-    if (!homeworkResp.data || typeof homeworkResp.data[0] !== 'string' || !homeworkResp.data[0].trim()) {
+    if (!homeworkResp.data.success || !homeworkResp.data.data.trim()) {
       course.value.assignments = []
       loading.value = false
       return
     }
 
-    const homeworkIds = homeworkResp.data[0].split('\t\r').filter(Boolean)
+    const homeworkIds = homeworkResp.data.data.split('\t\r').filter(Boolean)
 
     // 3. 并行获取每个作业的详情 + AI类型
     const assignmentPromises = homeworkIds.map(async (id) => {
       const [infoResp, aiResp] = await Promise.all([
-        apiClient.post('/api/get_info_by_homework_id', { First: courseId, Second: id }),
-        apiClient.post('/api/get_AI_type', { First: id })  // 获取AI类型
+        apiClient.post('/Homework/get_info_by_homework_id', { First: courseId, Second: id }),
+        apiClient.post('/Homework/get_AI_type', { First: id })  // 获取AI类型
       ])
 
-      if (!Array.isArray(infoResp.data) || infoResp.data.length < 4) return null
 
-      const d = infoResp.data
-      const rawAiType = aiResp.data?.[0] || ''  // 假设返回 [ai_type]
+      if (!infoResp.data.success || !infoResp.data.data.trim()) return null
+
+
+      const infoRespData = infoResp.data.data.trim().replace(/\t\r$/g, '');
+      const infoRespDataArray = infoRespData.split(/\t\r/).filter(item => item !== '');
+      const d = infoRespDataArray
+
+      const rawAiType = aiResp.data.data || ''
       const aiTypeDisplay = aiTypeMap[rawAiType] || '未知动作'
 
       return {
@@ -376,13 +385,13 @@ const submitForm = async () => {
 
   try {
     // 1. 创建作业
-    const addResp = await apiClient.post('/api/add_homework', {
+    const addResp = await apiClient.post('/Homework/new_homework', {
       First: teacherId,
       Second: jwt,
       Third: courseId,
       Fourth: newAssignment.value.title,
       Fifth: newAssignment.value.description,
-      Sixth: newAssignment.value.deadline
+      Sixth: dayjs(newAssignment.value.deadline).format('YYYY-MM-DD HH:mm:ss')
     })
 
     const homeworkId = addResp.data?.data?.trim()
@@ -392,7 +401,7 @@ const submitForm = async () => {
     }
 
     // 2. 设置AI类型
-    const setResp = await apiClient.post('/api/set_AI_type', {
+    const setResp = await apiClient.post('/Homework/set_AI_type', {
       First: teacherId,
       Second: jwt,
       Third: courseId,
@@ -400,7 +409,7 @@ const submitForm = async () => {
       Fifth: newAssignment.value.aiType
     })
 
-    if (setResp.data?.errorCode !== 0) {
+    if (!setResp.data.success) {
       alert('警告：AI识别模型设置失败，但作业已创建')
     }
 

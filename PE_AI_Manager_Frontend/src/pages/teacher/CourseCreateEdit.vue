@@ -176,7 +176,7 @@ const loading = ref(true)
 const submitting = ref(false)
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
-const jwt = currentUser.jwt || ''
+const jwt = currentUser.token || ''
 
 const isEdit = computed(() => route.path.includes('/edit'))
 
@@ -203,14 +203,18 @@ const loadCourseData = async () => {
   }
 
   try {
-    const resp = await apiClient.post('/api/get_info_by_course_id', { First: courseId })
-    if (resp.data[0] < 0) {
+    const resp = await apiClient.post('/Course/get_info_by_course_id', { First: courseId })
+    if (!resp.data.success) {
       alert('课程不存在或加载失败')
       goBack()
       return
     }
 
-    const d = resp.data
+
+    const courseRespData = resp.data.data.trim().replace(/\t\r$/g, '');
+    const courseRespDataArray = courseRespData.split(/\t\r/).filter(item => item !== '');
+
+    const d = courseRespDataArray
     form.value = {
       courseId: courseId,          // 只读显示
       name: d[1],
@@ -242,7 +246,7 @@ const submitForm = async () => {
       const courseId = route.params.courseId
 
       // 更新 name + semester
-      const editResp = await apiClient.post('/api/edit_course', {
+      const editResp = await apiClient.post('/Course/edit_course', {
         First: courseId,
         Second: teacherId,
         Third: jwt,
@@ -250,13 +254,13 @@ const submitForm = async () => {
         Fifth: form.value.semester
       })
 
-      if (editResp.data[0] !== '1') {
+      if (!editResp.data.success) {
         alert('更新课程信息失败')
         return
       }
 
       // 更新描述
-      await apiClient.post('/api/edit_info', {
+      await apiClient.post('/Course/edit_info', {
         First: courseId,
         Second: teacherId,
         Third: jwt,
@@ -264,7 +268,7 @@ const submitForm = async () => {
       })
 
       // 更新发布状态
-      await apiClient.post('/api/edit_is_active', {
+      await apiClient.post('/Course/edit_is_active', {
         First: courseId,
         Second: teacherId,
         Third: jwt,
@@ -274,30 +278,30 @@ const submitForm = async () => {
       alert('课程修改成功！')
     } else {
       // 新建课程
-      const resp = await apiClient.post('/api/new_course', {
-        First: teacherId,
-        Second: jwt,
-        Third: form.value.name,
-        Fourth: form.value.semester,
-        Fifth: form.value.courseId.trim()  // 手动输入的课号
+      const resp = await apiClient.post('/Course/new_course', {
+        First: form.value.courseId.trim(),
+        Second: teacherId,
+        Third: jwt,
+        Fourth: form.value.name,
+        Fifth: form.value.semester
       })
 
-      if (resp.data[0] < 0) {
+      if (!resp.data.success) {
         alert('创建失败：课号可能已存在或格式错误')
         return
       }
 
-      const newCode = resp.data[1]  // 返回的邀请码
+      const newCode = resp.data.data[1]  // 返回的邀请码
 
       // 补充描述和状态
-      await apiClient.post('/api/edit_info', {
+      await apiClient.post('/Course/edit_info', {
         First: form.value.courseId.trim(),
         Second: teacherId,
         Third: jwt,
         Fourth: form.value.info || ''
       })
 
-      await apiClient.post('/api/edit_is_active', {
+      await apiClient.post('/Course/edit_is_active', {
         First: form.value.courseId.trim(),
         Second: teacherId,
         Third: jwt,

@@ -18,10 +18,15 @@ import CourseCreateEdit from '../pages/teacher/CourseCreateEdit.vue'
 import CourseStudents from '../pages/teacher/CourseStudents.vue'
 import TeacherDashboard from '../pages/teacher/TeacherDashboard.vue'
 
+import VideoTest from '@/pages/VideoTest.vue'
+
 const routes = [
   { path: '/', component: Login },
   { path: '/login', component: Login },
   { path: '/register', component: Register },
+
+  // 视频测试页面
+  { path: '/videoTest', component: VideoTest},
 
   // 学生端路由
   { path: '/student', component: StudentHome },

@@ -79,6 +79,7 @@
                 id="deadline"
                 v-model="assignment.deadline"
                 type="datetime-local"
+                max="2999-12-31T23:59"
                 class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
                 required
               />
@@ -144,6 +145,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs';
 import apiClient from '../../services/axios.js'
 
 const router = useRouter()
@@ -155,7 +157,7 @@ const errorMsg = ref('')
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
-const jwt = currentUser.jwt || 'valid_teacher_jwt'
+const jwt = currentUser.token || 'valid_teacher_jwt'
 
 const assignment = ref({
   title: '',
@@ -171,18 +173,18 @@ const loadCourses = async () => {
   errorMsg.value = ''
 
   try {
-    const courseIdResp = await apiClient.post('/api/get_course_id_by_teacher', {
+    const courseIdResp = await apiClient.post('/Course/get_course_id_by_teacher', {
       First: teacherId,
       Second: jwt
     })
 
-    if (courseIdResp.data[0] < 0) {
+    if (!courseIdResp.data.success) {
       errorMsg.value = '获取课程失败'
       error.value = true
       return
     }
 
-    const courseIdStr = courseIdResp.data[0]
+    const courseIdStr = courseIdResp.data.data
     const courseIds = courseIdStr ? courseIdStr.split('\t\r').filter(Boolean) : []
 
     if (courseIds.length === 0) {
@@ -193,27 +195,32 @@ const loadCourses = async () => {
 
     const promises = courseIds.map(async (id) => {
       const [infoResp, studentResp] = await Promise.all([
-        apiClient.post('/api/get_info_by_course_id', { First: id }),
-        apiClient.post('/api/get_student_id_by_course', {
+        apiClient.post('/Course/get_info_by_course_id', { First: id }),
+        apiClient.post('/Course_student/get_student_id_by_course', {
           First: teacherId,
           Second: jwt,
           Third: id
         })
       ])
 
-      if (infoResp.data[0] < 0 || !infoResp.data[1] || infoResp.data[1].trim() === '') {
+      if (!infoResp.data.success || infoResp.data.data.trim() === '') {
         return null
       }
 
       let studentCount = 0
-      if (studentResp.data[0] >= 0) {
-        const studentIdStr = studentResp.data[0]
+      if (studentResp.data.success) {
+        const studentIdStr = studentResp.data.data
         studentCount = studentIdStr ? studentIdStr.split('\t\r').filter(Boolean).length : 0
       }
 
+
+
+    const courseRespData = infoResp.data.data.trim().replace(/\t\r$/g, '');
+    const courseRespDataArray = courseRespData.split(/\t\r/).filter(item => item !== '');
+
       return {
         id: String(id),
-        name: infoResp.data[1].trim(),
+        name: courseRespDataArray[1].trim(),
         studentCount: studentCount
       }
     })
@@ -252,13 +259,13 @@ const submitForm = async () => {
 
   try {
     const tasks = assignment.value.courseIds.map(async (courseId) => {
-      const addResp = await apiClient.post('/api/add_homework', {
+      const addResp = await apiClient.post('/Homework/new_homework', {
         First: teacherId,
         Second: jwt,
         Third: courseId,
         Fourth: assignment.value.title,
         Fifth: assignment.value.description,
-        Sixth: assignment.value.deadline
+        Sixth: dayjs(assignment.value.deadline).format('YYYY-MM-DD HH:mm:ss')
       })
 
       const homeworkId = addResp.data?.data?.trim()
@@ -267,7 +274,7 @@ const submitForm = async () => {
         return { courseId, success: false, stage: 'add_homework' }
       }
 
-      const setResp = await apiClient.post('/api/set_AI_type', {
+      const setResp = await apiClient.post('/Homework/set_AI_type', {
         First: teacherId,
         Second: jwt,
         Third: courseId,
@@ -275,7 +282,7 @@ const submitForm = async () => {
         Fifth: assignment.value.aiType
       })
 
-      if (setResp.data[0] !== 0) {
+      if (!setResp.data.success) {
         return { courseId, success: false, stage: 'set_AI_type' }
       }
 

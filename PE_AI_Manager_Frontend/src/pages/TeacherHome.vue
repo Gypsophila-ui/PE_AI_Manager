@@ -25,7 +25,7 @@
             <h3 class="text-xl font-bold">教学视频</h3>
           </button>
           <button @click="goToAssignments" class="p-6 rounded-3xl bg-purple-500 text-white hover:bg-purple-600 transition-all shadow-xl">
-            <div class="text-4xl mb-2">📊</div>
+            <div class="text-4xl mb-2">📚</div>
             <h3 class="text-xl font-bold">作业统计</h3>
           </button>
           <button @click="goToDashboard" class="p-6 rounded-3xl bg-orange-500 text-white hover:bg-orange-600 transition-all shadow-xl">
@@ -108,6 +108,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import apiClient from '../services/axios.js'
+import { controllers } from 'chart.js'
 
 const router = useRouter()
 
@@ -117,24 +118,23 @@ const errorMsg = ref('')
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
-const jwt = currentUser.jwt || ''
+const jwt = currentUser.token || ''
 
 const loadCourses = async () => {
   loading.value = true
   errorMsg.value = ''
 
   try {
-    const courseIdResp = await apiClient.post('/api/get_course_id_by_teacher', {
+    const courseIdResp = await apiClient.post('/Course/get_course_id_by_teacher', {
       First: teacherId,
       Second: jwt
     })
 
-    if (courseIdResp.data[0] < 0) {
+    if (!courseIdResp.data.success) {
       errorMsg.value = '获取课程列表失败'
       return
     }
-
-    const courseIdStr = courseIdResp.data[0]
+    const courseIdStr = courseIdResp.data.data
     const courseIds = courseIdStr ? courseIdStr.split('\t\r').filter(Boolean) : []
 
     if (courseIds.length === 0) {
@@ -144,8 +144,8 @@ const loadCourses = async () => {
 
     const coursePromises = courseIds.map(async (id) => {
       const [courseResp, homeworkResp] = await Promise.all([
-        apiClient.post('/api/get_info_by_course_id', { First: id }),
-        apiClient.post('/api/get_homework_id_by_course', {
+        apiClient.post('/Course/get_info_by_course_id', { First: id }),
+        apiClient.post('/Homework/get_homework_id_by_course', {
           First: '1',
           Second: teacherId,
           Third: jwt,
@@ -153,22 +153,24 @@ const loadCourses = async () => {
         })
       ])
 
-      if (courseResp.data[0] < 0) return null
+      if (!courseResp.data.success) return null
+      const courseRespData = courseResp.data.data.trim().replace(/\t\r$/g, '');
+      const courseRespDataArray = courseRespData.split(/\t\r/).filter(item => item !== '');
 
       let assignmentCount = 0
-      if (homeworkResp.data && typeof homeworkResp.data[0] === 'string') {
-        const homeworkIdStr = homeworkResp.data[0]
+      if (homeworkResp.data.success) {
+        const homeworkIdStr = homeworkResp.data.data
         assignmentCount = homeworkIdStr.trim().split(/[\t\r\n]+/).filter(Boolean).length
       }
 
       return {
         id: id,
-        name: courseResp.data[1],
-        info: courseResp.data[2],
-        code: courseResp.data[3],
-        semester: courseResp.data[4],
-        is_active: courseResp.data[5],
-        created_time: courseResp.data[6],
+        name: courseRespDataArray[1],
+        info: courseRespDataArray[2],
+        code: courseRespDataArray[3],
+        semester: courseRespDataArray[4],
+        is_active: courseRespDataArray[5],
+        created_time: courseRespDataArray[6],
         assignmentCount: assignmentCount
       }
     })
@@ -215,17 +217,17 @@ const deleteCourse = async (courseId) => {
   if (!confirm(`确定要删除课程 ${courseId} 吗？删除后不可恢复！`)) return
 
   try {
-    const resp = await apiClient.post('/api/delete_course', {
+    const resp = await apiClient.post('/Course/delete_course', {
       First: courseId,     // course_id
       Second: teacherId,   // teacher_id
       Third: jwt
     })
 
-    if (resp.data[0] === '1') {  // 成功标志
+    if (resp.data.success) {  // 成功标志
       alert('课程删除成功')
       teacherCourses.value = teacherCourses.value.filter(c => c.id !== courseId)
     } else {
-      alert('删除失败：' + (resp.data[1] || '未知错误'))
+      alert('删除失败：' + (resp.data.message || '未知错误'))
     }
   } catch (err) {
     alert('删除失败，请检查网络')

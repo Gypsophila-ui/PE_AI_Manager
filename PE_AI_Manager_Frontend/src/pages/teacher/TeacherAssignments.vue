@@ -23,16 +23,14 @@
         <div class="flex flex-col md:flex-row gap-3">
           <div class="flex-1">
             <label class="block text-xs font-medium text-gray-500 mb-1">选择班级</label>
-            <select v-model="selectedClass"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
+            <select v-model="selectedClass" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
               <option value="all">所有班级</option>
               <option v-for="cls in courses" :key="cls.id" :value="cls.id">{{ cls.name }}</option>
             </select>
           </div>
           <div class="flex-1">
             <label class="block text-xs font-medium text-gray-500 mb-1">选择运动类型</label>
-            <select v-model="selectedAiType"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
+            <select v-model="selectedAiType" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
               <option value="all">所有类型</option>
               <option value="squat">深蹲</option>
               <option value="pushup">俯卧撑</option>
@@ -41,8 +39,7 @@
           </div>
           <div class="flex-1">
             <label class="block text-xs font-medium text-gray-500 mb-1">作业状态</label>
-            <select v-model="selectedStatus"
-                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
+            <select v-model="selectedStatus" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-sm">
               <option value="all">所有状态</option>
               <option value="进行中">进行中</option>
               <option value="已截止">已截止</option>
@@ -58,7 +55,7 @@
           <div class="text-2xl font-bold text-gray-800">{{ totalAssignmentsCount }}</div>
         </div>
         <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100">
-          <div class="text-xs font-medium text-gray-500 mb-1">总提交人数（人次）</div>
+          <div class="text-xs font-medium text-gray-500 mb-1">总提交人次</div>
           <div class="text-2xl font-bold text-green-600">{{ totalSubmittedCount }}</div>
         </div>
         <div class="bg-white p-4 rounded-xl shadow-md border border-gray-100">
@@ -137,14 +134,14 @@ const loading = ref(true)
 const errorMsg = ref('')
 
 const selectedClass = ref('all')
-const selectedAiType = ref('all')   // 改为运动类型筛选
+const selectedAiType = ref('all')
 const selectedStatus = ref('all')
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
-const jwt = currentUser.jwt || 'valid_teacher_jwt'
+const jwt = currentUser.token || 'valid_teacher_jwt'
 
-// 中英文映射
+// AI 类型中英文映射
 const aiTypeMap = {
   squat: '深蹲',
   pushup: '俯卧撑',
@@ -157,77 +154,126 @@ const loadData = async () => {
 
   try {
     // 1. 获取教师课程
-    const courseResp = await apiClient.post('/api/get_course_id_by_teacher', {
+    const courseResp = await apiClient.post('/Course/get_course_id_by_teacher', {
       First: teacherId,
       Second: jwt
     })
 
-    if (courseResp.data[0] < 0) {
+    if (!courseResp.data.success) {
       errorMsg.value = '获取课程失败'
       loading.value = false
       return
     }
 
-    const courseIds = courseResp.data[0].split('\t\r').filter(Boolean)
+    const courseIds = courseResp.data.data.split('\t\r').filter(Boolean)
 
-    const coursePromises = courseIds.map(id => apiClient.post('/api/get_info_by_course_id', { First: id }))
+    const coursePromises = courseIds.map(id => apiClient.post('/Course/get_info_by_course_id', { First: id }))
     const courseResps = await Promise.all(coursePromises)
+    const processedResponses = courseResps.map(resp => {
+      if (!resp?.data?.data) return [];
 
-    courses.value = courseResps
-      .filter(r => r.data[0] >= 0)
-      .map((r, i) => ({ id: courseIds[i], name: r.data[1] }))
+      const data = resp.data.data.trim().replace(/\t\r$/g, '');
+      return data.split(/\t\r/).filter(item => item !== '');
+    });
 
-    // 2. 获取所有作业 + AI类型
+    console.log(processedResponses)
+    courses.value = processedResponses
+      .filter(r => r[0] >= 0)
+      .map((r, i) => ({ id: courseIds[i], name: r[1] }))
+
+    // 2. 获取所有作业 + AI类型 + 提交统计
     assignments.value = []
 
     for (const courseId of courseIds) {
-      const hwResp = await apiClient.post('/api/get_homework_id_by_course', {
+      // 获取作业列表
+      const hwResp = await apiClient.post('/Homework/get_homework_id_by_course', {
         First: '1',
         Second: teacherId,
         Third: jwt,
         Fourth: courseId
       })
 
-      if (hwResp.data[0] < 0 || !hwResp.data[0]) continue
+      if (!hwResp.data.success || !hwResp.data.data) continue
 
-      const hwIds = hwResp.data[0].split('\t\r').filter(Boolean)
+      const hwIds = hwResp.data.data.split('\t\r').filter(Boolean)
 
       // 获取学生总数
-      const studentResp = await apiClient.post('/api/get_student_id_by_course', {
+      const studentResp = await apiClient.post('/Course_student/get_student_id_by_course', {
         First: teacherId,
         Second: jwt,
         Third: courseId
       })
-      const totalStudents = studentResp.data[0] >= 0
-        ? studentResp.data[0].split('\t\r').filter(Boolean).length
+      const totalStudents = studentResp.data.success && studentResp.data.data
+        ? studentResp.data.data.split('\t\r').filter(Boolean).length
         : 0
 
       for (const hwId of hwIds) {
-        const [infoResp, aiResp] = await Promise.all([
-          apiClient.post('/api/get_info_by_homework_id', { First: courseId, Second: hwId }),
-          apiClient.post('/api/get_AI_type', { First: hwId })
-        ])
+        // 获取作业基本信息
+        const infoResp = await apiClient.post('/Homework/get_info_by_homework_id', { First: courseId, Second: hwId })
+        if (!infoResp.data.success) continue
 
-        if (infoResp.data[0] < 0) continue
-
-        const d = infoResp.data
-        const rawAiType = aiResp.data?.[0] || 'squat'
+        const d = infoResp.data.data.split('\t\r').filter(Boolean)
         const deadline = new Date(d[2])
         const status = deadline > new Date() ? '进行中' : '已截止'
 
+        // 获取 AI 类型
+        const aiResp = await apiClient.post('/Homework/get_AI_type', { First: hwId })
+        const rawAiType = aiResp.data?.[0] || 'squat'
+
+        // 获取所有学生提交情况
+        const submitResp = await apiClient.post('/Homework/get_final_submit', {
+          First: teacherId,
+          Second: jwt,
+          Third: courseId,
+          Fourth: hwId
+        })
+
+        let submittedCount = 0
+        let totalScore = 0
+        let scoreCount = 0
+
+        if (submitResp.data.success && submitResp.data.data) {
+          const pairs = submitResp.data.data.split('\t\r').filter(Boolean)
+
+          for (const pair of pairs) {
+            const [studentId, submitId] = pair.split('\n')
+            if (submitId === '-1' || submitId === '-2') continue  // 未提交或未评分
+
+            // 获取提交详情
+            const detailResp = await apiClient.post('/Homework/get_submit_info', {
+              First: '1',          // 教师身份
+              Second: teacherId,
+              Third: jwt,
+              Fourth: submitId
+            })
+
+            if (detailResp.data.success && detailResp.data.data) {
+              const detail = detailResp.data.data.split('\t\r').filter(Boolean)
+              const score = parseInt(detail[1]) || 0
+              submittedCount++
+              if (score > 0) {
+                totalScore += score
+                scoreCount++
+              }
+            }
+          }
+        }
+
+        const avgScore = scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : null
+
         assignments.value.push({
           id: hwId,
-          courseId: courseId,
+          courseId,
           title: d[0],
           description: d[1],
           deadline: d[2],
           create_time: d[3],
           aiType: rawAiType,
           aiTypeDisplay: aiTypeMap[rawAiType] || '标准动作',
-          status: status,
-          submittedCount: 0,     // 暂无提交统计接口，可后续替换
-          totalStudents: totalStudents,
-          avgScore: Math.floor(Math.random() * 20 + 80)  // 模拟平均分（80~99），后续换真实数据
+          status,
+          submittedCount,
+          totalStudents,
+          avgScore
         })
       }
     }
@@ -254,9 +300,12 @@ const totalSubmittedCount = computed(() =>
   filteredAssignments.value.reduce((sum, a) => sum + a.submittedCount, 0)
 )
 const overallAvgScore = computed(() => {
-  const valid = filteredAssignments.value.filter(a => a.avgScore)
-  if (valid.length === 0) return '-'
-  const avg = valid.reduce((sum, a) => sum + a.avgScore, 0) / valid.length
+  const validScores = filteredAssignments.value
+    .filter(a => a.avgScore !== null)
+    .map(a => parseFloat(a.avgScore))
+
+  if (validScores.length === 0) return '-'
+  const avg = validScores.reduce((sum, s) => sum + s, 0) / validScores.length
   return avg.toFixed(1)
 })
 

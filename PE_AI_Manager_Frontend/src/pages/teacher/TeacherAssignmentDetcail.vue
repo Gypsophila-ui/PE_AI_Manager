@@ -34,22 +34,21 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 border-y border-gray-50">
-            <div class="text-center md:text-left">
+          <!-- 统计卡片 -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 py-6 border-y border-gray-50">
+            <div class="text-center">
               <p class="text-xs text-gray-400 font-bold mb-1">提交人数</p>
-              <p class="text-xl font-bold text-gray-700">{{ stats.submittedCount }} / {{ stats.totalStudents }}</p>
+              <p class="text-2xl font-bold text-green-600">{{ stats.submittedCount }} / {{ stats.totalStudents }}</p>
             </div>
-            <div class="text-center md:text-left">
-              <p class="text-xs text-gray-400 font-bold mb-1">待批改</p>
-              <p class="text-xl font-bold text-orange-500">{{ stats.pendingCount }}</p>
-            </div>
-            <div class="text-center md:text-left">
+            <div class="text-center">
               <p class="text-xs text-gray-400 font-bold mb-1">平均分</p>
-              <p class="text-xl font-bold text-gray-700">{{ stats.avgScore }}</p>
+              <p class="text-2xl font-bold text-purple-600">
+                {{ stats.avgScore !== null ? stats.avgScore : '-' }}
+              </p>
             </div>
-            <div class="text-center md:text-left">
+            <div class="text-center">
               <p class="text-xs text-gray-400 font-bold mb-1">当前状态</p>
-              <span :class="['text-sm font-black italic', isDeadlinePassed ? 'text-red-500' : 'text-green-500']">
+              <span :class="['text-lg font-black italic', isDeadlinePassed ? 'text-red-500' : 'text-green-500']">
                 {{ isDeadlinePassed ? '已截止' : '进行中' }}
               </span>
             </div>
@@ -114,7 +113,6 @@
 
           <form @submit.prevent="submitEdit" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- 作业标题 -->
               <div class="col-span-1 md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-2">作业标题</label>
                 <input
@@ -126,7 +124,6 @@
                 />
               </div>
 
-              <!-- AI识别运动类型 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">AI识别运动类型</label>
                 <select
@@ -140,7 +137,6 @@
                 </select>
               </div>
 
-              <!-- 截止日期 -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">截止日期</label>
                 <input
@@ -150,11 +146,9 @@
                   max="2999-12-31T23:59"
                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm"
                 />
-                <p class="text-xs text-gray-500 mt-1">输入4位年份后自动跳转</p>
               </div>
             </div>
 
-            <!-- 作业描述 -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">作业描述</label>
               <textarea
@@ -167,17 +161,12 @@
             </div>
 
             <div class="mt-8 flex gap-4 justify-end">
-              <button
-                type="button"
-                @click="showEditModal = false"
-                class="px-8 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all shadow"
-              >
+              <button type="button" @click="showEditModal = false"
+                      class="px-8 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all shadow">
                 取消
               </button>
-              <button
-                type="submit"
-                class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg"
-              >
+              <button type="submit"
+                      class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg">
                 更新作业
               </button>
             </div>
@@ -191,6 +180,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import dayjs from 'dayjs'
 import apiClient from '../../services/axios.js'
 
 const router = useRouter()
@@ -205,8 +195,7 @@ const showEditModal = ref(false)
 const stats = ref({
   submittedCount: 0,
   totalStudents: 0,
-  pendingCount: 0,
-  avgScore: '-'
+  avgScore: null  // null 表示无评分数据
 })
 
 const editForm = ref({
@@ -218,9 +207,8 @@ const editForm = ref({
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
-const jwt = currentUser.jwt || ''
+const jwt = currentUser.token || ''
 
-// AI类型映射
 const aiTypeMap = {
   squat: '深蹲',
   pushup: '俯卧撑',
@@ -230,38 +218,87 @@ const aiTypeMap = {
 const fetchDetail = async () => {
   loading.value = true
   try {
-    // 1. 获取作业基本信息
-    const infoResp = await apiClient.post('/api/get_info_by_homework_id', {
+    // 获取作业基本信息
+    const infoResp = await apiClient.post('/Homework/get_info_by_homework_id', {
       First: courseId,
       Second: assignmentId
     })
 
-    if (!Array.isArray(infoResp.data) || infoResp.data.length < 4) {
+    if (!infoResp.data.success || !infoResp.data.data) {
       assignment.value = null
       return
     }
 
-    const d = infoResp.data
+    const infoData = infoResp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
 
-    // 2. 获取当前AI类型
-    const aiResp = await apiClient.post('/api/get_AI_type', { First: assignmentId })
-    const currentAiType = aiResp.data?.[0] || 'squat'
+    // 获取 AI 类型
+    const aiResp = await apiClient.post('/Homework/get_AI_type', { First: assignmentId })
+    const currentAiType = aiResp.data?.data || 'squat'
 
-    assignment.value = {
-      title: d[0],
-      description: d[1],
-      deadline: d[2],
-      create_time: d[3],
-      aiType: currentAiType,
-      aiTypeDisplay: aiTypeMap[currentAiType] || '标准动作'
+    // 获取学生总数
+    const studentResp = await apiClient.post('/Course_student/get_student_id_by_course', {
+      First: teacherId,
+      Second: jwt,
+      Third: courseId
+    })
+    const totalStudents = studentResp.data.success && studentResp.data.data
+      ? studentResp.data.data.split('\t\r').filter(Boolean).length
+      : 0
+
+    // 获取提交统计
+    const submitResp = await apiClient.post('/Homework/get_final_submit', {
+      First: teacherId,
+      Second: jwt,
+      Third: courseId,
+      Fourth: assignmentId
+    })
+
+    let submittedCount = 0
+    let totalScore = 0
+    let scoreCount = 0
+
+    if (submitResp.data.success && submitResp.data.data) {
+      const pairs = submitResp.data.data.split('\t\r').filter(Boolean)
+      for (const pair of pairs) {
+        const [studentId, submitId] = pair.split('\n')
+        if (submitId === '-1' || submitId === '-2') continue
+
+        submittedCount++
+
+        const detailResp = await apiClient.post('/Homework/get_submit_info', {
+          First: '1',
+          Second: teacherId,
+          Third: jwt,
+          Fourth: submitId
+        })
+
+        if (detailResp.data.success && detailResp.data.data) {
+          const raw = detailResp.data.data.trim().replace(/\t\r$/g, '')
+          let parts = raw.split('\t\r')
+          const score = parseInt(parts[1], 10)
+          if (!isNaN(score) && score > 0) {
+            totalScore += score
+            scoreCount++
+          }
+        }
+      }
     }
 
-    // 模拟统计（可替换为真实接口）
+    const avgScore = scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : null
+
+    assignment.value = {
+      title: infoData[0],
+      description: infoData[1],
+      deadline: infoData[2],
+      create_time: infoData[3],
+      aiType: currentAiType,
+      aiTypeDisplay: aiTypeMap[currentAiType] || '未知动作'
+    }
+
     stats.value = {
-      submittedCount: 24,
-      totalStudents: 45,
-      pendingCount: 6,
-      avgScore: 89.2
+      submittedCount,
+      totalStudents,
+      avgScore
     }
 
   } catch (err) {
@@ -291,31 +328,29 @@ const handleEdit = () => {
     title: assignment.value.title,
     aiType: assignment.value.aiType || 'squat',
     description: assignment.value.description,
-    deadline: assignment.value.deadline.slice(0, 16)  // 转为 datetime-local 格式
+    deadline: dayjs(assignment.value.deadline).format('YYYY-MM-DDTHH:mm:ss')
   }
   showEditModal.value = true
 }
 
 const submitEdit = async () => {
   try {
-    // 1. 更新基本信息
-    const editResp = await apiClient.post('/api/edit_homework', {
+    const editResp = await apiClient.post('/Homework/edit_homework', {
       First: teacherId,
       Second: jwt,
       Third: courseId,
       Fourth: assignmentId,
       Fifth: editForm.value.title,
       Sixth: editForm.value.description,
-      Seventh: editForm.value.deadline
+      Seventh: dayjs(editForm.value.deadline).format('YYYY/MM/DD HH:mm:ss')
     })
 
-    if (editResp.data[0] !== 0) {
-      alert(`基本信息更新失败 (代码: ${editResp.data[0]})`)
+    if (!editResp.data.success) {
+      alert('基本信息更新失败')
       return
     }
 
-    // 2. 更新AI类型
-    const aiResp = await apiClient.post('/api/edit_AI_type', {
+    const aiResp = await apiClient.post('/Homework/edit_AI_type', {
       First: teacherId,
       Second: jwt,
       Third: courseId,
@@ -323,36 +358,36 @@ const submitEdit = async () => {
       Fifth: editForm.value.aiType
     })
 
-    if (aiResp.data[0] !== 0) {
-      alert('警告：AI识别类型更新失败，但其他信息已保存')
+    if (!aiResp.data.success) {
+      alert('警告：AI类型更新失败，但其他信息已保存')
     }
 
     alert('作业更新成功！')
     showEditModal.value = false
-    await fetchDetail()  // 刷新显示
+    await fetchDetail()
 
   } catch (err) {
     console.error(err)
-    alert('更新失败，请检查网络')
+    alert('更新失败')
   }
 }
 
 const handleDelete = async () => {
-  if (!confirm('确定要删除此作业吗？')) return
+  if (!confirm('确定要删除此作业吗？所有提交数据将永久丢失！')) return
 
   try {
-    const resp = await apiClient.post('/api/delete_homework', {
+    const resp = await apiClient.post('/Homework/delete_homework', {
       First: teacherId,
       Second: jwt,
       Third: courseId,
       Fourth: assignmentId
     })
 
-    if (resp.data[0] === 0) {
+    if (resp.data.success) {
       alert('作业已删除')
       router.push(`/teacher/course/${courseId}`)
     } else {
-      alert(`删除失败 (代码: ${resp.data[0]})`)
+      alert('删除失败')
     }
   } catch (err) {
     alert('删除请求失败')
