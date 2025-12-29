@@ -204,40 +204,52 @@ const loadSubmissions = async () => {
         })
 
         console.log('get_submit_info:', submitInfoResponse.data)
-        if (submitInfoResponse.data[0] < 0) {
-          continue
-        }
+        if (submitInfoResponse.data.success && submitInfoResponse.data.data) {
+          // 解析提交数据字符串，格式为: video_url\t\r score\t\r AI_feedback\t\r teacher_feedback\t\r CREATE_TIME
+          const submitDataArray = submitInfoResponse.data.data.split('\t\r');
 
-        // 获取作业详情
-        let homeworkTitle = `作业 ${submitId.trim()}`
-        let submitCourseId = courseId
-        let submitCourseName = courseName
+          console.log('提交数据:', submitDataArray)
 
+          // 安全地解析提交数据，处理字段可能为空的情况
+          const videoUrl = submitDataArray[0] || null;
+          const score = submitDataArray[1] ? parseFloat(submitDataArray[1]) : null;
+          const aiFeedback = submitDataArray[2] || '';
+          const teacherFeedback = submitDataArray[3] || '';
+          const createTime = submitDataArray[4] || '';
 
-        try {
-          const homeworkDetailResponse = await apiClient.post('/Homework/get_info_by_homework_id', {
-            first: courseId || '',
-            second: targetHomeworkId
-          })
+          // 获取作业详情
+          let homeworkTitle = `作业 ${submitId.trim()}`
+          let submitCourseId = courseId
+          let submitCourseName = courseName
 
-          if (homeworkDetailResponse.data[0] >= 0) {
-            homeworkTitle = homeworkDetailResponse.data[0] || `作业 ${homeworkId}`
+          try {
+            const homeworkDetailResponse = await apiClient.post('/Homework/get_info_by_homework_id', {
+              first: courseId || '',
+              second: targetHomeworkId
+            })
+
+            if (homeworkDetailResponse.data[0] >= 0) {
+              homeworkTitle = homeworkDetailResponse.data[0] || `作业 ${homeworkId}`
+            }
+          } catch (err) {
+            console.error(`获取作业 ${targetHomeworkId } 详情失败:`, err)
           }
-        } catch (err) {
-          console.error(`获取作业 ${targetHomeworkId } 详情失败:`, err)
-        }
 
-        allSubmissions.push({
-          id: submitId.trim(),
-          courseId: submitCourseId || '',
-          courseName: submitCourseName,
-          title: homeworkTitle,
-          video_url: submitInfoResponse.data[0] || null,
-          score: submitInfoResponse.data[1] || null,
-          AI_feedback: submitInfoResponse.data[2] || '',
-          teacher_feedback: submitInfoResponse.data[3] || '',
-          CREATE_TIME: submitInfoResponse.data[4] || ''
-        })
+          allSubmissions.push({
+            id: submitId.trim(),
+            courseId: submitCourseId || '',
+            courseName: submitCourseName,
+            title: homeworkTitle,
+            video_url: videoUrl,
+            score: score,
+            AI_feedback: aiFeedback,
+            teacher_feedback: teacherFeedback,
+            CREATE_TIME: createTime
+          })
+        } else {
+          console.log(`提交 ${submitId} 信息获取失败或为空`);
+          continue;
+        }
       } catch (err) {
         console.error(`获取提交 ${submitId} 信息失败:`, err)
       }

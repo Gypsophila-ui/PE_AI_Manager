@@ -183,9 +183,31 @@ const fetchCourseList = async () => {
               first: courseId.trim(),
               second: token
             })
-
+            console.log('获取课程详情响应:', detailResponse.data)
             if (detailResponse.data.success && detailResponse.data.data) {
-              const courseData = detailResponse.data.data
+              // 解析课程数据字符串，格式为: 教师id\t\r课程名字\t\r课程描述\t\r课程码\t\r课程所在学期\t\r课程是否正在进行(1是0否)\t\r课程创建时间
+              const courseDataArray = detailResponse.data.data.split('\t\r');
+
+              console.log('课程数据:', courseDataArray)
+
+              // 安全地解析课程数据，处理字段可能为空的情况
+              const teacherId = courseDataArray[0] || '';
+              const courseName = courseDataArray[1] || '未命名课程';
+              const courseDescription = courseDataArray[2] || '暂无描述';
+              const courseCode = courseDataArray[3] || '';
+              const courseTerm = courseDataArray[4] || '';
+              const isActive = courseDataArray[5] || '0';
+              const createTime = courseDataArray[6] || '';
+
+              console.log('解析后的课程数据:', {
+                teacherId,
+                courseName,
+                courseDescription,
+                courseCode,
+                courseTerm,
+                isActive,
+                createTime
+              })
 
               // 获取该课程的作业列表
               const homeworkResponse = await apiClient.post('/Homework/get_homework_id_by_course', {
@@ -209,10 +231,14 @@ const fetchCourseList = async () => {
 
               return {
                 id: courseId.trim(),
-                name: courseData.name || '未命名课程',
-                description: courseData.info || '暂无描述',
+                name: courseName,
+                description: courseDescription,
+                code: courseCode,
                 subject: '体育',
-                status: courseData.is_active === '1' ? '进行中' : '未发布',
+                status: isActive === '1' ? '进行中' : '已结束',
+                term: courseTerm,
+                createTime: createTime,
+                teacherId: teacherId,
                 assignments: assignments,
                 totalAssignments: assignments.length,
                 completedAssignments: assignments.filter(a => a.status === '已完成').length,
@@ -289,14 +315,15 @@ const handleAddCourse = async () => {
       second: token,
       third: validationResult.courseCode.id
     })
-    const response = await apiClient.post('/Course_student/add_student', {
+
+    const response = await apiClient.post('/Course_student/add_course', {
       first: studentId,
       second: token,
       third: validationResult.courseCode.id
     })
 
     console.log('加入课程响应:', response.data)
-    if (response.data.code !== 0) {
+    if (!response.data.success) {
       throw new Error(response.data.message || '加入课程失败')
     }
   } catch (err) {
