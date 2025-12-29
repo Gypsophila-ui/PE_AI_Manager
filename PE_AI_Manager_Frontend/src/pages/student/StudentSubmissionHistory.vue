@@ -7,7 +7,7 @@
           <p class="text-gray-600">查看和管理您的作业提交记录</p>
         </div>
         <button @click="goBack" class="px-6 py-3 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow">
-          ← 返回
+          返回
         </button>
       </div>
 
@@ -124,10 +124,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import apiClient from '../../services/axios.js'
 
 const router = useRouter()
+const route = useRoute()
 
 const submissions = ref([])
 const loading = ref(true)
@@ -136,7 +137,10 @@ const errorMessage = ref('')
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const studentId = currentUser.id || ''
-const jwt = currentUser.jwt || ''
+const jwt = currentUser.token || ''
+
+const courseId = route.params.courseId || ''
+const assignmentId = route.params.assignmentId || ''
 
 const loadSubmissions = async () => {
   loading.value = true
@@ -148,94 +152,109 @@ const loadSubmissions = async () => {
       throw new Error('未找到用户信息，请重新登录')
     }
 
-    const courseResponse = await apiClient.post('/Course_student/get_course_id_by_student', {
-      first: studentId,
-      second: jwt
+    let targetHomeworkId = null
+    let courseName = '未命名课程'
+
+    // 如果有指定作业ID，只获取该作业的提交记录
+    if (assignmentId) {
+      targetHomeworkId = assignmentId
+
+      // 获取课程名称
+      try {
+        const courseDetailResponse = await apiClient.post('/Course/get_info_by_course_id', {
+          first: courseId,
+          second: jwt
+        })
+
+        if (courseDetailResponse.data.success && courseDetailResponse.data.data) {
+          courseName = courseDetailResponse.data.data.name || '未命名课程'
+        }
+      } catch (err) {
+        console.error('获取课程信息失败:', err)
+      }
+    }
+
+    // 调用 get_submit_id_by_student 获取提交ID列表
+    const submitIdResponse = await apiClient.post('/Homework/get_submit_id_by_student', {
+      first: '0',
+      second: studentId,
+      third: jwt,
+      fourth: targetHomeworkId || '1',
+      fifth: studentId
     })
 
-    if (!courseResponse.data.success || !courseResponse.data.data || courseResponse.data.data.trim() === '' || courseResponse.data.data === 'NULL') {
+    if (!submitIdResponse.data.success || !submitIdResponse.data.data || submitIdResponse.data.data.trim() === '' || submitIdResponse.data.data === 'NULL') {
       submissions.value = []
       loading.value = false
       return
     }
 
-    const courseIdList = courseResponse.data.data.split('\t\r').filter(id => id.trim())
+    const submitIdList = submitIdResponse.data.data.split('\t\r').filter(id => id.trim())
 
     const allSubmissions = []
 
-    for (const courseId of courseIdList) {
+    for (const submitId of submitIdList) {
       try {
-        const courseDetailResponse = await apiClient.post('/Course/get_info_by_course_id', {
-          first: courseId.trim(),
-          second: jwt
-        })
-
-        if (!courseDetailResponse.data.success || !courseDetailResponse.data.data) {
-          continue
-        }
-
-        const courseData = courseDetailResponse.data.data
-        const courseName = courseData.name || '未命名课程'
-
-        const homeworkResponse = await apiClient.post('/Homework/get_homework_id_by_course', {
+        // 获取提交详细信息
+        const submitInfoResponse = await apiClient.post('/Homework/get_submit_info', {
           first: '0',
           second: studentId,
           third: jwt,
-          fourth: courseId.trim()
+          fourth: submitId.trim()
         })
 
-        if (!homeworkResponse.data.success || !homeworkResponse.data.data) {
+        console.log('get_submit_info:', submitInfoResponse.data)
+        if (submitInfoResponse.data[0] < 0) {
           continue
         }
 
-        const homeworkIdList = homeworkResponse.data.data.split('\t\r').filter(id => id.trim())
+        // 获取作业详情
+        let homeworkTitle = `作业 ${submitId.trim()}`
+        let submitCourseId = courseId
+        let submitCourseName = courseName
 
-        for (const homeworkId of homeworkIdList) {
-          try {
-            const homeworkDetailResponse = await apiClient.post('/Homework/get_info_by_homework_id', {
-              first: homeworkId.trim(),
-              second: courseId.trim(),
-              third: jwt
-            })
+        // 从提交信息中获取作业ID
+        const homeworkId = submitId.trim()
 
-            if (homeworkDetailResponse.data[0] < 0) {
-              continue
-            }
+        try {
+          const homeworkDetailResponse = await apiClient.post('/Homework/get_info_by_homework_id', {
+            first: homeworkId,
+            second: courseId || '',
+            third: jwt
+          })
 
-            const homeworkTitle = homeworkDetailResponse.data[0] || `作业 ${homeworkId.trim()}`
-
-            const submitInfoResponse = await apiClient.post('/api/get_submit_info', {
-              user_type: '0',
-              user_id: studentId,
-              jwt: jwt,
-              submit_id: homeworkId.trim()
-            })
-
-            if (submitInfoResponse.data[0] < 0) {
-              continue
-            }
-
-            allSubmissions.push({
-              id: homeworkId.trim(),
-              courseId: courseId.trim(),
-              courseName: courseName,
-              title: homeworkTitle,
-              video_url: submitInfoResponse.data[0] || null,
-              score: submitInfoResponse.data[1] || null,
-              AI_feedback: submitInfoResponse.data[2] || '',
-              teacher_feedback: submitInfoResponse.data[3] || '',
-              CREATE_TIME: submitInfoResponse.data[4] || ''
-            })
-          } catch (err) {
-            console.error(`获取作业 ${homeworkId} 提交信息失败:`, err)
+          if (homeworkDetailResponse.data[0] >= 0) {
+            homeworkTitle = homeworkDetailResponse.data[0] || `作业 ${homeworkId}`
           }
+        } catch (err) {
+          console.error(`获取作业 ${homeworkId} 详情失败:`, err)
         }
+
+        allSubmissions.push({
+          id: submitId.trim(),
+          courseId: submitCourseId || '',
+          courseName: submitCourseName,
+          title: homeworkTitle,
+          video_url: submitInfoResponse.data[0] || null,
+          score: submitInfoResponse.data[1] || null,
+          AI_feedback: submitInfoResponse.data[2] || '',
+          teacher_feedback: submitInfoResponse.data[3] || '',
+          CREATE_TIME: submitInfoResponse.data[4] || ''
+        })
       } catch (err) {
-        console.error(`获取课程 ${courseId} 信息失败:`, err)
+        console.error(`获取提交 ${submitId} 信息失败:`, err)
       }
     }
 
-    submissions.value = allSubmissions.sort((a, b) => new Date(b.CREATE_TIME) - new Date(a.CREATE_TIME))
+    // 按submitId数值大小排序
+    const sortedSubmissions = allSubmissions.sort((a, b) => parseInt(a.id) - parseInt(b.id))
+
+    // 根据排序后的顺序更新提交标题为"第1次提交"、"第2次提交"等
+    sortedSubmissions.forEach((submission, index) => {
+      submission.title = `第${index + 1}次提交`
+    })
+
+    submissions.value = sortedSubmissions
   } catch (err) {
     error.value = true
     errorMessage.value = err.message || '加载提交历史失败'
@@ -293,7 +312,13 @@ const formatDate = (dateStr) => {
 }
 
 const goBack = () => {
-  router.push('/student/assignments')
+  if (courseId && assignmentId) {
+    router.push(`/student/course/${courseId}/assignments/${assignmentId}`)
+  } else if (courseId) {
+    router.push(`/student/course/${courseId}`)
+  } else {
+    router.push('/student/assignments')
+  }
 }
 
 onMounted(() => {

@@ -217,17 +217,26 @@ const fetchCourseDetails = async () => {
       // 解析课程数据字符串，格式为: 教师id\t\r课程名字\t\r课程描述\t\r课程码\t\r课程所在学期\t\r课程是否正在进行(1是0否)\t\r课程创建时间
       const courseDataArray = courseResponse.data.data.split('\t\r');
 
-      if (courseDataArray.length >= 7) {
-        const [
-          teacherId,      // 教师ID
-          courseName,     // 课程名字
-          courseDescription, // 课程描述
-          courseCode,     // 课程码
-          courseTerm,     // 课程所在学期
-          isActive,       // 课程是否正在进行 (1是 0否)
-          createTime     // 课程创建时间
-        ] = courseDataArray;
+      console.log('课程数据:', courseDataArray)
 
+      // 安全地解析课程数据，处理字段可能为空的情况
+      const teacherId = courseDataArray[0] || '';
+      const courseName = courseDataArray[1] || '未命名课程';
+      const courseDescription = courseDataArray[2] || '暂无描述';
+      const courseCode = courseDataArray[3] || '';
+      const courseTerm = courseDataArray[4] || '';
+      const isActive = courseDataArray[5] || '0';
+      const createTime = courseDataArray[6] || '';
+
+      console.log('解析后的课程数据:', {
+        teacherId,
+        courseName,
+        courseDescription,
+        courseCode,
+        courseTerm,
+        isActive,
+        createTime
+      })
         // 调用get_homework_id_by_course接口获取作业列表
         const homeworkResponse = await apiClient.post('/Homework/get_homework_id_by_course', {
           first: '0', // 学生
@@ -321,9 +330,6 @@ const fetchCourseDetails = async () => {
         }
 
         console.log('课程详情加载成功:', course.value)
-      } else {
-        throw new Error('课程数据格式不正确');
-      }
     } else {
       throw new Error(courseResponse.data.message || '获取课程详情失败')
     }

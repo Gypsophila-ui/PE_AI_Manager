@@ -8,9 +8,14 @@
 
       <!-- 页面标题 -->
       <section class="flex justify-between items-center">
-        <div>
-          <h2 class="text-4xl font-bold text-gray-800 mb-4">作业详情</h2>
-          <p class="text-gray-600">查看作业要求和提交状态</p>
+        <div class="flex items-center gap-4">
+          <button @click="goBack" class="px-6 py-3 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow flex items-center gap-2">
+           返回
+          </button>
+          <div>
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">作业详情</h2>
+            <p class="text-gray-600">查看作业要求和提交状态</p>
+          </div>
         </div>
         <button @click="goToHistory" class="px-6 py-3 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-all shadow-lg flex items-center gap-2">
           <span>📋</span> 查看提交历史
@@ -82,6 +87,24 @@
             <div>
               <div class="text-xs text-gray-400">分值</div>
               <div>{{ assignment.points }}分</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最终得分卡片 -->
+        <div class="mb-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl border-2 border-green-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-lg font-bold text-gray-800 mb-1">🏆 最终得分</h4>
+              <p class="text-sm text-gray-600">教师评定的最终成绩</p>
+            </div>
+            <div v-if="finalScore !== null" class="text-right">
+              <div class="text-4xl font-bold text-green-600">{{ finalScore }}分</div>
+              <span class="text-sm text-green-700">已评分</span>
+            </div>
+            <div v-else class="text-right">
+              <div class="text-4xl font-bold text-gray-400">--</div>
+              <span class="text-sm text-gray-500">待评分</span>
             </div>
           </div>
         </div>
@@ -269,6 +292,7 @@ const assignment = ref(null)
 const loading = ref(true)
 const error = ref(false)
 const errorMessage = ref('')
+const finalScore = ref(null)
 
 // 文件上传相关（集成提交作业功能）
 const fileInput = ref(null)
@@ -348,6 +372,54 @@ const fetchAssignmentDetails = async () => {
   }
 };
 
+// 获取最终得分
+const fetchFinalScore = async () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const studentId = user.id;
+    const jwt = user.token;
+    const teacherId = ''
+
+    if (!studentId || !jwt) {
+      console.log('未找到用户信息，跳过获取最终得分');
+      return;
+    }
+
+    // 调用get_final_score接口
+    const response = await apiClient.post('/Homework/get_final_score', {
+      first: '1', // 1为教师身份
+      second: assignmentId, // 提交ID（这里使用作业ID）
+      third: teacherId,
+      fourth: studentId,
+      fifth: jwt,
+      sixth: assignmentId
+    });
+
+    console.log('获取最终得分响应:', response.data);
+
+    // 检查返回值
+    if (response.data && typeof response.data === 'number') {
+      if (response.data >= 0) {
+        finalScore.value = response.data;
+      } else if (response.data === -26) {
+        // 当前学生在当前作业下还没有已经进行评分的提交
+        finalScore.value = null;
+      } else {
+        console.warn('获取最终得分返回错误码:', response.data);
+        finalScore.value = null;
+      }
+    } else if (response.data && typeof response.data === 'object' && response.data.score !== undefined) {
+      finalScore.value = response.data.score;
+    } else {
+      console.warn('获取最终得分返回数据格式不正确:', response.data);
+      finalScore.value = null;
+    }
+  } catch (err) {
+    console.error('获取最终得分失败:', err);
+    finalScore.value = null;
+  }
+};
+
 // 格式化日期
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -366,7 +438,7 @@ const goBack = () => {
 }
 
 const goToHistory = () => {
-  router.push(`/student/course/${courseId}/submission-history`)
+  router.push(`/student/course/${courseId}/assignments/${assignmentId}/submission-history`)
 }
 
 // 文件上传相关函数（集成提交作业功能）
@@ -970,5 +1042,6 @@ const downloadProcessedVideo = () => {
 // 组件挂载时获取作业详情
 onMounted(() => {
   fetchAssignmentDetails()
+  fetchFinalScore()
 })
 </script>

@@ -150,9 +150,9 @@ const loadData = async () => {
       }
     } else {
       // 1. 获取学生加入的所有课程ID
-      const courseIdResp = await apiClient.post('/api/get_course_id_by_student', {
-        student_id: studentId,
-        jwt: jwt
+      const courseIdResp = await apiClient.post('/Course_student/get_course_id_by_student', {
+        first: studentId,
+        second: jwt
       })
 
       if (courseIdResp.data[0] < 0) {
@@ -173,7 +173,7 @@ const loadData = async () => {
 
       // 2. 并行获取每个课程的详细信息（主要是 name）
       const coursePromises = courseIds.map(id =>
-        apiClient.post('/api/get_info_by_course_id', { course_id: id })
+        apiClient.post('/Course/get_info_by_course_id', { first: id })
       )
       const courseResps = await Promise.all(coursePromises)
 
