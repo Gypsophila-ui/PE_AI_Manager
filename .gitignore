@@ -12,4 +12,5 @@ bin/
 obj/
 *.pyc
 *.db
+*.xlsx
 __pycache__/
