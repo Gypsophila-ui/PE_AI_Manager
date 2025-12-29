@@ -284,12 +284,18 @@ const handleAddCourse = async () => {
   // 添加学生到课程
   try {
     const token = currentUser.token
+    console.log('加入课程请求:', {
+      first: studentId,
+      second: token,
+      third: validationResult.courseCode.id
+    })
     const response = await apiClient.post('/Course_student/add_student', {
       first: studentId,
       second: token,
       third: validationResult.courseCode.id
     })
 
+    console.log('加入课程响应:', response.data)
     if (response.data.code !== 0) {
       throw new Error(response.data.message || '加入课程失败')
     }
@@ -325,7 +331,16 @@ const validateCourseCode = (code) => {
   if (!alphanumericRegex.test(code)) {
     return {
       valid: false,
-      message: '课程码只能包含字母和数字'
+      message: '课程码只能包含数字'
+    }
+  }
+
+  // 验证通过，返回课程码信息
+  return {
+    valid: true,
+    courseCode: {
+      id: code,
+      className: `课程 ${code}` // 临时显示名称，实际名称会在获取课程详情时更新
     }
   }
 }

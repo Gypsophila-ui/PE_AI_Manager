@@ -144,7 +144,7 @@
               >
                 <div class="text-6xl text-gray-300 mb-4">🎥</div>
                 <h3 class="text-xl font-bold text-gray-800 mb-2">上传作业视频</h3>
-                <p class="text-gray-500 mb-4">支持 MP4、AVI、MOV 格式，文件大小不超过 200MB</p>
+                <p class="text-gray-500 mb-4">仅支持 MP4 格式，单个文件最大 100MB</p>
                 <button
                   @click="triggerFileInput"
                   class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow"
