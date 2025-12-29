@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen bg-white">
-    <div class="max-w-7xl mx-auto p-6 space-y-8">
+  <div class="min-h-screen bg-gray-100">
+    <div class="max-w-4xl mx-auto p-6 space-y-10">
       <!-- 顶部导航栏 -->
       <div class="flex justify-between items-center py-4">
         <h1 class="text-2xl font-bold text-gray-800">体育作业平台 - 学生端</h1>
@@ -26,13 +26,13 @@
       <!-- 错误状态 -->
       <div v-else-if="errorMsg" class="text-center py-32">
         <p class="text-2xl text-red-600 mb-6">{{ errorMsg }}</p>
-        <button @click="reloadPage" class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg">
+        <button @click="reloadPage" class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-xl">
           🔄 重试加载
         </button>
       </div>
 
       <!-- 作业基本信息卡片 -->
-      <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl shadow-lg p-8">
+      <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl shadow-xl p-8">
         <div class="flex justify-between items-start mb-6">
           <div>
             <h2 class="text-3xl font-bold text-gray-800 mb-3">{{ submission.title || '加载中...' }}</h2>
@@ -66,7 +66,7 @@
       </div>
 
       <!-- AI 分析视频 -->
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+      <div class="bg-white rounded-3xl shadow-xl p-8">
         <h3 class="text-2xl font-bold text-gray-800 mb-6">🎥 AI 分析视频</h3>
         <div v-if="submission.video_url" class="relative aspect-video bg-black rounded-xl overflow-hidden shadow-xl">
           <video :src="submission.video_url" controls class="w-full h-full object-contain">
@@ -79,7 +79,7 @@
       </div>
 
       <!-- AI 反馈 -->
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+      <div class="bg-white rounded-3xl shadow-xl p-8">
         <h3 class="text-2xl font-bold text-gray-800 mb-6">🤖 AI 智能评价</h3>
         <div v-if="submission.AI_feedback" class="bg-indigo-50 rounded-xl p-6 border border-indigo-200">
           <p class="text-lg text-indigo-900 leading-relaxed whitespace-pre-wrap">{{ submission.AI_feedback }}</p>
@@ -90,7 +90,7 @@
       </div>
 
       <!-- 教师反馈 -->
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+      <div class="bg-white rounded-3xl shadow-xl p-8">
         <h3 class="text-2xl font-bold text-gray-800 mb-6">👩‍🏫 教师评语</h3>
         <div v-if="submission.teacher_feedback" class="bg-blue-50 rounded-xl p-6 border border-blue-200">
           <p class="text-lg text-blue-900 leading-relaxed whitespace-pre-wrap">{{ submission.teacher_feedback }}</p>
@@ -109,7 +109,7 @@
         </div>
         <button v-else
             @click="reSubmit"
-            class="px-8 py-4 rounded-xl bg-orange-500 text-white text-xl font-bold hover:bg-orange-600 transition-all shadow-lg flex items-center gap-3">
+            class="px-8 py-4 rounded-xl bg-orange-500 text-white text-xl font-bold hover:bg-orange-600 transition-all shadow-xl flex items-center gap-3">
           <span>🔄</span> 重新提交此作业
         </button>
       </div>
@@ -127,7 +127,7 @@ const router = useRouter()
 
 const submission = ref({})   // 提交记录详情
 const homework = ref({})     // 作业信息
-const course = ref({})       // 课程信息（新增）
+const course = ref({})       // 课程信息
 
 const loading = ref(true)
 const errorMsg = ref('')
@@ -156,17 +156,17 @@ onMounted(async () => {
     // 并行发起三个请求，提高速度
     const [submitResp, homeworkResp, courseResp] = await Promise.all([
       apiClient.post('/api/get_submit_info', {
-        user_type: '0',       // 学生身份
-        user_id: studentId,
-        jwt: jwt,
-        submit_id: submitId
+        First: '0',           // user_type (学生=0)
+        Second: studentId,    // user_id
+        Third: jwt,           // jwt
+        Fourth: submitId      // submit_id
       }),
       apiClient.post('/api/get_info_by_homework_id', {
-        course_id: courseId,
-        homework_id: homeworkId
+        First: courseId,      // course_id
+        Second: homeworkId    // homework_id
       }),
       apiClient.post('/api/get_info_by_course_id', {
-        course_id: courseId
+        First: courseId       // course_id
       })
     ])
 
@@ -195,7 +195,7 @@ onMounted(async () => {
       create_time: homeworkResp.data[3],
     }
 
-    // 处理 get_info_by_course_id（新增）
+    // 处理 get_info_by_course_id
     if (courseResp.data[0] < 0) {
       errorMsg.value = getCourseErrorMsg(courseResp.data[0])
       return
@@ -216,7 +216,7 @@ onMounted(async () => {
       description: homework.value.description,
       deadline: homework.value.deadline,
       courseId: courseId,
-      courseName: course.value.name  // 直接用真实课程名
+      courseName: course.value.name
     })
 
   } catch (err) {

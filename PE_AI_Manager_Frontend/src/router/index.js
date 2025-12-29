@@ -16,11 +16,20 @@ import GradeManagement from '../pages/teacher/GradeManagement.vue'
 import TeachingVideos from '../pages/teacher/TeachingVideos.vue'
 import CourseDetails from '../pages/CourseDetails.vue'
 import TeacherCourseDetails from '../pages/teacher/TeacherCourseDetails.vue'
+import TeacherAssignmentDetcail from '../pages/teacher/TeacherAssignmentDetcail.vue'
+import CourseCreateEdit from '../pages/teacher/CourseCreateEdit.vue'
+import CourseStudents from '../pages/teacher/CourseStudents.vue'
+import TeacherDashboard from '../pages/teacher/TeacherDashboard.vue'
+
+import VideoTest from '@/pages/VideoTest.vue'
 
 const routes = [
   { path: '/', component: Login },
   { path: '/login', component: Login },
   { path: '/register', component: Register },
+
+  // 视频测试页面
+  { path: '/videoTest', component: VideoTest},
 
   // 学生端路由
   { path: '/student', component: StudentHome },
@@ -34,9 +43,14 @@ const routes = [
   { path: '/teacher', component: TeacherHome },
   { path: '/teacher/assignments', component: TeacherAssignments },
   { path: '/teacher/publish', component: PublishAssignment },
-  { path: '/teacher/grade/:id', component: GradeManagement },
+  { path: '/teacher/grade/course/:courseId/assignment/:assignmentId', component: GradeManagement },
+  { path: '/teacher/course/:courseId/assignment/:assignmentId', component: TeacherAssignmentDetcail },
   { path: '/teacher/videos', component: TeachingVideos },
   { path: '/teacher/course/:courseId', component: TeacherCourseDetails },
+  { path: '/teacher/course/:courseId/edit', component: CourseCreateEdit },
+  { path: '/teacher/createCourse/', component: CourseCreateEdit },
+  { path: '/teacher/course/:courseId/students', component: CourseStudents },
+  { path: '/teacher/dashboard', component: TeacherDashboard },
 
   // 公共路由
   { path: '/assistant', component: Assistant },

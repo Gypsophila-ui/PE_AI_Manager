@@ -19,76 +19,25 @@
         </div>
       </div>
 
-      <!-- 页面标题 -->
       <section>
-        <h2 class="text-4xl font-bold text-gray-800 mb-4">✏️ 成绩管理</h2>
-        <p class="text-gray-600">查看和管理学生作业成绩</p>
+        <h2 class="text-4xl font-bold text-gray-800 mb-4">✏️ {{ assignmentTitle }} - 成绩管理</h2>
+        <p class="text-gray-600 mb-8">查看学生提交并进行评分（教师评分将直接覆盖作为最终成绩）</p>
       </section>
 
-      <!-- 筛选条件 -->
-      <section class="bg-white rounded-3xl shadow-xl p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <!-- 选择班级 -->
-          <div>
-            <label for="classId" class="block text-sm font-medium text-gray-700 mb-2">选择班级</label>
-            <select
-              id="classId"
-              v-model="filter.classId"
-              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-              @change="filterSubmissions"
-            >
-              <option value="">全部班级</option>
-              <option v-for="classItem in classes" :key="classItem.id" :value="classItem.id">
-                {{ classItem.name }}
-              </option>
-            </select>
-          </div>
+      <!-- 加载状态 -->
+      <div v-if="loading" class="flex justify-center items-center py-20">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+      </div>
 
-          <!-- 选择作业 -->
-          <div>
-            <label for="assignmentId" class="block text-sm font-medium text-gray-700 mb-2">选择作业</label>
-            <select
-              id="assignmentId"
-              v-model="filter.assignmentId"
-              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-              @change="filterSubmissions"
-            >
-              <option value="">全部作业</option>
-              <option v-for="assignment in assignments" :key="assignment.id" :value="assignment.id">
-                {{ assignment.title }}
-              </option>
-            </select>
-          </div>
-
-          <!-- 选择状态 -->
-          <div>
-            <label for="status" class="block text-sm font-medium text-gray-700 mb-2">提交状态</label>
-            <select
-              id="status"
-              v-model="filter.status"
-              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-              @change="filterSubmissions"
-            >
-              <option value="">全部状态</option>
-              <option value="submitted">已提交</option>
-              <option value="graded">已批改</option>
-              <option value="pending">未提交</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <!-- 成绩列表 -->
-      <section class="bg-white rounded-3xl shadow-xl p-8">
+      <!-- 成绩表格 -->
+      <section v-else class="bg-white rounded-3xl shadow-xl p-8">
         <div class="overflow-x-auto">
-          <table class="w-full min-w-full">
+          <table class="w-full">
             <thead>
               <tr class="border-b border-gray-200">
                 <th class="text-left py-4 px-6 font-medium text-gray-600">学生信息</th>
-                <th class="text-left py-4 px-6 font-medium text-gray-600">作业名称</th>
-                <th class="text-center py-4 px-6 font-medium text-gray-600">AI评分</th>
-                <th class="text-center py-4 px-6 font-medium text-gray-600">教师评分</th>
-                <th class="text-center py-4 px-6 font-medium text-gray-600">总分</th>
+                <th class="text-center py-4 px-6 font-medium text-gray-600">提交时间</th>
+                <th class="text-center py-4 px-6 font-medium text-gray-600">成绩</th>
                 <th class="text-left py-4 px-6 font-medium text-gray-600">AI反馈</th>
                 <th class="text-left py-4 px-6 font-medium text-gray-600">教师评价</th>
                 <th class="text-center py-4 px-6 font-medium text-gray-600">操作</th>
@@ -96,105 +45,86 @@
             </thead>
             <tbody>
               <tr
-                v-for="submission in filteredSubmissions"
-                :key="submission.id"
+                v-for="sub in studentSubmissions"
+                :key="sub.studentId"
                 class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
               >
-                <!-- 学生信息 -->
                 <td class="py-6 px-6">
                   <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl">
-                      {{ submission.studentName.charAt(0) }}
+                    <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xl font-bold">
+                      {{ sub.studentName.charAt(0) }}
                     </div>
                     <div>
-                      <div class="font-medium text-gray-800">{{ submission.studentName }}</div>
-                      <div class="text-sm text-gray-500">班级：{{ getClassName(submission.classId) }}</div>
+                      <div class="font-medium text-gray-800">{{ sub.studentName }}</div>
+                      <div class="text-sm text-gray-500">学号：{{ sub.studentId }}</div>
                     </div>
                   </div>
                 </td>
 
-                <!-- 作业名称 -->
-                <td class="py-6 px-6">
-                  <div class="font-medium text-gray-800">{{ getAssignmentName(submission.assignmentId) }}</div>
-                  <div class="text-sm text-gray-500">{{ formatDate(submission.submissionTime) }}</div>
+                <td class="py-6 px-6 text-center text-sm text-gray-600">
+                  {{ formatDate(sub.createTime) }}
                 </td>
 
-                <!-- AI评分 -->
+                <!-- 统一成绩列（字符串处理） -->
                 <td class="py-6 px-6 text-center">
-                  <div v-if="submission.aiFeedback" class="text-lg font-bold text-green-600">
-                    {{ submission.aiFeedback ? '90' : '-' }}
-                  </div>
-                  <div v-else class="text-gray-400">-</div>
-                </td>
-
-                <!-- 教师评分 -->
-                <td class="py-6 px-6 text-center">
-                  <div v-if="editingId === submission.id" class="flex justify-center">
+                  <div v-if="editingStudentId === sub.studentId" class="flex justify-center gap-2">
                     <input
-                      v-model.number="editingScore"
-                      type="number"
-                      min="0"
-                      max="100"
-                      class="w-16 px-3 py-1 border border-gray-300 rounded-lg text-center"
+                      v-model="editingScore"
+                      type="text"
+                      class="w-20 px-3 py-1 border border-gray-300 rounded-lg text-center"
+                      placeholder="分数"
                     />
                   </div>
-                  <div v-else class="text-lg font-bold text-blue-600">
-                    {{ submission.score || '-' }}
+                  <div v-else class="text-2xl font-black" :class="sub.score !== null ? 'text-purple-600' : 'text-gray-400'">
+                    {{ sub.score ?? '-' }}
                   </div>
                 </td>
 
-                <!-- 总分 -->
-                <td class="py-6 px-6 text-center">
-                  <div class="text-lg font-bold text-purple-600">
-                    {{ submission.score ? submission.score : '-' }}
-                  </div>
-                </td>
-
-                <!-- AI反馈 -->
                 <td class="py-6 px-6">
-                  <div class="max-w-xs text-sm text-gray-600 line-clamp-2">
-                    {{ submission.aiFeedback || '-' }}
+                  <div class="max-w-xs text-sm text-gray-600 line-clamp-3" :title="sub.aiFeedback">
+                    {{ sub.aiFeedback || '暂无反馈' }}
                   </div>
                 </td>
 
-                <!-- 教师评价 -->
                 <td class="py-6 px-6">
-                  <div v-if="editingId === submission.id" class="flex justify-center">
+                  <div v-if="editingStudentId === sub.studentId">
                     <input
                       v-model="editingComment"
                       type="text"
-                      class="w-40 px-3 py-1 border border-gray-300 rounded-lg"
-                      placeholder="添加评价..."
+                      class="w-full max-w-xs px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none"
+                      placeholder="输入评价..."
                     />
                   </div>
-                  <div v-else class="max-w-xs text-sm text-gray-600 line-clamp-2">
-                    {{ submission.teacherComment || '-' }}
+                  <div v-else class="max-w-xs text-sm text-gray-600 line-clamp-3" :title="sub.teacherFeedback">
+                    {{ sub.teacherFeedback || '-' }}
                   </div>
                 </td>
 
-                <!-- 操作按钮 -->
                 <td class="py-6 px-6 text-center">
                   <div class="flex gap-2 justify-center">
                     <button
-                      v-if="editingId === submission.id"
-                      @click="saveGrade(submission.id)"
-                      class="px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all shadow"
+                      v-if="editingStudentId === sub.studentId"
+                      @click="saveGrade(sub)"
+                      class="px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all shadow text-sm"
                     >
                       保存
                     </button>
                     <button
-                      v-else
-                      @click="startEdit(submission)"
-                      class="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all shadow"
+                      v-else-if="sub.submitId && sub.submitId !== '-1' && sub.submitId !== '-2'"
+                      @click="startEdit(sub)"
+                      class="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all shadow text-sm"
                     >
-                      编辑
+                      修改评分
                     </button>
+
                     <button
-                      @click="viewVideo(submission.id)"
-                      class="px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-all shadow"
+                      v-if="sub.videoUrl"
+                      @click="viewVideo(sub.videoUrl)"
+                      class="px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-all shadow text-sm"
                     >
-                      查看视频
+                      视频
                     </button>
+                    <span v-else class="text-gray-400 text-xs">尚未提交</span>
                   </div>
                 </td>
               </tr>
@@ -202,11 +132,11 @@
           </table>
         </div>
 
-        <!-- 空状态 -->
-        <div v-if="filteredSubmissions.length === 0" class="py-16 text-center">
+        <!-- 无提交记录 -->
+        <div v-if="studentSubmissions.length === 0" class="py-16 text-center">
           <div class="text-6xl text-gray-300 mb-4">📭</div>
-          <h3 class="text-xl font-bold text-gray-800 mb-2">暂无数据</h3>
-          <p class="text-gray-500">没有找到符合条件的作业提交记录</p>
+          <h3 class="text-xl font-bold text-gray-800 mb-2">暂无提交记录</h3>
+          <p class="text-gray-500">该作业目前还没有学生提交</p>
         </div>
       </section>
     </div>
@@ -214,87 +144,186 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { classes, assignments, submissions } from '../../data/mockData'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import apiClient from '../../services/axios.js'
 
+const route = useRoute()
 const router = useRouter()
 
-// 筛选条件
-const filter = ref({
-  classId: '',
-  assignmentId: '',
-  status: ''
-})
+const courseId = route.params.courseId
+const assignmentId = route.params.assignmentId
+
+const loading = ref(true)
+const assignmentTitle = ref('加载中...')
+const studentSubmissions = ref([])
+
+const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+const teacherId = currentUser.id || ''
+const jwt = currentUser.token || ''
 
 // 编辑状态
-const editingId = ref(null)
-const editingScore = ref(0)
+const editingStudentId = ref(null)
+const editingScore = ref('')
 const editingComment = ref('')
 
-// 计算筛选后的提交记录
-const filteredSubmissions = computed(() => {
-  return submissions.filter(submission => {
-    let match = true
+// 根据学号查询学生姓名
+const fetchStudentName = async (studentId) => {
+  try {
+    const resp = await apiClient.post('User/get_student_info', {
+      First: teacherId,
+      Second: jwt,
+      Third: '1',        // 教师身份
+      Fourth: studentId
+    })
 
-    if (filter.value.classId && submission.classId !== parseInt(filter.value.classId)) {
-      match = false
+    if (resp.data.success && resp.data.data) {
+      const parts = resp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
+      return parts[0] || `学生${studentId}`
     }
-
-    if (filter.value.assignmentId && submission.assignmentId !== parseInt(filter.value.assignmentId)) {
-      match = false
-    }
-
-    if (filter.value.status && submission.status !== filter.value.status) {
-      match = false
-    }
-
-    return match
-  })
-})
-
-// 开始编辑
-const startEdit = (submission) => {
-  editingId.value = submission.id
-  editingScore.value = submission.score || 0
-  editingComment.value = submission.teacherComment || ''
+  } catch (err) {
+    console.error(`查询学生${studentId}姓名失败:`, err)
+  }
+  return `学生${studentId}`
 }
 
-// 保存成绩
-const saveGrade = (submissionId) => {
-  const submission = submissions.find(s => s.id === submissionId)
-  if (submission) {
-    submission.score = editingScore.value
-    submission.teacherComment = editingComment.value
-    submission.status = 'graded'
+const fetchData = async () => {
+  loading.value = true
+  try {
+    // 获取作业标题
+    const infoResp = await apiClient.post('/Homework/get_info_by_homework_id', {
+      First: courseId,
+      Second: assignmentId
+    })
+
+    if (infoResp.data.success && infoResp.data.data) {
+      const d = infoResp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
+      assignmentTitle.value = d[0] || '未知作业'
+    }
+
+    // 获取所有学生的最终提交情况
+    const finalResp = await apiClient.post('/Homework/get_final_submit', {
+      First: teacherId,
+      Second: jwt,
+      Third: courseId,
+      Fourth: assignmentId
+    })
+
+    if (!finalResp.data.success || !finalResp.data.data) {
+      studentSubmissions.value = []
+      loading.value = false
+      return
+    }
+
+    const pairs = finalResp.data.data.split('\t\r').filter(Boolean)
+    const submissions = []
+
+    for (const pair of pairs) {
+      const [studentId, submitId] = pair.split('\n')
+
+      // 查询真实姓名
+      const studentName = await fetchStudentName(studentId)
+
+      let subInfo = {
+        studentId,
+        studentName,
+        submitId,
+        createTime: null,
+        score: null,
+        aiFeedback: null,
+        teacherFeedback: null,
+        videoUrl: null
+      }
+
+      if (submitId === '-1' || submitId === '-2') {
+        submissions.push(subInfo)
+        continue
+      }
+
+      const detailResp = await apiClient.post('/Homework/get_submit_info', {
+        First: '1',
+        Second: teacherId,
+        Third: jwt,
+        Fourth: submitId
+      })
+
+      if (detailResp.data.success && detailResp.data.data) {
+        const raw = detailResp.data.data.trim().replace(/\t\r$/g, '')
+        let parts = raw.split('\t\r')
+        subInfo = {
+          ...subInfo,
+          videoUrl: parts[0] || null,
+          score: parts[1] || null,
+          aiFeedback: parts[2] || null,
+          teacherFeedback: parts[3] || null,
+          createTime: parts[4] || null
+        }
+      }
+
+      submissions.push(subInfo)
+    }
+
+    // 按提交时间降序，未提交放最后
+    studentSubmissions.value = submissions.sort((a, b) => {
+      if (!a.createTime) return 1
+      if (!b.createTime) return -1
+      return new Date(b.createTime) - new Date(a.createTime)
+    })
+
+  } catch (err) {
+    console.error('加载成绩失败:', err)
+    alert('加载失败，请刷新重试')
+  } finally {
+    loading.value = false
+  }
+}
+
+const startEdit = (sub) => {
+  editingStudentId.value = sub.studentId
+  editingScore.value = sub.score || ''
+  editingComment.value = sub.teacherFeedback || ''
+}
+
+const saveGrade = async (sub) => {
+  if (!sub.submitId || sub.submitId === '-1'|| sub.submitId === '-2') {
+    alert('无法评分：学生未提交')
+    return
   }
 
-  editingId.value = null
-  alert('成绩保存成功！')
+  try {
+    const resp = await apiClient.post('/Homework/teacher_test', {
+      First: teacherId,
+      Second: jwt,
+      Third: courseId,
+      Fourth: assignmentId,
+      Fifth: sub.submitId,
+      Sixth: editingScore.value,           // 字符串传入
+      Seventh: editingComment.value.trim()
+    })
+
+    if (resp.data[0] === 0 || resp.data.success) {
+      alert('评分保存成功！')
+      editingStudentId.value = null
+      await fetchData()  // 刷新获取最新 score
+    } else {
+      alert('保存失败')
+    }
+  } catch (err) {
+    console.error(err)
+    alert('保存失败，请检查网络')
+  }
 }
 
-// 筛选提交记录
-const filterSubmissions = () => {
-  // 这里可以添加额外的筛选逻辑
-  console.log('筛选条件:', filter.value)
+const viewVideo = (url) => {
+  if (url) {
+    window.open(url, '_blank')
+  }
 }
 
-// 获取班级名称
-const getClassName = (classId) => {
-  const classItem = classes.find(c => c.id === classId)
-  return classItem ? classItem.name : '未知班级'
-}
-
-// 获取作业名称
-const getAssignmentName = (assignmentId) => {
-  const assignment = assignments.find(a => a.id === assignmentId)
-  return assignment ? assignment.title : '未知作业'
-}
-
-// 格式化日期
 const formatDate = (dateString) => {
+  if (!dateString) return '-'
   const date = new Date(dateString)
-  return date.toLocaleDateString('zh-CN', {
+  return date.toLocaleString('zh-CN', {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -302,23 +331,12 @@ const formatDate = (dateString) => {
   })
 }
 
-// 查看视频
-const viewVideo = (submissionId) => {
-  console.log('查看视频:', submissionId)
-  // 这里可以跳转到视频查看页面
-}
-
-// 导航函数
-const goBack = () => {
-  router.push('/teacher')
-}
-
-const goToAssistant = () => {
-  router.push('/teacher/assistant')
-}
-
+const goBack = () => router.push('/teacher')
+const goToAssistant = () => router.push('/teacher/assistant')
 const logout = () => {
   localStorage.removeItem('user')
   router.push('/login')
 }
+
+onMounted(fetchData)
 </script>

@@ -4,6 +4,11 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 
+// 引入 Element Plus
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+
 // 添加错误处理
 console.log('Vue应用初始化开始...')
 
@@ -25,7 +30,12 @@ router.onError((error) => {
   console.error('路由错误:', error)
 })
 
+app.use(ElementPlus, {
+  locale: zhCn
+})
+
 console.log('应用挂载前...')
 app.use(router)
 app.mount('#app')
 console.log('应用挂载完成!')
+
