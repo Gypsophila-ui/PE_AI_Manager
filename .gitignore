@@ -1,0 +1,3 @@
+# 忽略 SE_PE_AI_Manager 目录下的 bin 和 .vs 文件夹
+SE_PE_AI_Managerbin
+SE_PE_AI_Manager.vs
