@@ -51,7 +51,7 @@ namespace SE_PE_AI_Manager.Operation
             action = action + "values('" + course_id + "',";
             action = action + "'" + teacher_id + "',";
             action = action + "'" + name + "',";
-            action = action + "'" + code + "',";
+            action = action + "'" + course_id + "',";
             action = action + "'" + semester + "',";
             action = action + "'" + "0" + "',";//默认建立后未发布
             action = action + "SYSDATE)\n";

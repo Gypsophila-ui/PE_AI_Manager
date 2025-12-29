@@ -3,7 +3,7 @@
     <div class="max-w-6xl mx-auto p-6 space-y-8">
       <!-- 页面标题 -->
       <section>
-        <h2 class="text-4xl font-bold text-gray-800 mb-4">📚 课程详情</h2>
+        <h2 class="text-4xl font-bold text-gray-800 mb-4">课程详情</h2>
       </section>
 
       <!-- 加载状态 -->
@@ -31,16 +31,20 @@
             <p class="text-gray-600 mb-4">{{ course.description }}</p>
             <div class="flex items-center gap-4">
               <div class="flex items-center gap-2 text-gray-600">
-                <span class="text-gray-400">📚</span>
+                <span class="text-gray-400">学科:</span>
                 <span>{{ course.subject }}</span>
               </div>
               <div class="flex items-center gap-2 text-gray-600">
-                <span class="text-gray-400">📊</span>
+                <span class="text-gray-400">教师:</span>
+                <span>{{ course.teacherName }}</span>
+              </div>
+              <div class="flex items-center gap-2 text-gray-600">
+                <span class="text-gray-400">状态:</span>
                 <span>{{ course.status }}</span>
               </div>
               <div class="flex items-center gap-2 text-gray-600">
-                <span class="text-gray-400">📝</span>
-                <span>{{ course.assignments.length }} 个作业</span>
+                <span class="text-gray-400">作业:</span>
+                <span>{{ course.assignments.length }} 个</span>
               </div>
             </div>
           </div>
@@ -50,8 +54,14 @@
       <!-- 教学视频列表 -->
       <section v-if="course" class="bg-white rounded-3xl shadow-xl p-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-2xl font-bold text-gray-800">🎥 教学视频</h3>
-          <span v-if="teachingVideos.length > 0" class="text-sm text-gray-500">{{ teachingVideos.length }} 个视频</span>
+          <h3 class="text-2xl font-bold text-gray-800">教学视频</h3>
+          <div class="flex items-center gap-4">
+            <span v-if="teachingVideos.length > 0" class="text-sm text-gray-500">{{ teachingVideos.length }} 个视频</span>
+            <router-link :to="`/student/course/${courseId}/teaching-videos`"
+                        class="text-sm text-blue-500 hover:text-blue-700 font-medium flex items-center gap-1">
+              查看全部
+            </router-link>
+          </div>
         </div>
 
         <!-- 视频加载状态 -->
@@ -68,7 +78,7 @@
         <div v-else-if="teachingVideos.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div v-for="video in teachingVideos" :key="video.id"
                class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-md p-4 hover:shadow-lg transition-all cursor-pointer"
-               @click="openVideoPlayer(video)">
+               @click="goToTeachingVideos">
             <!-- 视频封面 -->
             <div class="relative aspect-video bg-gray-200 rounded-lg mb-3 overflow-hidden">
               <img v-if="video.cover" :src="video.cover" :alt="video.title" class="w-full h-full object-cover">
@@ -153,40 +163,7 @@
       </section>
     </div>
 
-    <!-- 视频播放器模态框 -->
-    <div v-if="showVideoModal && selectedVideo" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        <!-- 模态框头部 -->
-        <div class="flex items-center justify-between p-4 border-b">
-          <h3 class="text-xl font-bold text-gray-800">{{ selectedVideo.title }}</h3>
-          <button @click="closeVideoPlayer" class="text-gray-500 hover:text-gray-700 text-2xl font-bold">
-            ×
-          </button>
-        </div>
 
-        <!-- 视频播放区域 -->
-        <div class="aspect-video bg-black">
-          <video v-if="selectedVideo.url" :src="selectedVideo.url" controls class="w-full h-full" autoplay>
-            您的浏览器不支持视频播放
-          </video>
-          <div v-else class="w-full h-full flex items-center justify-center text-white">
-            <div class="text-center">
-              <div class="text-6xl mb-4">⚠️</div>
-              <p class="text-xl">视频地址不可用</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 视频信息 -->
-        <div class="p-4">
-          <p class="text-gray-700 mb-2">{{ selectedVideo.description }}</p>
-          <div class="flex items-center gap-4 text-sm text-gray-500">
-            <span v-if="selectedVideo.duration">时长: {{ selectedVideo.duration }}</span>
-            <span v-if="selectedVideo.uploadDate">上传时间: {{ formatDate(selectedVideo.uploadDate) }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -210,8 +187,6 @@ const teachingVideos = ref([])
 const videosLoading = ref(false)
 const videosError = ref(false)
 const videosErrorMessage = ref('')
-const showVideoModal = ref(false)
-const selectedVideo = ref(null)
 
 // 获取课程ID
 const courseId = route.params.courseId || route.params.id
@@ -240,9 +215,9 @@ const fetchCourseDetails = async () => {
 
     if (courseResponse.data.success && courseResponse.data.data) {
       // 解析课程数据字符串，格式为: 教师id\t\r课程名字\t\r课程描述\t\r课程码\t\r课程所在学期\t\r课程是否正在进行(1是0否)\t\r课程创建时间
-      const courseDataArray = courseResponse.data.data.split('\t\r').filter(item => item.trim());
+      const courseDataArray = courseResponse.data.data.split('\t\r');
 
-      if (courseDataArray.length <= 7) {
+      if (courseDataArray.length >= 7) {
         const [
           teacherId,      // 教师ID
           courseName,     // 课程名字
@@ -275,18 +250,17 @@ const fetchCourseDetails = async () => {
               })
 
               if (assignmentResponse.data.success && assignmentResponse.data.data) {
-                // 解析作业数据字符串，格式可能与课程类似
-                const assignmentData = assignmentResponse.data.data;
+                const assignmentData = assignmentResponse.data.data.split('\t\r');
                 return {
                   id: homeworkId.trim(),
-                  title: assignmentData.name || `作业 ${homeworkId.trim()}`,
-                  description: assignmentData.info || '暂无描述',
-                  deadline: assignmentData.deadline || '待定',
-                  create_time: assignmentData.create_time || '',
+                  title: assignmentData[0] || `作业 ${homeworkId.trim()}`,
+                  description: assignmentData[1] || '暂无描述',
+                  deadline: assignmentData[2] || '待定',
+                  create_time: assignmentData[3] || '',
                   course_id: courseId,
-                  subject: assignmentData.subject || '体育',
-                  status: assignmentData.is_active === '1' ? '进行中' : '未发布',
-                  points: assignmentData.points || 100
+                  subject: '体育',
+                  status: new Date(assignmentData[2]) > new Date() ? '进行中' : '已截止',
+                  points: 100
                 }
               }
             } catch (error) {
@@ -309,6 +283,29 @@ const fetchCourseDetails = async () => {
           assignments = await Promise.all(assignmentDetailsPromises)
         }
 
+        // 首先获取教师信息
+        let teacherName = '未知教师'; // 默认值
+        try {
+          // 尝试获取教师信息 - 使用可能的API端点
+          const teacherResponse = await apiClient.post('/User/get_teacher_info', {
+            first: studentId,
+            second: token,  // 需要认证token
+            third: '0',
+            fourth: teacherId
+          });
+
+          if (teacherResponse.data.success && teacherResponse.data.data) {
+            // 解析教师数据字符串，格式为: 教师姓名\t\r其他信息...
+            const teacherDataArray = teacherResponse.data.data.split('\t\r');
+            if (teacherDataArray.length > 0) {
+              teacherName = teacherDataArray[0] || '未知教师';  // 第一个字段是教师姓名
+            }
+          }
+        } catch (teacherError) {
+          console.warn(`获取教师信息失败 (ID: ${teacherId}):`, teacherError.message);
+          // 如果获取教师信息失败，使用默认值
+        }
+
         // 构造课程对象
         course.value = {
           id: courseId,
@@ -318,6 +315,7 @@ const fetchCourseDetails = async () => {
           status: isActive === '1' ? '进行中' : '未发布',
           assignments: assignments,
           teacherId: teacherId,
+          teacherName: teacherName,  // 添加教师姓名
           courseTerm: courseTerm,
           createTime: createTime
         }
@@ -420,109 +418,73 @@ const fetchTeachingVideos = async () => {
       throw new Error('未找到认证token，请重新登录')
     }
 
-    // 调用获取教学视频的API接口
-    const response = await apiClient.post('/get_teaching_videos', {
-      course_id: courseId,
-      jwt: token
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const studentId = currentUser ? currentUser.id : 'student1'
+
+    const classIdResp = await apiClient.post('/Class/get_class_id_by_course', {
+      first: '0',
+      second: studentId,
+      third: token,
+      fourth: courseId
     })
 
-    if (response.data.code === 0 && response.data.data) {
-      // 解析教学视频数据
-      const videoData = response.data.data
-
-      // 如果返回的是字符串（可能是视频ID列表），需要进一步处理
-      if (typeof videoData === 'string') {
-        // 假设返回的是视频ID列表，用\t\r分隔
-        const videoIdList = videoData.split('\t\r').filter(id => id.trim())
-
-        // 为每个视频ID获取视频详情
-        const videoDetailsPromises = videoIdList.map(async (videoId) => {
-          try {
-            const videoResponse = await apiClient.post('/get_info_by_video_id', {
-              video_id: videoId.trim(),
-              jwt: token
-            })
-
-            if (videoResponse.data.code === 0 && videoResponse.data.data) {
-              const videoInfo = videoResponse.data.data
-              return {
-                id: videoId.trim(),
-                title: videoInfo.title || `教学视频 ${videoId.trim()}`,
-                description: videoInfo.description || '暂无描述',
-                url: videoInfo.url || '',
-                duration: videoInfo.duration || '00:00',
-                cover: videoInfo.cover || '',
-                uploadDate: videoInfo.create_time || ''
-              }
-            }
-          } catch (error) {
-            console.error(`获取视频 ${videoId} 详情失败:`, error)
-            return {
-              id: videoId.trim(),
-              title: `教学视频 ${videoId.trim()}`,
-              description: '暂无描述',
-              url: '',
-              duration: '00:00',
-              cover: '',
-              uploadDate: ''
-            }
-          }
-        })
-
-        // 等待所有视频详情获取完成
-        teachingVideos.value = await Promise.all(videoDetailsPromises)
-      } else if (Array.isArray(videoData)) {
-        // 如果返回的是视频数组，直接使用
-        teachingVideos.value = videoData.map(video => ({
-          id: video.id || video.video_id || '',
-          title: video.title || '未命名视频',
-          description: video.description || '暂无描述',
-          url: video.url || '',
-          duration: video.duration || '00:00',
-          cover: video.cover || '',
-          uploadDate: video.create_time || video.upload_date || ''
-        }))
-      } else {
-        // 如果返回的是单个视频对象
-        teachingVideos.value = [{
-          id: videoData.id || videoData.video_id || '',
-          title: videoData.title || '未命名视频',
-          description: videoData.description || '暂无描述',
-          url: videoData.url || '',
-          duration: videoData.duration || '00:00',
-          cover: videoData.cover || '',
-          uploadDate: videoData.create_time || videoData.upload_date || ''
-        }]
-      }
-
-      console.log('教学视频加载成功:', teachingVideos.value)
-    } else {
-      // 如果没有教学视频，设置为空数组
+    if (classIdResp.data[0] < 0) {
       teachingVideos.value = []
       console.log('该课程暂无教学视频')
+      return
     }
+
+    const classIdStr = classIdResp.data[0]
+    const classIds = classIdStr ? classIdStr.split('\t\r').filter(id => id) : []
+
+    const videoDetailsPromises = classIds.map(async (classId) => {
+      try {
+        const infoResp = await apiClient.post('/api/get_info_by_class_id', {
+          course_id: courseId,
+          class_id: classId
+        })
+
+        if (infoResp.data[0] < 0) {
+          return null
+        }
+
+        const d = infoResp.data
+        return {
+          id: classId,
+          title: d[0],
+          description: d[1],
+          url: d[2],
+          duration: '00:00',
+          cover: '',
+          uploadDate: d[3]
+        }
+      } catch (error) {
+        console.error(`获取视频 ${classId} 详情失败:`, error)
+        return null
+      }
+    })
+
+    const videos = await Promise.all(videoDetailsPromises)
+    teachingVideos.value = videos.filter(v => v !== null)
+
+    console.log('教学视频加载成功:', teachingVideos.value)
   } catch (err) {
     console.error('获取教学视频失败:', err)
     videosError.value = true
     videosErrorMessage.value = err.message
-
-    // 如果API请求失败，设置为空数组
     teachingVideos.value = []
   } finally {
     videosLoading.value = false
   }
 }
 
-// 打开视频播放器
-const openVideoPlayer = (video) => {
-  selectedVideo.value = video
-  showVideoModal.value = true
+// 导航函数
+const goBack = () => {
+  router.push('/student')
 }
 
-// 关闭视频播放器
-const closeVideoPlayer = () => {
-  showVideoModal.value = false
-  selectedVideo.value = null
+const goToTeachingVideos = () => {
+  router.push(`/student/course/${courseId}/teaching-videos`)
 }
 
 // 格式化日期
@@ -543,11 +505,6 @@ const formatDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit'
   })
-}
-
-// 导航函数
-const goBack = () => {
-  router.push('/student')
 }
 
 // 组件挂载时获取课程详情

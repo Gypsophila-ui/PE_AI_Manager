@@ -7,9 +7,14 @@
     <div class="max-w-4xl mx-auto p-6 space-y-10">
 
       <!-- 页面标题 -->
-      <section>
-        <h2 class="text-4xl font-bold text-gray-800 mb-4">作业详情</h2>
-        <p class="text-gray-600">查看作业要求和提交状态</p>
+      <section class="flex justify-between items-center">
+        <div>
+          <h2 class="text-4xl font-bold text-gray-800 mb-4">作业详情</h2>
+          <p class="text-gray-600">查看作业要求和提交状态</p>
+        </div>
+        <button @click="goToHistory" class="px-6 py-3 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-all shadow-lg flex items-center gap-2">
+          <span>📋</span> 查看提交历史
+        </button>
       </section>
 
       <!-- 加载状态 -->
@@ -196,6 +201,7 @@
                 </div>
                 <div class="mt-4 flex justify-center">
                   <button
+                    v-if="processedVideoUrl || processedVideoBlob"
                     @click="downloadProcessedVideo"
                     class="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all shadow"
                   >
@@ -275,75 +281,72 @@ const processedVideoUrl = ref(null)
 const showProcessedVideo = ref(false)
 
 // 获取课程ID和作业ID
-// 支持两种路由格式：/course/:courseId/assignments/:assignmentId 和 /assignment/:id
+// 支持路由格式：/course/:courseId/assignments/:assignmentId
 const courseId = route.params.courseId || 'PE101' // 默认为PE101课程
 const assignmentId = route.params.assignmentId || route.params.id
 
-// 获取作业详情（直接显示示例数据，不调用API）
+// 获取作业详情（调用后端API）
 const fetchAssignmentDetails = async () => {
   loading.value = true
   error.value = false
   errorMessage.value = ''
 
   try {
-    // 直接加载示例作业数据，不调用API
-    console.log('直接加载示例作业数据，作业ID:', assignmentId)
+    // 获取JWT token
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const token = user.token;
 
-    // 使用mock数据，根据不同的作业ID返回不同的作业详情
-    const mockAssignments = {
-      '1': {
-        title: '俯卧撑标准动作练习',
-        description: '完成标准俯卧撑动作，要求动作规范，身体保持直线。注意：1. 双手与肩同宽；2. 身体从头部到脚踝保持一条直线；3. 下降时胸部接近地面；4. 上升时手臂完全伸直。',
-        deadline: '2024-01-20T23:59:59',
-        create_time: '2024-01-10T08:00:00',
-        course_id: 'PE101',
-        subject: '体能训练',
-        status: '进行中',
-        points: 100
-      },
-      '2': {
-        title: '仰卧起坐耐力测试',
-        description: '在规定时间内完成尽可能多的仰卧起坐，测试核心力量。要求：1. 双腿弯曲90度；2. 双手交叉抱头；3. 起身时肘部触及膝盖；4. 躺下时肩部完全接触地面。',
-        deadline: '2024-01-25T23:59:59',
-        create_time: '2024-01-15T10:30:00',
-        course_id: 'PE101',
-        subject: '体能测试',
-        status: '进行中',
-        points: 100
-      },
-      '3': {
-        title: '跳绳技巧练习',
-        description: '掌握基本跳绳技巧，提高协调性和耐力。练习内容：1. 单摇跳绳（每分钟至少120次）；2. 双摇跳绳（尝试完成10次连续双摇）；3. 交叉跳绳（左右交叉各50次）。',
-        deadline: '2024-01-15T23:59:59',
-        create_time: '2024-01-05T14:20:00',
-        course_id: 'PE101',
-        subject: '协调训练',
-        status: '已完成',
-        points: 100
+    if (!token) {
+      throw new Error('未找到认证token，请重新登录');
+    }
+
+    // 调用后端API获取作业详情
+    const response = await apiClient.post('/Homework/get_info_by_homework_id', {
+      first: courseId,
+      second: assignmentId
+    });
+    console.log('请求数据:', { courseId, assignmentId });
+    console.log('响应数据:', response.data);
+
+    if (response.data.success) {
+      // 解析API返回的数据
+      const homeworkDataArray = response.data.data.split('\t\r');
+
+      if (homeworkDataArray.length >= 4) {
+        const [
+          title,         // 作业标题
+          description,   // 作业描述
+          deadline,      // 截至时间
+          createTime    // 创建时间
+        ] = homeworkDataArray;
+
+        assignment.value = {
+          id: assignmentId,
+          title: title || `作业 ${assignmentId}`,
+          description: description || '暂无描述',
+          deadline: deadline || '待定',
+          create_time: createTime || '',
+          course_id: courseId,
+          subject: '体育',
+          status: new Date(deadline) > new Date() ? '进行中' : '已截止',
+          points: 100
+        };
+      } else {
+        throw new Error('作业数据格式不正确');
       }
+    } else {
+      throw new Error(response.data.message || '获取作业详情失败');
     }
 
-    // 获取对应的作业详情，如果找不到则使用默认作业
-    assignment.value = mockAssignments[assignmentId] || {
-      title: '默认作业',
-      description: '这是一个默认作业的描述。',
-      deadline: '2024-01-30T23:59:59',
-      create_time: '2024-01-10T08:00:00',
-      course_id: 'PE101',
-      subject: '体育',
-      status: '进行中',
-      points: 100
-    }
-
-    console.log('示例作业加载成功:', assignment.value)
+    console.log('作业详情加载成功:', assignment.value);
   } catch (err) {
-    console.error('加载示例作业失败:', err)
-    error.value = true
-    errorMessage.value = err.message
+    console.error('获取作业详情失败:', err);
+    error.value = true;
+    errorMessage.value = err.message || '获取作业详情失败，请稍后重试';
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // 格式化日期
 const formatDate = (dateString) => {
@@ -360,6 +363,10 @@ const formatDate = (dateString) => {
 // 导航函数
 const goBack = () => {
   router.push(`/student/course/${courseId}`)
+}
+
+const goToHistory = () => {
+  router.push(`/student/course/${courseId}/submission-history`)
 }
 
 // 文件上传相关函数（集成提交作业功能）
@@ -476,180 +483,278 @@ const submitAssignment = async () => {
     const user = JSON.parse(localStorage.getItem('user') || '{}')
     const studentId = user.id || 'student1'
 
-    // 创建 FormData 对象
-    const formData = new FormData()
-    formData.append('file', selectedFile.value)
-
-    // 从后端获取AI类型（动作类型）根据作业ID
-     const aiTypeResponse = await apiClient.post('/Homework/get_AI_type', {
-      first: assignmentId
-    })
-    let poseType = 'squat'; // 默认值
-
-    if (aiTypeResponse.success) {
-      poseType = aiTypeResponse.data.data || 'squat'; // 使用返回的动作类型，或默认为squat
-      console.log('获取到的动作类型:', poseType);
-    } else {
-      console.warn('获取AI类型失败，使用默认动作类型: squat');
-    }
-
-    // 构造请求URL，将pose_type作为URL查询参数传递
-    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}/process_video?pose_type=${encodeURIComponent(poseType)}`
-
-    console.log('开始上传视频到AI后端服务...')
-    processingStats.value = '正在连接到流式处理服务...'
-
-    // 使用Fetch API和ReadableStream处理SSE流
-    const response = await fetch(url, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        // 如果需要认证，可以添加认证头
-      }
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-
-    // 处理SSE流
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-    let videoChunks = []
     let aiResult = null
+    let processedVideoUrlValue = null
 
-    function processStream() {
-      reader.read().then(({done, value}) => {
-        if (done) {
-          // 处理完成
-          processingStats.value += '<br>处理完成!'
-          isUploading.value = false
-          isProcessing.value = false
+    try {
+      // 创建 FormData 对象
+      const formData = new FormData()
+      formData.append('file', selectedFile.value)
 
-          // 创建视频下载
-          if (videoChunks.length > 0) {
-            const processedVideoBlobValue = new Blob(videoChunks, { type: 'video/mp4' })
-            processedVideoBlob.value = processedVideoBlobValue
-            const videoUrl = URL.createObjectURL(processedVideoBlobValue)
+      // 从后端获取AI类型（动作类型）根据作业ID
+      const aiTypeResponse = await apiClient.post('/Homework/get_AI_type', {
+        first: assignmentId
+      })
+      let poseType = 'squat'; // 默认值
 
-            // 更新处理后的视频URL和预览
-            processedVideoUrl.value = videoUrl
-            showProcessedVideo.value = true
+      if (aiTypeResponse.success) {
+        poseType = aiTypeResponse.data.data || 'squat'; // 使用返回的动作类型，或默认为squat
+        console.log('获取到的动作类型:', poseType);
+      } else {
+        console.warn('获取AI类型失败，使用默认动作类型: squat');
+      }
 
-            // 初始化视频预览
-            if (processedVideoPreview.value) {
-              processedVideoPreview.value.src = videoUrl
-              processedVideoPreview.value.load()
-            }
-          }
+      // 构造请求URL，将pose_type作为URL查询参数传递
+      const url = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}/process_video?pose_type=${encodeURIComponent(poseType)}`
 
-          // 如果有AI结果，保存作业提交信息
-          if (aiResult) {
-            saveAssignmentSubmission(aiResult, studentId)
-          }
+      console.log('开始上传视频到AI后端服务...')
+      processingStats.value = '正在连接到流式处理服务...'
 
-          return
+      // 使用Fetch API和ReadableStream处理SSE流
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          // 如果需要认证，可以添加认证头
         }
+      })
 
-        // 将接收到的数据添加到缓冲区
-        buffer += decoder.decode(value, {stream: true})
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
 
-        // 处理缓冲区中的数据
-        let lines = buffer.split('\n\n')
-        buffer = lines.pop() // 保留不完整的最后一行
+      // 处理SSE流
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let videoChunks = []
 
-        for (const chunk of lines) {
-          if (chunk.startsWith('data: ')) {
-            try {
-              const jsonData = chunk.slice(6) // 去掉 'data: ' 前缀
-              const data = JSON.parse(jsonData)
+      function processStream() {
+        reader.read().then(({done, value}) => {
+          if (done) {
+            // 处理完成
+            processingStats.value += '<br>处理完成!'
+            isUploading.value = false
+            isProcessing.value = false
 
-              switch (data.event) {
-                case 'init':
-                  processingStats.value = `<strong>初始化:</strong> ${data.data.message}<br>`
-                  if (data.data.fps) {
-                    processingStats.value += `FPS: ${data.data.fps}, 分辨率: ${data.data.width}x${data.data.height}<br>`
-                  }
-                  break
+            // 创建视频下载
+            if (videoChunks.length > 0) {
+              const processedVideoBlobValue = new Blob(videoChunks, { type: 'video/mp4' })
+              processedVideoBlob.value = processedVideoBlobValue
+              processedVideoUrlValue = URL.createObjectURL(processedVideoBlobValue)
 
-                case 'frame':{
-                  // 显示处理后的帧
-                  processingVideoFrame.value = `data:image/jpeg;base64,${data.data.image}`
-                  // 构建处理状态信息，只包含后端实际返回的字段
-                  let statsText = `<strong>处理中...</strong><br>`
-                  statsText += `当前帧: ${data.data.processed_frame_count}<br>`
-                  statsText += `计数: ${data.data.count}<br>`
-                  // 只有当后端返回correct字段时才显示正确计数
-                  if (data.data.correct !== undefined && data.data.correct !== null) {
-                    statsText += `正确计数: ${data.data.correct}<br>`
-                  }
-                  statsText += `最大计数: ${data.data.max_count}`
-                  processingStats.value = statsText
-                  break
-                }
-                case 'final_stats':
-                  // 保存处理后的视频URL
-                  if (data.data.download_url) {
-                    processedVideoUrl.value = data.data.download_url
-                  }
+              // 更新处理后的视频URL和预览
+              processedVideoUrl.value = processedVideoUrlValue
+              showProcessedVideo.value = true
 
-                  aiResult = {
-                    final_count: data.data.max_count,
-                    processed_frame_count: data.data.processed_frame_count,
-                    total_time: data.data.total_time,
-                    video_url: data.data.download_url || ''
-                  }
-
-                  // 显示最终处理结果
-                  processingStats.value = `<strong>处理完成!</strong><br>`
-                  processingStats.value += `最终计数: ${data.data.max_count}<br>`
-                  processingStats.value += `处理帧数: ${data.data.processed_frame_count}<br>`
-                  processingStats.value += `总时间: ${parseFloat(data.data.total_time).toFixed(2)} 秒<br>`
-                  if (data.data.download_url || data.data.video_size || processedVideoBlob.value) {
-                    processingStats.value += `<button @click="downloadProcessedVideo" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-2">下载处理后视频</button>`
-                  }
-                  break
-
-                case 'error':
-                  throw new Error(data.data.message)
+              // 初始化视频预览
+              if (processedVideoPreview.value) {
+                processedVideoPreview.value.src = processedVideoUrlValue
+                processedVideoPreview.value.load()
               }
-            } catch (e) {
-              // 如果不是JSON格式，可能是视频数据的一部分
+
+              // AI处理完成后，调用 process_and_save_video 接口保存视频
+              saveProcessedVideoToServer(selectedFile.value, poseType, aiResult, studentId, processedVideoUrlValue)
+            }
+
+            // 保存作业提交信息（无论AI是否成功）
+            saveAssignmentSubmission(aiResult, studentId, processedVideoUrlValue)
+            return
+          }
+
+          // 将接收到的数据添加到缓冲区
+          buffer += decoder.decode(value, {stream: true})
+
+          // 处理缓冲区中的数据
+          let lines = buffer.split('\n\n')
+          buffer = lines.pop() // 保留不完整的最后一行
+
+          for (const chunk of lines) {
+            if (chunk.startsWith('data: ')) {
+              try {
+                const jsonData = chunk.slice(6) // 去掉 'data: ' 前缀
+                const data = JSON.parse(jsonData)
+
+                switch (data.event) {
+                  case 'init':
+                    processingStats.value = `<strong>初始化:</strong> ${data.data.message}<br>`
+                    if (data.data.fps) {
+                      processingStats.value += `FPS: ${data.data.fps}, 分辨率: ${data.data.width}x${data.data.height}<br>`
+                    }
+                    break
+
+                  case 'frame':{
+                    // 显示处理后的帧
+                    processingVideoFrame.value = `data:image/jpeg;base64,${data.data.image}`
+                    // 构建处理状态信息，只包含后端实际返回的字段
+                    let statsText = `<strong>处理中...</strong><br>`
+                    statsText += `当前帧: ${data.data.processed_frame_count}<br>`
+                    statsText += `计数: ${data.data.count}<br>`
+                    // 只有当后端返回correct字段时才显示正确计数
+                    if (data.data.correct !== undefined && data.data.correct !== null) {
+                      statsText += `正确计数: ${data.data.correct}<br>`
+                    }
+                    statsText += `最大计数: ${data.data.max_count}`
+                    processingStats.value = statsText
+                    break
+                  }
+                  case 'final_stats':
+                    // 保存处理后的视频URL
+                    if (data.data.download_url) {
+                      // 确保URL是完整的
+                      let downloadUrl = data.data.download_url
+                      if (!downloadUrl.startsWith('http')) {
+                        downloadUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}${downloadUrl}`
+                      }
+                      processedVideoUrl.value = downloadUrl
+                      processedVideoUrlValue = downloadUrl
+                    }
+
+                    aiResult = {
+                      final_count: data.data.max_count,
+                      processed_frame_count: data.data.processed_frame_count,
+                      total_time: data.data.total_time,
+                      video_url: data.data.download_url || ''
+                    }
+
+                    // 显示最终处理结果
+                    processingStats.value = `<strong>处理完成!</strong><br>`
+                    processingStats.value += `最终计数: ${data.data.max_count}<br>`
+                    processingStats.value += `处理帧数: ${data.data.processed_frame_count}<br>`
+                    processingStats.value += `总时间: ${parseFloat(data.data.total_time).toFixed(2)} 秒<br>`
+                    if (data.data.download_url || data.data.video_size || processedVideoBlob.value) {
+                      processingStats.value += `<button @click="downloadProcessedVideo" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-2">下载处理后视频</button>`
+                    }
+
+                    // 显示处理后的视频区域
+                    showProcessedVideo.value = true
+                    break
+
+                  case 'error':
+                    throw new Error(data.data.message)
+                }
+              } catch (e) {
+                // 如果不是JSON格式，可能是视频数据的一部分
+                videoChunks.push(value)
+              }
+            } else {
+              // 收集非SSE格式的数据作为视频块
               videoChunks.push(value)
             }
-          } else {
-            // 收集非SSE格式的数据作为视频块
-            videoChunks.push(value)
           }
-        }
 
-        // 继续处理流
-        processStream()
-      }).catch(error => {
-        console.error('Error:', error)
-        processingStats.value += `<br>错误: ${error.message}`
-        alert(`流式处理过程中发生错误: ${error.message}`)
-        isUploading.value = false
-        isProcessing.value = false
-      })
+          // 继续处理流
+          processStream()
+        }).catch(error => {
+          console.error('Error:', error)
+          processingStats.value += `<br>错误: ${error.message}`
+          alert(`流式处理过程中发生错误: ${error.message}`)
+          isUploading.value = false
+          isProcessing.value = false
+        })
+      }
+
+      // 开始处理流
+      processStream()
+
+    } catch (aiError) {
+      // AI服务调用失败，创建空的AI评价结果
+      console.error('AI服务调用失败:', aiError)
+      processingStats.value = `AI服务暂时不可用，将直接提交作业。<br>错误: ${aiError.message}`
+
+      // 创建空的AI评价结果
+      aiResult = {
+        final_count: 0,
+        processed_frame_count: 0,
+        total_time: 0,
+        video_url: null
+      }
+
+      // 直接提交作业，不等待AI处理
+      isUploading.value = false
+      isProcessing.value = false
+
+      // 延迟一下让用户看到错误信息
+      setTimeout(() => {
+        saveAssignmentSubmission(aiResult, studentId, null)
+      }, 1500)
     }
-
-    // 开始处理流
-    processStream()
-
   } catch (error) {
-    console.error('视频上传和处理失败:', error)
+    console.error('作业提交失败:', error)
     alert(`作业提交失败: ${error.message}`)
     isUploading.value = false
     isProcessing.value = false
   }
 }
 
+// 保存处理后的视频到服务器
+const saveProcessedVideoToServer = async (file, poseType, aiResult, studentId, processedVideoUrlValue) => {
+  try {
+    console.log('开始保存处理后的视频到服务器...')
+    console.log('poseType:', poseType)
+    console.log('aiResult:', aiResult)
+
+    // 创建 FormData 对象
+    const formData = new FormData()
+    formData.append('file', file)
+
+    // 构造请求URL，使用 process_and_save_video 接口
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'
+    const url = `${baseUrl}/process_and_save_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&pose_type=${encodeURIComponent(poseType)}`
+
+    console.log('正在上传视频到服务器保存...')
+
+    // 使用 Fetch API 调用 process_and_save_video 接口
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('保存视频到服务器失败:', errorData)
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+    }
+
+    // 解析 JSON 响应
+    const result = await response.json()
+    console.log('视频保存结果:', result)
+
+    if (result.status === 'success') {
+      // 构建完整的视频URL
+      let videoUrl = result.video_url
+      if (videoUrl && !videoUrl.startsWith('http')) {
+        videoUrl = `${baseUrl}${videoUrl}`
+      }
+
+      // 更新 aiResult 中的数据，使用接口返回的最终计数
+      if (aiResult) {
+        aiResult.video_url = videoUrl
+        aiResult.final_count = result.final_count
+        aiResult.processed_frame_count = result.total_frames
+        aiResult.total_time = result.total_time
+      }
+
+      // 更新处理后的视频URL
+      processedVideoUrl.value = videoUrl
+
+      console.log('视频保存成功，URL:', videoUrl)
+      console.log('最终计数:', result.final_count)
+    } else {
+      console.warn('视频保存返回非成功状态:', result.message)
+    }
+  } catch (error) {
+    console.error('保存处理后的视频到服务器失败:', error)
+    // 不抛出异常，因为视频保存失败不应该影响作业提交
+  }
+}
+
 // 保存作业提交信息
-const saveAssignmentSubmission = async (aiResult, studentId) => {
+const saveAssignmentSubmission = async (aiResult, studentId, processedVideoUrlValue) => {
   try {
     console.log('开始保存作业提交信息...')
+    console.log('aiResult:', aiResult)
+    console.log('processedVideoUrlValue:', processedVideoUrlValue)
 
     // 获取JWT token
     const token = localStorage.getItem('token')
@@ -658,34 +763,61 @@ const saveAssignmentSubmission = async (aiResult, studentId) => {
     }
 
     // 准备视频URL - 优先使用AI处理后的视频URL，如果没有则使用原始视频
-    let videoUrl = aiResult.video_url
+    let videoUrl = processedVideoUrlValue
     if (!videoUrl && processedVideoBlob.value) {
       // 如果没有AI返回的视频URL但有Blob，创建临时URL
       videoUrl = URL.createObjectURL(processedVideoBlob.value)
     }
 
+    // 如果仍然没有视频URL，使用原始视频文件的URL
+    if (!videoUrl && selectedFile.value) {
+      videoUrl = URL.createObjectURL(selectedFile.value)
+    }
+
     // 根据API文档构造请求参数
     const submitData = {
-      student_id: studentId,
-      jwt: token,
-      course_id: courseId,
-      homework_id: assignmentId.toString(),
-      video_url: videoUrl
+      first: studentId,
+      second: token,
+      third: courseId,
+      fourth: assignmentId.toString(),
+      fifth: videoUrl
     }
 
     console.log('提交作业参数:', submitData)
 
     // 调用submit_homework接口
-    const submitResponse = await apiClient.post('/submit_homework', submitData, {
+    const submitResponse = await apiClient.post('/Homework/submit_homework', submitData, {
       headers: {
         'Content-Type': 'application/json'
       }
     })
 
     // 上传成功处理
-    if (submitResponse.status === 200 || submitResponse.status === 201) {
+    if (submitResponse.data.success) {
       console.log('作业提交成功:', submitResponse.data)
-      alert(`作业提交成功！视频已处理完成。\n可在作业详情查看提交记录。`)
+
+      // 获取submit_id - 从响应数据中提取
+      let submitId = null
+      if (submitResponse.data && submitResponse.data.data) {
+        submitId = submitResponse.data.data
+      } else if (submitResponse.data && typeof submitResponse.data === 'string') {
+        submitId = submitResponse.data
+      }
+
+      console.log('获取到的submit_id:', submitId)
+
+      // 如果有submit_id，调用AI_test API保存AI评价结果
+      if (submitId) {
+        await saveAIEvaluation(submitId, aiResult, studentId)
+      }
+
+      // 根据AI评价结果显示不同的提示信息
+      if (aiResult && aiResult.video_url) {
+        alert(`作业提交成功！视频已处理完成。\n可在作业详情查看提交记录。`)
+      } else {
+        alert(`作业提交成功！\nAI评价暂不可用，等待教师批改。\n可在作业详情查看提交记录。`)
+      }
+
       // 更新作业状态为已完成
       if (assignment.value) {
         assignment.value.status = '已完成'
@@ -704,6 +836,102 @@ const saveAssignmentSubmission = async (aiResult, studentId) => {
       alert('作业提交记录保存失败，请稍后重试。')
     }
   }
+}
+
+// 保存AI评价结果到数据库
+const saveAIEvaluation = async (submitId, aiResult, studentId) => {
+  try {
+    console.log('开始保存AI评价结果...')
+    console.log('submit_id:', submitId)
+    console.log('aiResult:', aiResult)
+
+    // 获取JWT token
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('未找到认证token，请重新登录')
+    }
+
+    // 准备视频URL - 优先使用AI处理后的视频URL
+    let videoUrl = aiResult.video_url
+    if (!videoUrl && processedVideoBlob.value) {
+      videoUrl = URL.createObjectURL(processedVideoBlob.value)
+    }
+
+    // 如果仍然没有视频URL，使用原始视频文件的URL
+    if (!videoUrl && selectedFile.value) {
+      videoUrl = URL.createObjectURL(selectedFile.value)
+    }
+
+    // 准备AI评价数据 - 处理空的AI评价结果
+    // 支持两种aiResult格式：一种是AI处理返回的格式（final_count等），一种是AI评价API需要的格式（score等）
+    const aiEvaluationData = {
+      first: submitId,
+      second: videoUrl,
+      third: aiResult.score || aiResult.final_count || 0,
+      fourth: aiResult.AI_feedback || 'AI评价暂不可用，等待教师批改'
+    }
+
+    console.log('AI评价数据:', aiEvaluationData)
+
+    // 调用AI_test接口
+    const aiTestResponse = await apiClient.post('/AI_test', aiEvaluationData, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+
+    console.log('AI_test API响应:', aiTestResponse.data)
+
+    // 处理API返回结果
+    if (aiTestResponse.status === 200) {
+      const result = aiTestResponse.data
+      console.log('AI评价保存成功:', result)
+
+      // 检查返回状态码
+      if (result.code === 0) {
+        console.log('AI评价记录保存成功')
+      } else {
+        console.warn('AI评价保存返回警告状态码:', result.code)
+        handleAIError(result.code)
+      }
+    } else {
+      console.error('AI_test API返回异常状态码:', aiTestResponse.status)
+    }
+  } catch (error) {
+    console.error('保存AI评价结果失败:', error)
+    // 即使AI评价保存失败，也不影响作业提交的成功
+    // 只记录错误，不抛出异常
+    if (error.response) {
+      console.error('错误响应:', error.response.data)
+      const errorCode = error.response.data?.code || error.response.status
+      handleAIError(errorCode)
+    }
+  }
+}
+
+// 处理AI评价API错误码
+const handleAIError = (code) => {
+  let errorMessage = ''
+  switch (code) {
+    case -1:
+      errorMessage = '参数错误'
+      break
+    case -11:
+      errorMessage = '查询提交记录存在性的SQL操作无法执行'
+      break
+    case -12:
+      errorMessage = '修改评价的SQL操作无法正常执行'
+      break
+    case -21:
+      errorMessage = '当前提交记录不存在'
+      break
+    case -99:
+      errorMessage = '意料之外的错误'
+      break
+    default:
+      errorMessage = `未知错误码: ${code}`
+  }
+  console.error('AI评价错误:', errorMessage)
 }
 
 // 下载处理后的视频

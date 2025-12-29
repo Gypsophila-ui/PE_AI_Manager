@@ -1,0 +1,4 @@
+CREATE TABLE std_course (
+    id varchar2(50),
+    PRIMARY KEY (id)
+) TABLESPACE SE_DATA;
