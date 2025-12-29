@@ -19,6 +19,7 @@
           @change="handleFileChange"
         />
         <div class="upload-hint">
+          <div class="text-5xl text-gray-300 mb-4">🎥</div>
           <p>点击或将 MP4 视频文件拖拽到这里上传</p>
           <p class="tip">仅支持 MP4 格式，单个文件最大 100MB</p>
         </div>
