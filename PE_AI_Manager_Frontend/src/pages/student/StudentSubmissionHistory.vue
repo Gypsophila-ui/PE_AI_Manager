@@ -213,21 +213,18 @@ const loadSubmissions = async () => {
         let submitCourseId = courseId
         let submitCourseName = courseName
 
-        // 从提交信息中获取作业ID
-        const homeworkId = submitId.trim()
 
         try {
           const homeworkDetailResponse = await apiClient.post('/Homework/get_info_by_homework_id', {
-            first: homeworkId,
-            second: courseId || '',
-            third: jwt
+            first: courseId || '',
+            second: targetHomeworkId
           })
 
           if (homeworkDetailResponse.data[0] >= 0) {
             homeworkTitle = homeworkDetailResponse.data[0] || `作业 ${homeworkId}`
           }
         } catch (err) {
-          console.error(`获取作业 ${homeworkId} 详情失败:`, err)
+          console.error(`获取作业 ${targetHomeworkId } 详情失败:`, err)
         }
 
         allSubmissions.push({
