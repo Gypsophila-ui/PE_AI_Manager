@@ -17,95 +17,111 @@
       </div>
 
       <!-- 正常内容 -->
-      <div v-else>
-        <!-- 页面标题和发布按钮 + 课程筛选 -->
-        <section class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
-          <div>
-            <h2 class="text-4xl font-bold text-gray-800 mb-2">🎥 教学视频管理</h2>
-            <p class="text-gray-600">发布和管理体育教学视频</p>
+      <div v-else class="space-y-12">  <!-- ⭐ 关键：大间距分隔区 -->
+
+        <!-- 标题 + 操作栏 -->
+        <section class="bg-white rounded-3xl shadow-lg p-8">
+          <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
+            <div>
+              <h2 class="text-4xl font-bold text-gray-800 mb-2">🎥 教学视频管理</h2>
+              <p class="text-gray-600">发布和管理体育教学视频</p>
+            </div>
+            <div class="flex items-center gap-4">
+              <select v-model="selectedCourseFilter"
+                      @change="loadVideos"
+                      class="px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm">
+                <option value="all">所有课程</option>
+                <option v-for="course in courses" :key="course.id" :value="course.id">
+                  {{ course.name }}
+                </option>
+              </select>
+              <button @click="openAddModal"
+                      class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg">
+                + 发布新视频
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-4">
-            <!-- 课程筛选 -->
-            <select v-model="selectedCourseFilter"
-                    @change="loadVideos"
-                    class="px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm">
-              <option value="all">所有课程</option>
-              <option v-for="course in courses" :key="course.id" :value="course.id">
-                {{ course.name }}
-              </option>
-            </select>
-            <button @click="showUploadModal = true"
-                    class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg">
-              + 发布新视频
+        </section>
+
+        <!-- 视频内容区 -->
+        <section class="bg-white rounded-3xl shadow-lg p-8">
+          <h3 class="text-2xl font-bold text-gray-800 mb-8">
+            视频列表
+            <span class="text-lg font-normal text-gray-500 ml-3">
+              (共 {{ filteredVideos.length }} 个)
+            </span>
+          </h3>
+
+          <!-- 有视频：网格列表 -->
+          <div v-if="filteredVideos.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div v-for="video in filteredVideos"
+                 :key="video.id"
+                 @click="openPlayDialog(video)"
+                 class="bg-gray-50 rounded-2xl overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer">
+              <!-- 卡片内容保持不变 -->
+              <div class="relative">
+                <img :src="video.cover" class="w-full h-48 object-cover" alt="视频封面" />
+                <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <div class="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center text-3xl">
+                    ▶️
+                  </div>
+                </div>
+                <div class="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-lg">
+                  {{ video.duration }}
+                </div>
+                <div class="absolute top-3 left-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-lg">
+                  {{ getCourseName(video.courseId) }}
+                </div>
+              </div>
+              <div class="p-6">
+                <h4 class="text-lg font-bold text-gray-800 mb-2 line-clamp-1">{{ video.title }}</h4>
+                <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ video.description }}</p>
+                <div class="flex justify-between items-center text-sm">
+                  <span class="text-gray-500">{{ formatDate(video.createdAt) }}</span>
+                  <div class="flex gap-3">
+                    <button @click.stop="openEditModal(video)" class="text-blue-500 hover:text-blue-700">✏️</button>
+                    <button @click.stop="deleteVideo(video.id)" class="text-red-500 hover:text-red-700">🗑️</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 无视频：空状态 -->
+          <div v-else class="text-center py-16">
+            <div class="text-8xl text-gray-200 mb-6">📹</div>
+            <h4 class="text-2xl font-bold text-gray-700 mb-3">暂无教学视频</h4>
+            <p class="text-gray-500 mb-8 max-w-md mx-auto">
+              当前筛选条件下还没有发布任何视频，赶紧添加第一个吧！
+            </p>
+            <button @click="openAddModal"
+                    class="px-8 py-4 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg text-lg">
+              + 发布第一个视频
             </button>
           </div>
         </section>
-
-        <!-- 视频列表 -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div v-for="video in filteredVideos"
-               :key="video.id"
-               class="bg-white rounded-3xl shadow-xl overflow-hidden transition-all hover:shadow-2xl">
-            <!-- 视频封面 -->
-            <div class="relative">
-              <img :src="video.cover || defaultCover" class="w-full h-48 object-cover" />
-              <div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <div class="w-16 h-16 rounded-full bg-white/80 flex items-center justify-center text-2xl text-blue-500 hover:scale-110 transition-transform">
-                  ▶️
-                </div>
-              </div>
-              <div class="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-lg">
-                {{ video.duration || '未知' }}
-              </div>
-              <div class="absolute top-3 left-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-lg">
-                {{ getCourseName(video.courseId) }}
-              </div>
-            </div>
-            <!-- 视频信息 -->
-            <div class="p-6">
-              <h3 class="text-xl font-bold text-gray-800 mb-2">{{ video.title }}</h3>
-              <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ video.description }}</p>
-              <div class="flex justify-between items-center">
-                <div class="text-sm text-gray-500">
-                  {{ formatDate(video.createdAt) }}
-                </div>
-                <div class="flex gap-2">
-                  <button @click="openEditModal(video)" class="text-blue-500 hover:text-blue-700 transition-colors">
-                    ✏️
-                  </button>
-                  <button @click="deleteVideo(video.id)" class="text-red-500 hover:text-red-700 transition-colors">
-                    🗑️
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- 空状态 -->
-        <section v-if="filteredVideos.length === 0" class="bg-white rounded-3xl shadow-xl p-16 text-center">
-          <div class="text-6xl text-gray-300 mb-4">📹</div>
-          <h3 class="text-xl font-bold text-gray-800 mb-2">暂无教学视频</h3>
-          <p class="text-gray-500 mb-6">当前筛选条件下还没有视频</p>
-          <button @click="showUploadModal = true"
-                  class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg">
-            + 发布第一个视频
-          </button>
-        </section>
       </div>
 
-      <!-- 视频上传模态框 -->
+
+      <!-- 弹窗播放器 -->
+      <VideoDialogPlayer
+        v-model:visible="playDialogVisible"
+        :video-url="currentPlayUrl"
+        :title="currentPlayTitle"
+      />
+
+      <!-- 发布/编辑模态框 -->
       <div v-if="showUploadModal" class="fixed inset-0 bg-black/50 flex items-center justify-center p-6 z-50">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-          <!-- 模态框头部 -->
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <div class="flex justify-between items-center p-8 border-b border-gray-200">
-            <h3 class="text-2xl font-bold text-gray-800">发布教学视频</h3>
+            <h3 class="text-2xl font-bold text-gray-800">
+              {{ isEditMode ? '编辑教学视频' : '发布教学视频' }}
+            </h3>
             <button @click="closeModal" class="text-2xl text-gray-400 hover:text-gray-600 transition-colors">
               ✕
             </button>
           </div>
 
-          <!-- 模态框内容 -->
           <div class="p-8">
             <form @submit.prevent="submitVideo">
               <!-- 所属课程 -->
@@ -120,102 +136,50 @@
                   </option>
                 </select>
               </div>
-              <!-- 视频封面上传 -->
+
+              <!-- 编辑时预览当前视频（默认暂停） -->
+              <div v-if="isEditMode && videoForm.url" class="mb-8">
+                <p class="text-sm text-gray-500 mt-3">重新上传将替换当前视频</p>
+              </div>
+
+              <!-- 视频上传 -->
               <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">视频封面</label>
-                <div
-                  class="border-2 border-dashed rounded-2xl p-6 text-center transition-all hover:bg-gray-50 cursor-pointer"
-                  @click="triggerCoverInput"
-                >
-                  <div v-if="videoForm.cover" class="relative">
-                    <img :src="videoForm.cover" class="w-full max-h-48 object-cover rounded-xl mb-2" />
-                    <button
-                      type="button"
-                      @click.stop="removeCover"
-                      class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-all"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div v-else>
-                    <div class="text-4xl text-gray-300 mb-2">🖼️</div>
-                    <p class="text-sm text-gray-500">点击上传封面图片</p>
-                  </div>
-                  <input
-                    ref="coverInput"
-                    type="file"
-                    accept="image/*"
-                    class="hidden"
-                    @change="handleCoverChange"
-                  />
-                </div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ isEditMode ? '替换视频（可选）' : '上传视频' }} <span class="text-red-500">*</span>
+                </label>
+                <FileUploader max-width="100%" @uploaded="onVideoUploaded" />
               </div>
 
               <!-- 视频标题 -->
               <div class="mb-6">
-                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">视频标题</label>
-                <input
-                  id="title"
-                  v-model="videoForm.title"
-                  type="text"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                  placeholder="例如：50米折返跑技巧教学"
-                  required
-                />
+                <label class="block text-sm font-medium text-gray-700 mb-2">视频标题 <span class="text-red-500">*</span></label>
+                <input v-model="videoForm.title"
+                       type="text"
+                       class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                       placeholder="例如：50米折返跑技巧教学"
+                       required />
               </div>
 
               <!-- 视频描述 -->
               <div class="mb-6">
-                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">视频描述</label>
-                <textarea
-                  id="description"
-                  v-model="videoForm.description"
-                  rows="4"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                  placeholder="详细描述视频内容和教学要点"
-                  required
-                ></textarea>
-              </div>
-
-              <!-- 视频URL -->
-              <div class="mb-6">
-                <label for="url" class="block text-sm font-medium text-gray-700 mb-2">视频URL</label>
-                <input
-                  id="url"
-                  v-model="videoForm.url"
-                  type="text"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                  placeholder="https://example.com/video.mp4"
-                  required
-                />
-              </div>
-
-              <!-- 视频时长 -->
-              <div class="mb-6">
-                <label for="duration" class="block text-sm font-medium text-gray-700 mb-2">视频时长</label>
-                <input
-                  id="duration"
-                  v-model="videoForm.duration"
-                  type="text"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                  placeholder="例如：05:23"
-                  required
-                />
+                <label class="block text-sm font-medium text-gray-700 mb-2">视频描述 <span class="text-red-500">*</span></label>
+                <textarea v-model="videoForm.description"
+                          rows="4"
+                          class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+                          placeholder="详细描述视频内容和教学要点"
+                          required></textarea>
               </div>
 
               <!-- 提交按钮 -->
               <div class="flex gap-4 justify-end">
-                <button
-                  type="button"
-                  @click="closeModal"
-                  class="px-8 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all shadow"
-                >
+                <button type="button"
+                        @click="closeModal"
+                        class="px-8 py-3 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all shadow">
                   取消
                 </button>
-                <button
-                  type="submit"
-                  class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg"
-                >
+                <button type="submit"
+                        :disabled="!videoForm.url"
+                        class="px-8 py-3 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
                   {{ isEditMode ? '保存修改' : '发布视频' }}
                 </button>
               </div>
@@ -229,24 +193,28 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import apiClient from '../../services/axios.js'
-
-const router = useRouter()
+import FileUploader from '@/components/FileUploader.vue'
+import VideoDialogPlayer from '@/components/VideoDialogPlayer.vue'
 
 const courses = ref([])
 const videos = ref([])
 const selectedCourseFilter = ref('all')
 const showUploadModal = ref(false)
-const isEditMode = ref(false)  // 是否为编辑模式
-const editingVideoId = ref('')  // 当前编辑的视频ID
+const isEditMode = ref(false)
+const editingVideoId = ref('')
+
+const playDialogVisible = ref(false)
+const currentPlayUrl = ref('')
+const currentPlayTitle = ref('')
 
 const loading = ref(true)
 const errorMsg = ref('')
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
-const jwt = currentUser.jwt || 'valid_teacher_jwt'
+const jwt = currentUser.token || ''
 
 const defaultCover = 'https://images.unsplash.com/photo-1570545887596-2a6c5cbcf9c3?w=800'
 
@@ -254,94 +222,70 @@ const videoForm = ref({
   courseId: '',
   title: '',
   description: '',
-  url: '',
-  cover: '',
-  duration: ''
+  url: ''
 })
-
-const coverInput = ref(null)
 
 const filteredVideos = computed(() => {
   if (selectedCourseFilter.value === 'all') return videos.value
   return videos.value.filter(v => v.courseId === selectedCourseFilter.value)
 })
 
-const loadData = async () => {
-  loading.value = true
-  errorMsg.value = ''
+// 路径修正：/video_data/ → /files/
+const getPlayUrl = (url) => url ? url.replace('/video_data/', '/files/') : ''
 
-  try {
-    // 获取教师课程
-    const resp = await apiClient.post('/api/get_course_id_by_teacher', {
-      teacher_id: teacherId,
-      jwt: jwt
+// 点击卡片弹窗播放
+const openPlayDialog = (video) => {
+  currentPlayUrl.value = getPlayUrl(video.url)
+  currentPlayTitle.value = video.title
+  playDialogVisible.value = true
+}
+
+// 动态生成封面和时长
+const generateVideoMeta = (url, callback) => {
+  if (!url) return callback(defaultCover, '未知')
+
+  const video = document.createElement('video')
+  video.src = getPlayUrl(url)
+  video.crossOrigin = 'anonymous'
+
+  let cover = defaultCover
+  let duration = '未知'
+
+  video.onloadedmetadata = () => {
+    const mins = Math.floor(video.duration / 60).toString().padStart(2, '0')
+    const secs = Math.floor(video.duration % 60).toString().padStart(2, '0')
+    duration = `${mins}:${secs}`
+
+    // 截取第1秒作为封面
+    video.currentTime = Math.min(1, video.duration)
+  }
+
+  video.onseeked = () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    cover = canvas.toDataURL('image/jpeg')
+    callback(cover, duration)
+  }
+
+  video.onerror = () => callback(defaultCover, '未知')
+}
+
+// 上传成功回调
+const onVideoUploaded = (result) => {
+  if (result && result.url) {
+    videoForm.value.url = result.url
+    ElMessage.success('视频上传成功！封面和时长加载中...')
+
+    // 立即生成封面和时长（仅用于当前表单预览）
+    generateVideoMeta(result.url, (newCover, newDuration) => {
+      ElMessage.success('封面和时长已生成')
     })
-
-    if (resp.data[0] < 0) {
-      errorMsg.value = '获取课程失败'
-      return
-    }
-
-    const courseIds = resp.data[0].split('\t\r').filter(Boolean)
-
-    const promises = courseIds.map(id => apiClient.post('/api/get_info_by_course_id', { course_id: id }))
-    const resps = await Promise.all(promises)
-
-    courses.value = resps.map((r, i) => ({
-      id: courseIds[i],
-      name: r.data[1]
-    }))
-
-    await loadVideos()
-
-  } catch (err) {
-    errorMsg.value = '加载失败'
-  } finally {
-    loading.value = false
   }
 }
 
-const loadVideos = async () => {
-  videos.value = []
-
-  const targetIds = selectedCourseFilter.value === 'all' ? courses.value.map(c => c.id) : [selectedCourseFilter.value]
-
-  for (const courseId of targetIds) {
-    const resp = await apiClient.post('/Class/get_class_id_by_course', {
-      first: '1',
-      second: teacherId,
-      third: jwt,
-      fourth: courseId
-    })
-
-    if (resp.data[0] < 0) continue
-
-    const classIds = resp.data[0].split('\t\r').filter(Boolean)
-
-    for (const classId of classIds) {
-      const infoResp = await apiClient.post('/api/get_info_by_class_id', {
-        course_id: courseId,
-        class_id: classId
-      })
-
-      if (infoResp.data[0] < 0) continue
-
-      const d = infoResp.data
-      videos.value.push({
-        id: classId,
-        courseId: courseId,
-        title: d[0],
-        description: d[1],
-        url: d[2],
-        cover: defaultCover,
-        duration: '未知',
-        createdAt: d[3]
-      })
-    }
-  }
-}
-
-// 打开新增模态框
 const openAddModal = () => {
   isEditMode.value = false
   editingVideoId.value = ''
@@ -349,14 +293,11 @@ const openAddModal = () => {
     courseId: courses.value[0]?.id || '',
     title: '',
     description: '',
-    url: '',
-    cover: '',
-    duration: ''
+    url: ''
   }
   showUploadModal.value = true
 }
 
-// 打开编辑模态框
 const openEditModal = (video) => {
   isEditMode.value = true
   editingVideoId.value = video.id
@@ -364,80 +305,81 @@ const openEditModal = (video) => {
     courseId: video.courseId,
     title: video.title,
     description: video.description,
-    url: video.url,
-    cover: video.cover,
-    duration: video.duration
+    url: video.url
   }
   showUploadModal.value = true
 }
 
-// 关闭模态框
 const closeModal = () => {
   showUploadModal.value = false
-  // 可选：也清空表单，避免下次打开残留
-  videoForm.value = { courseId: '', title: '', description: '', url: '', cover: '', duration: '' }
-  if (coverInput.value) coverInput.value.value = ''
+  videoForm.value = { courseId: '', title: '', description: '', url: '' }
 }
 
-// 提交（新增或编辑）
 const submitVideo = async () => {
-  if (!videoForm.value.courseId || !videoForm.value.title || !videoForm.value.description || !videoForm.value.url) {
-    alert('请填写必填项')
+  if (!videoForm.value.courseId || !videoForm.value.title ||
+      !videoForm.value.description || !videoForm.value.url) {
+    alert('请填写所有必填项并上传视频')
     return
   }
 
-  const payload = {
-    teacher_id: teacherId,
-    jwt: jwt,
-    course_id: videoForm.value.courseId,
-    title: videoForm.value.title,
-    description: videoForm.value.description,
-    content_url: videoForm.value.url
-  }
-
   try {
-    const url = isEditMode.value ? '/api/edit_class' : '/api/add_class'
+    let resp
     if (isEditMode.value) {
-      payload.class_id = editingVideoId.value
+      resp = await apiClient.post('/Class/edit_class', {
+        first: teacherId,
+        second: jwt,
+        third: videoForm.value.courseId,
+        fourth: editingVideoId.value,
+        fifth: videoForm.value.title,
+        sixth: videoForm.value.description,
+        seventh: videoForm.value.url
+      })
+    } else {
+      resp = await apiClient.post('/Class/new_class', {
+        first: teacherId,
+        second: jwt,
+        third: videoForm.value.courseId,
+        fourth: videoForm.value.title,
+        fifth: videoForm.value.description,
+        sixth: videoForm.value.url
+      })
     }
 
-    const resp = await apiClient.post(url, payload)
-
-    if (resp.data[0] !== 0) {
+    if (resp.data.success) {
+      ElMessage.success(isEditMode.value ? '修改成功！' : '发布成功！')
+      closeModal()
+      await loadVideos()
+    } else {
       alert(isEditMode.value ? '修改失败' : '发布失败')
-      return
     }
-
-    alert(isEditMode.value ? '修改成功！' : '发布成功！')
-    showUploadModal.value = false
-    await loadVideos()
   } catch (err) {
-    alert('网络错误')
+    console.error(err)
+    alert('网络错误，请重试')
   }
 }
 
 const deleteVideo = async (classId) => {
-  if (!confirm('确定删除此视频吗？')) return
+  if (!confirm('确定删除此教学视频吗？删除后不可恢复')) return
 
   const video = videos.value.find(v => v.id === classId)
   if (!video) return
 
   try {
-    const resp = await apiClient.post('/api/delete_class', {
-      teacher_id: teacherId,
-      jwt: jwt,
-      course_id: video.courseId,
-      class_id: classId
+    const resp = await apiClient.post('/Class/delete_class', {
+      first: teacherId,
+      second: jwt,
+      third: video.courseId,
+      fourth: classId
     })
 
-    if (resp.data[0] !== 0) {
+    if (resp.data.success) {
+      ElMessage.success('删除成功')
+      await loadVideos()
+    } else {
       alert('删除失败')
-      return
     }
-
-    alert('删除成功')
-    await loadVideos()
   } catch (err) {
+    console.error(err)
     alert('网络错误')
   }
 }
@@ -453,16 +395,107 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-const triggerCoverInput = () => coverInput.value?.click()
-const handleCoverChange = (e) => {
-  const file = e.target.files[0]
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (ev) => videoForm.value.cover = ev.target.result
-    reader.readAsDataURL(file)
+const loadData = async () => {
+  loading.value = true
+  errorMsg.value = ''
+
+  try {
+    const resp = await apiClient.post('/Course/get_course_id_by_teacher', {
+      first: teacherId,
+      second: jwt
+    })
+
+    if (!resp.data.success) {
+      errorMsg.value = '获取课程失败'
+      return
+    }
+
+    const courseIds = resp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
+
+    const promises = courseIds.map(id =>
+      apiClient.post('/Course/get_info_by_course_id', { first: id })
+    )
+    const resps = await Promise.all(promises)
+
+    courses.value = resps
+      .filter(r => r.data.success)
+      .map((r, i) => ({
+        id: courseIds[i],
+        name: r.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)[1] || '未知课程'
+      }))
+
+    await loadVideos()
+  } catch (err) {
+    console.error(err)
+    errorMsg.value = '加载失败，请检查网络或登录状态'
+  } finally {
+    loading.value = false
   }
 }
-const removeCover = () => videoForm.value.cover = ''
 
-onMounted(loadData)
+const loadVideos = async () => {
+  const tempVideos = []
+
+  const targetIds = selectedCourseFilter.value === 'all'
+    ? courses.value.map(c => c.id)
+    : [selectedCourseFilter.value]
+
+  for (const courseId of targetIds) {
+    const resp = await apiClient.post('/Class/get_class_id_by_course', {
+      first: '1',
+      second: teacherId,
+      third: jwt,
+      fourth: courseId
+    })
+
+    if (!resp.data.success) continue
+
+    const classIds = resp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
+
+    const infoPromises = classIds.map(classId =>
+      apiClient.post('/Class/get_info_by_class_id', {
+        first: courseId,
+        second: classId
+      })
+    )
+    const infoResps = await Promise.all(infoPromises)
+
+    infoResps.forEach((infoResp, idx) => {
+      if (infoResp.data.success) {
+        const d = infoResp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
+        tempVideos.push({
+          id: classIds[idx],
+          courseId: courseId,
+          title: d[0] || '无标题',
+          description: d[1] || '暂无描述',
+          url: d[2] || '',
+          cover: defaultCover,  // 占位
+          duration: '加载中...',
+          createdAt: d[3] || ''
+        })
+      }
+    })
+  }
+
+  videos.value = tempVideos
+
+  // 动态计算每个视频的封面和时长
+  videos.value.forEach(video => {
+    if (video.url) {
+      generateVideoMeta(video.url, (cover, duration) => {
+        video.cover = cover
+        video.duration = duration
+      })
+    }
+  })
+}
+
+onMounted(() => {
+  if (!teacherId || !jwt) {
+    errorMsg.value = '请先登录'
+    loading.value = false
+    return
+  }
+  loadData()
+})
 </script>

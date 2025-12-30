@@ -176,7 +176,6 @@ const loadData = async () => {
       return data.split(/\t\r/).filter(item => item !== '');
     });
 
-    console.log(processedResponses)
     courses.value = processedResponses
       .filter(r => r[0] >= 0)
       .map((r, i) => ({ id: courseIds[i], name: r[1] }))
@@ -218,7 +217,13 @@ const loadData = async () => {
 
         // 获取 AI 类型
         const aiResp = await apiClient.post('/Homework/get_AI_type', { First: hwId })
-        const rawAiType = aiResp.data?.[0] || 'squat'
+        let rawAiType = 'squat'
+        if (aiResp.data.success) {
+          const config = aiResp.data.data.trim()
+          const parts = config.split('\t\r')
+          rawAiType = parts[0] || 'squat'
+
+        }
 
         // 获取所有学生提交情况
         const submitResp = await apiClient.post('/Homework/get_final_submit', {

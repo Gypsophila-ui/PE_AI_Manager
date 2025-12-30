@@ -156,9 +156,9 @@
           </div>
 
           <form @submit.prevent="submitForm">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <!-- 作业标题 -->
-              <div class="col-span-1 md:col-span-2">
+              <div class="col-span-1 md:col-span-3">
                 <label for="title" class="block text-sm font-medium text-gray-700 mb-2">作业标题</label>
                 <input
                   id="title"
@@ -172,7 +172,7 @@
 
               <!-- AI识别运动类型 -->
               <div>
-                <label for="aiType" class="block text-sm font-medium text-gray-700 mb-2">AI识别运动类型</label>
+                <label for="aiType" class="block text-sm font-medium text-gray-700 mb-2">运动类型</label>
                 <select
                   id="aiType"
                   v-model="newAssignment.aiType"
@@ -184,6 +184,22 @@
                   <option value="pushup">俯卧撑</option>
                   <option value="deadlift">硬拉</option>
                 </select>
+              </div>
+
+              <!-- 要求完成次数 -->
+              <div>
+                <label for="requiredCount" class="block text-sm font-medium text-gray-700 mb-2">要求完成次数</label>
+                <input
+                  id="requiredCount"
+                  v-model.number="newAssignment.requiredCount"
+                  type="number"
+                  min="1"
+                  max="999"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                  placeholder="30"
+                  required
+                />
+                <p class="text-xs text-gray-500 mt-1">学生需完成该次数的动作</p>
               </div>
 
               <!-- 截止日期 -->
@@ -253,6 +269,7 @@ const showPublishAssignment = ref(false)
 const newAssignment = ref({
   title: '',
   aiType: '',
+  requiredCount: 30,
   description: '',
   deadline: ''
 })
@@ -350,7 +367,13 @@ const fetchCourseDetails = async () => {
       const infoRespDataArray = infoRespData.split(/\t\r/).filter(item => item !== '');
       const d = infoRespDataArray
 
-      const rawAiType = aiResp.data.data || ''
+      let rawAiType = ''
+      if (aiResp.data.success) {
+          const config = aiResp.data.data.trim()
+          const parts = config.split('\t\r')
+          rawAiType = parts[0] || 'squat'
+
+      }
       const aiTypeDisplay = aiTypeMap[rawAiType] || '未知动作'
 
       return {
@@ -378,7 +401,7 @@ const fetchCourseDetails = async () => {
 }
 
 const submitForm = async () => {
-  if (!newAssignment.value.title || !newAssignment.value.description || !newAssignment.value.deadline || !newAssignment.value.aiType) {
+  if (!newAssignment.value.title || !newAssignment.value.description || !newAssignment.value.deadline || !newAssignment.value.aiType || !newAssignment.value.requiredCount) {
     alert('请完整填写所有字段')
     return
   }
@@ -406,7 +429,8 @@ const submitForm = async () => {
       Second: jwt,
       Third: courseId,
       Fourth: homeworkId,
-      Fifth: newAssignment.value.aiType
+      Fifth: newAssignment.value.aiType,
+      Sixth: newAssignment.value.requiredCount.toString()
     })
 
     if (!setResp.data.success) {

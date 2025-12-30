@@ -112,8 +112,8 @@
           </div>
 
           <form @submit.prevent="submitEdit" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="col-span-1 md:col-span-2">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="col-span-1 md:col-span-3">
                 <label class="block text-sm font-medium text-gray-700 mb-2">作业标题</label>
                 <input
                   v-model="editForm.title"
@@ -125,7 +125,7 @@
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">AI识别运动类型</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">运动类型</label>
                 <select
                   v-model="editForm.aiType"
                   required
@@ -135,6 +135,21 @@
                   <option value="pushup">俯卧撑</option>
                   <option value="deadlift">硬拉</option>
                 </select>
+              </div>
+
+              <!-- 要求完成次数 -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">要求完成次数</label>
+                <input
+                  v-model.number="editForm.requiredCount"
+                  type="number"
+                  min="1"
+                  max="999"
+                  required
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 shadow-sm"
+                  placeholder="30"
+                />
+                <p class="text-xs text-gray-500 mt-1">学生需完成该次数的动作</p>
               </div>
 
               <div>
@@ -201,6 +216,7 @@ const stats = ref({
 const editForm = ref({
   title: '',
   aiType: 'squat',
+  requiredCount: 30,
   description: '',
   deadline: ''
 })
@@ -231,9 +247,21 @@ const fetchDetail = async () => {
 
     const infoData = infoResp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
 
-    // 获取 AI 类型
+    // 获取 AI 类型和次数
     const aiResp = await apiClient.post('/Homework/get_AI_type', { First: assignmentId })
-    const currentAiType = aiResp.data?.data || 'squat'
+    let currentAiType = 'squat'
+    let currentRequiredCount = 30
+
+    if (aiResp.data.success) {
+      const config = aiResp.data.data.trim()
+      const parts = config.split('\t\r')
+      if (parts.length >= 2) {
+        currentRequiredCount = parseInt(parts[1], 10) || 30
+        currentAiType = parts[0] || 'squat'
+      } else if (parts.length === 1) {
+        currentAiType = parts[0] || 'squat'
+      }
+    }
 
     // 获取学生总数
     const studentResp = await apiClient.post('/Course_student/get_student_id_by_course', {
@@ -292,7 +320,8 @@ const fetchDetail = async () => {
       deadline: infoData[2],
       create_time: infoData[3],
       aiType: currentAiType,
-      aiTypeDisplay: aiTypeMap[currentAiType] || '未知动作'
+      requiredCount: currentRequiredCount,
+      aiTypeDisplay: `${aiTypeMap[currentAiType] || '未知动作'}（${currentRequiredCount}次）`
     }
 
     stats.value = {
@@ -327,6 +356,7 @@ const handleEdit = () => {
   editForm.value = {
     title: assignment.value.title,
     aiType: assignment.value.aiType || 'squat',
+    requiredCount: assignment.value.requiredCount || 30,
     description: assignment.value.description,
     deadline: dayjs(assignment.value.deadline).format('YYYY-MM-DDTHH:mm:ss')
   }
@@ -355,7 +385,8 @@ const submitEdit = async () => {
       Second: jwt,
       Third: courseId,
       Fourth: assignmentId,
-      Fifth: editForm.value.aiType
+      Fifth: editForm.value.aiType,
+      Sixth: editForm.value.requiredCount.toString()
     })
 
     if (!aiResp.data.success) {

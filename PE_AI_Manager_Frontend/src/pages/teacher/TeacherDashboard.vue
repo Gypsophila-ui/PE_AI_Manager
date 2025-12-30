@@ -58,7 +58,7 @@
             <input type="date" v-model="query.endDate" @change="fetchData" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"/>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">AI 类型</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">运动类型</label>
             <select v-model="query.aiType" @change="fetchData" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all shadow-sm">
               <option value="">全部</option>
               <option value="squat">深蹲</option>
@@ -222,7 +222,7 @@ const loadData = async () => {
         const title = infoParts[0] || '未命名作业'
 
         const aiResp = await apiClient.post('/Homework/get_AI_type', { First: hwId })
-        const rawAiType = aiResp.data?.[0] || 'squat'
+        const rawAiType = aiResp.data.data.split('\t\r')[0] || 'squat'
 
         const submitResp = await apiClient.post('/Homework/get_final_submit', {
           First: teacherId, Second: jwt, Third: courseId, Fourth: hwId
