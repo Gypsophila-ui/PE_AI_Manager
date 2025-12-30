@@ -152,8 +152,6 @@ const login = async () => {
         token: result.data.data
       }))
 
-
-
       // 根据角色跳转到对应首页
       if (role.value === 'student') {
         router.push('/student')
