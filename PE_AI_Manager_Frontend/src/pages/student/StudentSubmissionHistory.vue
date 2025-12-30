@@ -24,7 +24,6 @@
       </div>
 
       <div v-else-if="submissions.length === 0" class="bg-white rounded-3xl shadow-xl p-12 text-center">
-        <div class="text-6xl mb-4">📭</div>
         <h3 class="text-2xl font-bold text-gray-800 mb-2">暂无提交记录</h3>
         <p class="text-gray-600">您还没有提交任何作业</p>
       </div>
@@ -41,12 +40,10 @@
                 <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ submission.title }}</h3>
                 <div class="flex items-center gap-4 text-gray-600">
                   <span class="flex items-center gap-1">
-                    <span>📚</span>
                     {{ submission.courseName }}
                   </span>
                   <span>•</span>
                   <span class="flex items-center gap-1">
-                    <span>📅</span>
                     {{ formatDate(submission.CREATE_TIME) }}
                   </span>
                 </div>
@@ -66,7 +63,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 class="text-lg font-semibold text-gray-700 mb-3">🎥 AI 分析视频</h4>
+                <h4 class="text-lg font-semibold text-gray-700 mb-3">AI 分析视频</h4>
                 <div v-if="submission.video_url" class="relative aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
                   <video :src="submission.video_url" controls class="w-full h-full object-contain">
                     您的浏览器不支持视频播放。
@@ -79,7 +76,7 @@
 
               <div class="space-y-4">
                 <div>
-                  <h4 class="text-lg font-semibold text-gray-700 mb-2">🤖 AI 智能评价</h4>
+                  <h4 class="text-lg font-semibold text-gray-700 mb-2">AI 智能评价</h4>
                   <div v-if="submission.AI_feedback" class="bg-indigo-50 rounded-xl p-4 border border-indigo-200 max-h-32 overflow-y-auto">
                     <p class="text-indigo-900 text-sm whitespace-pre-wrap">{{ submission.AI_feedback }}</p>
                   </div>
@@ -89,7 +86,7 @@
                 </div>
 
                 <div>
-                  <h4 class="text-lg font-semibold text-gray-700 mb-2">👩‍🏫 教师评语</h4>
+                  <h4 class="text-lg font-semibold text-gray-700 mb-2">教师评语</h4>
                   <div v-if="submission.teacher_feedback" class="bg-blue-50 rounded-xl p-4 border border-blue-200 max-h-32 overflow-y-auto">
                     <p class="text-blue-900 text-sm whitespace-pre-wrap">{{ submission.teacher_feedback }}</p>
                   </div>
@@ -103,16 +100,16 @@
             <div class="flex justify-end gap-3 mt-6">
               <button
                 @click="viewDetail(submission)"
-                class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg flex items-center gap-2"
+                class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg"
               >
-                <span>📋</span> 查看详情
+                查看详情
               </button>
               <button
                 v-if="submission.video_url"
                 @click="deleteVideo(submission)"
-                class="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg flex items-center gap-2"
+                class="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg"
               >
-                <span>🗑️</span> 删除视频
+                删除视频
               </button>
             </div>
           </div>

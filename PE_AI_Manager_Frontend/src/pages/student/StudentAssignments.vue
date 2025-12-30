@@ -95,7 +95,7 @@
         <div class="mb-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl border-2 border-green-200">
           <div class="flex items-center justify-between">
             <div>
-              <h4 class="text-lg font-bold text-gray-800 mb-1">🏆 最终得分</h4>
+              <h4 class="text-lg font-bold text-gray-800 mb-1">最终得分</h4>
               <p class="text-sm text-gray-600">教师评定的最终成绩</p>
             </div>
             <div v-if="finalScore !== null" class="text-right">
@@ -218,9 +218,14 @@
                 <div class="rounded-lg overflow-hidden border border-gray-300 w-full">
                   <video
                     ref="processedVideoPreview"
+                    :src="processedVideoUrl"
                     controls
-                    class="w-full h-auto"
+                    class="w-full max-h-60"
+                    v-if="processedVideoUrl"
                   ></video>
+                  <div v-else class="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
+                    <p class="text-gray-500">视频预览待加载...</p>
+                  </div>
                 </div>
                 <div class="mt-4 flex justify-center">
                   <button
@@ -247,7 +252,7 @@
                   <img
                     :src="processingVideoFrame"
                     alt="处理过程预览"
-                    class="max-w-full max-h-64 rounded-lg shadow"
+                    class="max-w-full max-h-100 rounded-lg shadow"
                   />
                 </div>
               </div>
@@ -283,6 +288,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from '../../services/axios'
 import { apiClient, aiClient } from '../../services/axios'
+
+// 定义基础URL常量
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
 
 const router = useRouter()
 const route = useRoute()
@@ -493,7 +501,7 @@ const getProcessedVideo = async (homeworkId, studentId) => {
     console.log('开始获取处理后的视频...')
 
     // 构建请求URL
-    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}/get_processed_video`;
+    const url = `${BASE_URL}/get_processed_video`;
 
     const response = await fetch(url + `?homework_id=${homeworkId}&student_id=${studentId}`);
 
@@ -513,13 +521,7 @@ const getProcessedVideo = async (homeworkId, studentId) => {
       showProcessedVideo.value = true
       processedVideoBlob.value = videoBlob
 
-      // 初始化视频预览
-      if (processedVideoPreview.value) {
-        processedVideoPreview.value.src = videoUrl
-        // 手动加载视频，确保视频正确播放
-        processedVideoPreview.value.load()
-        console.log('处理后的视频预览已设置并开始加载')
-      }
+      console.log('处理后的视频预览URL已更新')
 
       return videoUrl
     } else if (response.status === 404) {
@@ -576,19 +578,16 @@ const submitAssignment = async () => {
         console.warn('获取AI类型失败，使用默认动作类型: squat');
       }
 
-      // 构造请求URL，将pose_type作为URL查询参数传递
-      const url = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}/process_video?pose_type=${encodeURIComponent(poseType)}`
+      // 构造请求URL，使用 process_and_save_video 接口
+      const url = `${BASE_URL}/process_and_save_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&pose_type=${encodeURIComponent(poseType)}`
 
       console.log('开始上传视频到AI后端服务...')
-      processingStats.value = '正在连接到流式处理服务...'
+      processingStats.value = '正在处理视频...'
 
-      // 使用Fetch API和ReadableStream处理SSE流
+      // 使用 Fetch API 调用 process_and_save_video 接口
       const response = await fetch(url, {
         method: 'POST',
-        body: formData,
-        headers: {
-          // 如果需要认证，可以添加认证头
-        }
+        body: formData
       })
 
       if (!response.ok) {
@@ -619,14 +618,9 @@ const submitAssignment = async () => {
               processedVideoUrl.value = processedVideoUrlValue
               showProcessedVideo.value = true
 
-              // 初始化视频预览
-              if (processedVideoPreview.value) {
-                processedVideoPreview.value.src = processedVideoUrlValue
-                processedVideoPreview.value.load()
-              }
+              // 视频预览将通过Vue响应式绑定自动更新
 
               // AI处理完成后，调用 process_and_save_video 接口保存视频
-              saveProcessedVideoToServer(selectedFile.value, poseType, aiResult, studentId, processedVideoUrlValue)
             }
 
             // 保存作业提交信息（无论AI是否成功）
@@ -676,7 +670,7 @@ const submitAssignment = async () => {
                       // 确保URL是完整的
                       let downloadUrl = data.data.download_url
                       if (!downloadUrl.startsWith('http')) {
-                        downloadUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'}${downloadUrl}`
+                        downloadUrl = `${BASE_URL}${downloadUrl}`
                       }
                       processedVideoUrl.value = downloadUrl
                       processedVideoUrlValue = downloadUrl
@@ -700,6 +694,38 @@ const submitAssignment = async () => {
 
                     // 显示处理后的视频区域
                     showProcessedVideo.value = true
+                    
+                    // 调用query_records接口获取AI反馈
+                    fetch(`${BASE_URL}/query_records?homework_id=${assignmentId}&student_id=${studentId}&pose_type=${poseType}`)
+                      .then(queryResponse => {
+                        if (queryResponse.ok) {
+                          return queryResponse.json()
+                        }
+                        throw new Error(`HTTP ${queryResponse.status}: ${queryResponse.statusText}`)
+                      })
+                      .then(records => {
+                        if (records && records.length > 0) {
+                          const latestRecord = records[records.length - 1]
+                          if (latestRecord && latestRecord.feedback_json) {
+                            const feedbackData = JSON.parse(latestRecord.feedback_json)
+                            
+                            // 提取反馈信息并拼成一句话
+                            const totalCount = latestRecord.total_count || 0
+                            const correctCount = latestRecord.correct_count || 0
+                            const incorrectCount = latestRecord.incorrect_count || 0
+                            const accuracyRate = feedbackData.performance?.accuracy_rate?.toFixed(2) || 0
+                            const videoDuration = latestRecord.video_duration?.toFixed(2) || 0
+                            
+                            aiResult.AI_feedback = `本次动作共完成${totalCount}次，其中${correctCount}次动作标准，${incorrectCount}次动作不标准，标准度为${accuracyRate}%，视频持续时长${videoDuration}秒。`
+                          }
+                        }
+                      })
+                      .catch(error => {
+                        console.error('获取反馈记录失败:', error)
+                        // 即使获取失败也不影响后续流程
+                        aiResult.AI_feedback = 'AI反馈获取失败，等待教师批改'
+                      })
+                    
                     break
 
                   case 'error':
@@ -742,7 +768,10 @@ const submitAssignment = async () => {
         video_url: null
       }
 
-      // 直接提交作业，不等待AI处理
+      // 直接保存作业提交信息
+      saveAssignmentSubmission(aiResult, studentId, processedVideoUrlValue)
+
+      // 设置处理完成状态
       isUploading.value = false
       isProcessing.value = false
 
@@ -771,8 +800,7 @@ const saveProcessedVideoToServer = async (file, poseType, aiResult, studentId, p
     formData.append('file', file)
 
     // 构造请求URL，使用 process_and_save_video 接口
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://118.25.145.4:8000'
-    const url = `${baseUrl}/process_and_save_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&pose_type=${encodeURIComponent(poseType)}`
+    const url = `${BASE_URL}/process_and_save_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&pose_type=${encodeURIComponent(poseType)}`
 
     console.log('正在上传视频到服务器保存...')
 
