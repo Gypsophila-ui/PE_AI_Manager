@@ -551,13 +551,14 @@ namespace SE_PE_AI_Manager.Controllers
         }
 
         [HttpPost("set_AI_type")]//增加AI测评识别码
-        public ActionResult<API_result> Set_AI_type([FromBody] Request_five request)
+        public ActionResult<API_result> Set_AI_type([FromBody] Request_six request)
         {
             string teacher_id = request.First;//获取参数
             string jwt = request.Second;
             string course_id = request.Third;
             string homework_id = request.Fourth;
             string AI_type = request.Fifth;
+            string num = request.Sixth;
             var API_result = new API_result//初始化的返回值
             {
                 Success = true,
@@ -565,7 +566,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Data = "NULL",
                 ErrorCode = 0
             };
-            if (course_id == null || homework_id == null || teacher_id == null || AI_type == null || jwt == null)//如果参数错误
+            if (course_id == null || homework_id == null || teacher_id == null || AI_type == null || jwt == null || num == null)//如果参数错误
             {
                 API_result.Success = false;
                 API_result.Message = "Error parameters";
@@ -592,7 +593,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Basic_link.Close_link();
                 return NotFound(API_result);
             }
-            Function_result val = SE_PE_AI_Manager.Operation.Homework.Set_AI_type(teacher_id, jwt, course_id, homework_id, AI_type, connection);
+            Function_result val = SE_PE_AI_Manager.Operation.Homework.Set_AI_type(teacher_id, jwt, course_id, homework_id, AI_type, num, connection);
             if (val.Code < 0)//如果返回结果存在错误
             {
                 API_result.Success = false;
@@ -612,13 +613,14 @@ namespace SE_PE_AI_Manager.Controllers
         }
 
         [HttpPost("edit_AI_type")]//修改AI测评识别码
-        public ActionResult<API_result> Edit_AI_type([FromBody] Request_five request)
+        public ActionResult<API_result> Edit_AI_type([FromBody] Request_six request)
         {
             string teacher_id = request.First;//获取参数
             string jwt = request.Second;
             string course_id = request.Third;
             string homework_id = request.Fourth;
             string AI_type = request.Fifth;
+            string num = request.Sixth;
             var API_result = new API_result//初始化的返回值
             {
                 Success = true,
@@ -626,7 +628,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Data = "NULL",
                 ErrorCode = 0
             };
-            if (course_id == null || homework_id == null || teacher_id == null || AI_type == null || jwt == null)//如果参数错误
+            if (course_id == null || homework_id == null || teacher_id == null || AI_type == null || jwt == null || num == null)//如果参数错误
             {
                 API_result.Success = false;
                 API_result.Message = "Error parameters";
@@ -653,7 +655,7 @@ namespace SE_PE_AI_Manager.Controllers
                 Basic_link.Close_link();
                 return NotFound(API_result);
             }
-            Function_result val = SE_PE_AI_Manager.Operation.Homework.Edit_AI_type(teacher_id, jwt, course_id, homework_id, AI_type, connection);
+            Function_result val = SE_PE_AI_Manager.Operation.Homework.Edit_AI_type(teacher_id, jwt, course_id, homework_id, AI_type, num, connection);
             if (val.Code < 0)//如果返回结果存在错误
             {
                 API_result.Success = false;

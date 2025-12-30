@@ -503,7 +503,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "SE_PE_AI_Manager.Basic.Request_five",
+        "Type": "SE_PE_AI_Manager.Basic.Request_six",
         "IsRequired": true
       }
     ],
@@ -841,7 +841,7 @@
     "Parameters": [
       {
         "Name": "request",
-        "Type": "SE_PE_AI_Manager.Basic.Request_five",
+        "Type": "SE_PE_AI_Manager.Basic.Request_six",
         "IsRequired": true
       }
     ],
