@@ -301,7 +301,6 @@ const finalScore = ref(null)
 // 文件上传相关（集成提交作业功能）
 const fileInput = ref(null)
 const videoPreview = ref(null)
-const processedVideoPreview = ref(null)
 const selectedFile = ref(null)
 const uploadProgress = ref(0)
 const isUploading = ref(false)
@@ -431,17 +430,14 @@ const getProcessedVideo = async (homeworkId, studentId) => {
       console.log('处理后的视频预览URL已更新')
 
       return result.videoUrl
-    }
+    } else {
       throw new Error('未找到处理后的视频文件')
     }
+  } catch (error) {
+    console.error('获取处理后的视频失败:', error);
+    throw error;
   }
 }
-
-// 视频处理状态相关
-const processingStats = ref('')
-const isProcessing = ref(false)
-const processingVideoFrame = ref('')
-const processedVideoBlob = ref(null)
 
 // 提交作业
 const submitAssignment = async () => {
@@ -468,7 +464,10 @@ const submitAssignment = async () => {
         assignmentId,
         selectedFile.value,
         processedVideoBlob.value,
-        processedVideoUrl.value
+        processedVideoUrl.value,
+        (frameUrl) => {
+          processingVideoFrame.value = frameUrl;
+        }
       );
 
       const { processedVideoUrlValue, aiResult } = result;

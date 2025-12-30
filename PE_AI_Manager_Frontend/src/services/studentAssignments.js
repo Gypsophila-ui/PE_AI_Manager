@@ -132,9 +132,9 @@ export class StudentAssignmentService {
       const aiTypeResponse = await apiClient.post('/Homework/get_AI_type', {
         first: assignmentId
       });
-      if (aiTypeResponse.success) {
+      console.log('获取AI类型响应:', aiTypeResponse.data);
+      if (aiTypeResponse.data.success) {
         const poseType = aiTypeResponse.data.data || 'squat';
-        console.log('获取到的动作类型:', poseType);
         return poseType;
       } else {
         console.warn('获取AI类型失败，使用默认动作类型: squat');
@@ -173,12 +173,20 @@ export class StudentAssignmentService {
   /**
    * 处理SSE事件
    */
-  handleSSEEvent(data, assignmentId, studentId, poseType, aiResult, processedVideoUrlValue) {
+  handleSSEEvent(data, assignmentId, studentId, poseType, aiResult, processedVideoUrlValue, processingVideoFrameValue, onFrameUpdate) {
     switch (data.event) {
       case 'init':
         break;
 
       case 'frame':
+        if (data.data && data.data.image) {
+          const base64Image = data.data.image;
+          const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+          processingVideoFrameValue.value = dataUrl;
+          if (onFrameUpdate) {
+            onFrameUpdate(dataUrl);
+          }
+        }
         break;
 
       case 'final_stats':
@@ -241,11 +249,12 @@ export class StudentAssignmentService {
   /**
    * 处理SSE流
    */
-  async processSSEStream(reader, decoder, assignmentId, studentId, poseType, resolve, reject) {
+  async processSSEStream(reader, decoder, assignmentId, studentId, poseType, resolve, reject, onFrameUpdate) {
     let buffer = '';
     let videoChunks = [];
     const aiResult = { value: null };
     const processedVideoUrlValue = { value: null };
+    const processingVideoFrameValue = { value: null };
 
     const processStream = () => {
       reader.read().then(({done, value}) => {
@@ -259,7 +268,8 @@ export class StudentAssignmentService {
 
           resolve({
             processedVideoUrlValue: processedVideoUrlValue.value,
-            aiResult: aiResult.value
+            aiResult: aiResult.value,
+            processingVideoFrameValue: processingVideoFrameValue.value
           });
           return;
         }
@@ -275,12 +285,13 @@ export class StudentAssignmentService {
               const jsonData = chunk.slice(6);
               const data = JSON.parse(jsonData);
 
-              this.handleSSEEvent(data, assignmentId, studentId, poseType, aiResult, processedVideoUrlValue);
+              this.handleSSEEvent(data, assignmentId, studentId, poseType, aiResult, processedVideoUrlValue, processingVideoFrameValue, onFrameUpdate);
 
               if (data.event === 'final_stats') {
                 this.fetchAIFeedback(assignmentId, studentId, poseType, aiResult);
               }
             } catch (e) {
+              console.log('解析JSON失败，将数据作为视频块:', e);
               videoChunks.push(value);
             }
           } else {
@@ -301,7 +312,7 @@ export class StudentAssignmentService {
   /**
    * 提交作业
    */
-  async submitAssignment(courseId, assignmentId, selectedFile, processedVideoBlob, processedVideoUrl) {
+  async submitAssignment(courseId, assignmentId, selectedFile, processedVideoBlob, processedVideoUrl, onFrameUpdate) {
     return new Promise(async (resolve, reject) => {
       try {
         const formData = this.createVideoFormData(selectedFile);
@@ -323,7 +334,7 @@ export class StudentAssignmentService {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
-        await this.processSSEStream(reader, decoder, assignmentId, studentId, poseType, resolve, reject);
+        await this.processSSEStream(reader, decoder, assignmentId, studentId, poseType, resolve, reject, onFrameUpdate);
       } catch (error) {
         console.error('作业提交失败:', error);
         reject(error);
