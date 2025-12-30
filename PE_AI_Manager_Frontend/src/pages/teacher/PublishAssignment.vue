@@ -42,9 +42,9 @@
       <!-- 表单 -->
       <section v-else class="bg-white rounded-3xl shadow-xl p-8">
         <form @submit.prevent="submitForm">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <!-- 作业标题 -->
-            <div class="col-span-1 md:col-span-2">
+            <div class="col-span-1 md:col-span-3">
               <label for="title" class="block text-sm font-medium text-gray-700 mb-2">作业标题</label>
               <input
                 id="title"
@@ -70,6 +70,22 @@
                 <option value="pushup">俯卧撑</option>
                 <option value="deadlift">硬拉</option>
               </select>
+            </div>
+
+            <!-- 要求完成次数 -->
+            <div>
+              <label for="requiredCount" class="block text-sm font-medium text-gray-700 mb-2">要求完成次数</label>
+              <input
+                id="requiredCount"
+                v-model.number="assignment.requiredCount"
+                type="number"
+                min="1"
+                max="999"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
+                placeholder="30"
+                required
+              />
+              <p class="text-xs text-gray-500 mt-1">学生需完成该次数的动作</p>
             </div>
 
             <!-- 截止日期 -->
@@ -162,6 +178,7 @@ const jwt = currentUser.token || 'valid_teacher_jwt'
 const assignment = ref({
   title: '',
   aiType: '',         // squat / pushup / deadlift
+  requiredCount: 30,
   description: '',
   deadline: '',
   courseIds: []       // 存储字符串类型的 course id
@@ -252,7 +269,7 @@ const submitForm = async () => {
     alert('请至少选择一个课程')
     return
   }
-  if (!assignment.value.title || !assignment.value.description || !assignment.value.deadline || !assignment.value.aiType) {
+  if (!assignment.value.title || !assignment.value.aiType || !assignment.value.description || !assignment.value.deadline) {
     alert('请填写所有必填字段')
     return
   }
@@ -279,7 +296,8 @@ const submitForm = async () => {
         Second: jwt,
         Third: courseId,
         Fourth: homeworkId,
-        Fifth: assignment.value.aiType
+        Fifth: assignment.value.aiType,
+        Sixth: assignment.value.requiredCount.toString()
       })
 
       if (!setResp.data.success) {
