@@ -62,6 +62,31 @@ namespace SE_PE_AI_Manager.Operation
                 return_result.Message = "SQL Error";
                 return return_result;
             }
+            check = "SELECT count(*) FROM student_course WHERE student_id = '" + student_id + "' and course_id = '" + ans + "'";
+            count = 0;
+            try
+            {
+                using (OracleCommand command = new OracleCommand(check, connection))
+                {
+                    object result = command.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)//如果result非空
+                    {
+                        count = Convert.ToInt32(result);//尝试转化为数字
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return_result.Code = -15;//-15表示学生是否已经加入当前课程的sql操作无法顺利执行
+                return_result.Message = "SQL Error";
+                return return_result;
+            }
+            if (count > 0)
+            {
+                return_result.Code = -26;//-26表示学生已经加入的当前课程不准重复加入
+                return_result.Message = "Already in this class";
+                return return_result;
+            }
             check = "SELECT max(id) FROM student_course";
             int now_id = 0;
             try
@@ -77,7 +102,7 @@ namespace SE_PE_AI_Manager.Operation
             }
             catch (Exception)
             {
-                return_result.Code = -15;//-15表示查询当前最大ID的操作错误
+                return_result.Code = -16;//-16表示查询当前最大ID的操作错误
                 return_result.Message = "SQL Error";
                 return return_result;
             }
@@ -97,7 +122,7 @@ namespace SE_PE_AI_Manager.Operation
             }
             catch (Exception)
             {
-                return_result.Code = -16;//-16表示插入课程的sql操作无法顺利执行
+                return_result.Code = -17;//-16表示插入课程的sql操作无法顺利执行
                 return_result.Message = "SQL Error";
                 return return_result;
             }
