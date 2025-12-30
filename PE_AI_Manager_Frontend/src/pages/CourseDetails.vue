@@ -2,7 +2,10 @@
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
     <div class="max-w-6xl mx-auto p-6 space-y-8">
       <!-- 页面标题 -->
-      <section>
+      <section class="flex items-center gap-4">
+        <button @click="goBack" class="px-6 py-3 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow">
+          返回
+        </button>
         <h2 class="text-4xl font-bold text-gray-800 mb-4">课程详情</h2>
       </section>
 
