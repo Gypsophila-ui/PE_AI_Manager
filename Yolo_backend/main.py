@@ -208,6 +208,7 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
         fourcc_options = [
             # cv2.VideoWriter_fourcc(*'avc1'),  # H.264/AVC
             # cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
+            cv2.VideoWriter_fourcc(*'VP90'),
             cv2.VideoWriter_fourcc(*'H264'),
             cv2.VideoWriter_fourcc(*'XVID'),  # XVID
             cv2.VideoWriter_fourcc(*'MJPG')  # Motion JPEG
@@ -559,6 +560,7 @@ def process_video_logic(file_content: bytes, pose_type: str):
         fourcc_options = [
             # cv2.VideoWriter_fourcc(*'avc1'),  # H.264/AVC
             # cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
+            cv2.VideoWriter_fourcc(*'VP90'),
             cv2.VideoWriter_fourcc(*'H264'),
             cv2.VideoWriter_fourcc(*'XVID'),  # XVID
             cv2.VideoWriter_fourcc(*'MJPG')  # Motion JPEG
