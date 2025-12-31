@@ -41,7 +41,21 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
+      },
+      '/video': {
+        target: 'http://118.25.145.4:8000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/video/, '')
+      },
+      '/chat': {
+        target: 'http://118.25.145.4:5000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/chat/, '')
       }
+
+
     }
   }
 })
