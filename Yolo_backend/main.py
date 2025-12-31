@@ -203,16 +203,44 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
         # 视频编码器设置
         SKIP_FACTOR = 2
         output_fps = fps / SKIP_FACTOR
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_path, fourcc, output_fps, (width, height), True)
 
-        if not out.isOpened():
-            logger.warning("使用默认API创建视频写入器")
-            out = cv2.VideoWriter()
-            out.open(output_path, cv2.CAP_FFMPEG, fourcc, output_fps, (width, height), True)
+        # 尝试不同的视频编码器
+        fourcc_options = [
+            # cv2.VideoWriter_fourcc(*'avc1'),  # H.264/AVC
+            # cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
+            cv2.VideoWriter_fourcc(*'H264'),
+            cv2.VideoWriter_fourcc(*'XVID'),  # XVID
+            cv2.VideoWriter_fourcc(*'MJPG')  # Motion JPEG
+        ]
 
-        if not out.isOpened():
-            yield sse_format("error", {"message": "无法创建输出视频文件"})
+        out = None
+        for fourcc_code in fourcc_options:
+            try:
+                out = cv2.VideoWriter(output_path, fourcc_code, output_fps, (width, height), True)
+                if out.isOpened():
+                    logger.info(f"使用编码器 {fourcc_code} 创建视频写入器成功")
+                    break
+                else:
+                    out = None
+                    logger.warning(f"编码器 {fourcc_code} 创建失败")
+            except Exception as e:
+                logger.warning(f"尝试编码器 {fourcc_code} 时出错: {e}")
+                out = None
+
+        # 如果所有编码器都失败，尝试不使用编码器参数
+        if out is None:
+            try:
+                out = cv2.VideoWriter(output_path, -1, output_fps, (width, height), True)
+                if out.isOpened():
+                    logger.info("使用默认编码器创建视频写入器成功")
+                else:
+                    out = None
+            except Exception as e:
+                logger.error(f"使用默认编码器也失败: {e}")
+                out = None
+
+        if out is None:
+            yield sse_format("error", {"message": "无法创建输出视频文件，请检查视频编码器支持"})
             return
 
         logger.info(f"输出视频文件创建成功: {output_path}")
@@ -523,18 +551,48 @@ def process_video_logic(file_content: bytes, pose_type: str):
         # 创建输出视频文件，保持原始FPS不变
         output_path = os.path.join(temp_dir, "output_video.mp4")
 
-        # 跳帧因子，skip_factor=1表示不跳帧，skip_factor=2表示每隔1帧处理1帧
-        SKIP_FACTOR = 2  # 可根据需要调整，值越大跳过的帧越多，处理越快但精度可能下降
-
-        # 视频编码器
+        # 视频编码器设置
+        SKIP_FACTOR = 2
         output_fps = fps / SKIP_FACTOR
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_path, fourcc, output_fps, (width, height), True)
-        # 如果上面的方法失败，尝试使用不同的方法
-        if not out.isOpened():
-            logger.warning("使用默认API创建视频写入器")
-            out = cv2.VideoWriter()
-            out.open(output_path, cv2.CAP_FFMPEG, fourcc, output_fps, (width, height), True)
+
+        # 尝试不同的视频编码器
+        fourcc_options = [
+            # cv2.VideoWriter_fourcc(*'avc1'),  # H.264/AVC
+            # cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
+            cv2.VideoWriter_fourcc(*'H264'),
+            cv2.VideoWriter_fourcc(*'XVID'),  # XVID
+            cv2.VideoWriter_fourcc(*'MJPG')  # Motion JPEG
+        ]
+
+        out = None
+        for fourcc_code in fourcc_options:
+            try:
+                out = cv2.VideoWriter(output_path, fourcc_code, output_fps, (width, height), True)
+                if out.isOpened():
+                    logger.info(f"使用编码器 {fourcc_code} 创建视频写入器成功")
+                    break
+                else:
+                    out = None
+                    logger.warning(f"编码器 {fourcc_code} 创建失败")
+            except Exception as e:
+                logger.warning(f"尝试编码器 {fourcc_code} 时出错: {e}")
+                out = None
+
+        # 如果所有编码器都失败，尝试不使用编码器参数
+        if out is None:
+            try:
+                out = cv2.VideoWriter(output_path, -1, output_fps, (width, height), True)
+                if out.isOpened():
+                    logger.info("使用默认编码器创建视频写入器成功")
+                else:
+                    out = None
+            except Exception as e:
+                logger.error(f"使用默认编码器也失败: {e}")
+                out = None
+
+        if out is None:
+            yield sse_format("error", {"message": "无法创建输出视频文件，请检查视频编码器支持"})
+            return
 
         if not out.isOpened():
             raise HTTPException(status_code=500, detail="无法创建输出视频文件")
@@ -690,19 +748,59 @@ async def process_and_save_video(
 @app.get("/get_processed_video")
 async def get_processed_video(
         homework_id: str = Query(..., description="作业ID"),
-        student_id: str = Query(..., description="学生ID")
+        student_id: str = Query(..., description="学生ID"),
+        download: bool = Query(False, description="是否作为附件下载")
 ):
-    """获取已处理的视频文件"""
+    """获取已处理的视频文件 - 支持预览和下载"""
+
+    # 记录请求信息
+    logger.info(f"获取视频请求 - homework_id={homework_id}, student_id={student_id}, download={download}")
+
     video_path = os.path.join("homework", homework_id, student_id, "processed_video.mp4")
+    logger.info(f"视频路径: {video_path}")
 
     if not os.path.exists(video_path):
+        logger.warning(f"视频文件不存在: {video_path}")
         raise HTTPException(status_code=404, detail="视频文件不存在")
 
-    return FileResponse(
-        video_path,
-        media_type="video/mp4",
-        headers={"Content-Disposition": "inline"}
-    )
+    try:
+        # 获取文件信息用于日志
+        file_size = os.path.getsize(video_path)
+        file_mtime = datetime.fromtimestamp(os.path.getmtime(video_path)).strftime('%Y-%m-%d %H:%M:%S')
+
+        logger.info(f"视频文件信息 - 大小: {file_size} 字节, 修改时间: {file_mtime}")
+
+        # 如果是下载模式，设置下载文件名
+        if download:
+            filename = f"processed_video_{homework_id}_{student_id}.mp4"
+            logger.info(f"下载模式: 文件名={filename}")
+            return FileResponse(
+                video_path,
+                media_type="video/mp4",
+                filename=filename,  # 设置下载文件名
+                headers={
+                    "Content-Disposition": f'attachment; filename="{filename}"',
+                    "Content-Length": str(file_size),
+                    "X-Video-Info": f"homework_id={homework_id}, student_id={student_id}, size={file_size}"
+                }
+            )
+        else:
+            # 预览模式
+            logger.info(f"预览模式: 内联播放")
+            return FileResponse(
+                video_path,
+                media_type="video/mp4",
+                headers={
+                    "Content-Disposition": "inline",
+                    "Content-Length": str(file_size),
+                    "X-Video-Info": f"homework_id={homework_id}, student_id={student_id}, size={file_size}"
+                }
+            )
+
+    except Exception as e:
+        logger.error(f"获取视频时出错: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"获取视频时出错: {str(e)}")
 
 
 @app.delete("/delete_homework")

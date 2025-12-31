@@ -353,7 +353,7 @@
 
     <script>
         // 设置基础URL
-        const BASE_URL = 'http://127.0.0.1:8000';
+        const BASE_URL = 'http://localhost:8000';
 
         // 直接处理视频
         document.getElementById('directProcessForm').addEventListener('submit', function(e) {
@@ -862,19 +862,49 @@
             const studentId = document.getElementById('viewStudentId').value;
             const videoElement = document.getElementById('processedVideo');
 
-            try {
-                const response = await fetch(`${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}`);
+            // 询问用户是预览还是下载
+            const action = confirm("预览视频？点击'确定'预览，'取消'下载");
+            const download = !action;
 
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const url = URL.createObjectURL(blob);
-                    videoElement.src = url;
-                    videoElement.style.display = 'block';
-                } else if (response.status === 404) {
-                    alert('未找到视频文件，请确认作业ID和学生ID是否正确');
+            console.log(`查看视频 - homeworkId: ${homeworkId}, studentId: ${studentId}, 操作: ${download ? '下载' : '预览'}`);
+
+            try {
+                const url = `${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}&download=${download}`;
+
+                if (download) {
+                    // 下载模式 - 直接创建下载链接
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `processed_video_${homeworkId}_${studentId}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    // 显示提示信息
+                    const resultDiv = document.getElementById('saveResult');
+                    if (resultDiv) {
+                        showResult(resultDiv, `视频下载已开始: processed_video_${homeworkId}_${studentId}.mp4`, 'success');
+                    }
                 } else {
-                    const errorText = await response.text();
-                    throw new Error(`获取视频失败: ${errorText}`);
+                    // 预览模式 - 在页面中播放
+                    const response = await fetch(url);
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        videoElement.src = url;
+                        videoElement.style.display = 'block';
+
+                        // 显示视频信息
+                        const videoSize = response.headers.get('Content-Length');
+                        const videoInfo = response.headers.get('X-Video-Info');
+                        console.log(`视频大小: ${videoSize} 字节, 信息: ${videoInfo}`);
+                    } else if (response.status === 404) {
+                        alert('未找到视频文件，请确认作业ID和学生ID是否正确');
+                    } else {
+                        const errorText = await response.text();
+                        throw new Error(`获取视频失败: ${errorText}`);
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -1057,7 +1087,8 @@
                     <td>${record.video_duration !== null ? parseFloat(record.video_duration).toFixed(2) : ''}</td>
                     <td>
                         <button onclick="viewRecordDetails(${record.id})" style="padding: 4px 8px; margin: 2px;">详情</button>
-                        <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')" style="padding: 4px 8px; margin: 2px;">视频</button>
+                        <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}', false)" style="padding: 4px 8px; margin: 2px;">预览</button>
+                        <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}', true)" style="padding: 4px 8px; margin: 2px;">下载</button>
                     </td>
                 `;
 
@@ -1171,7 +1202,8 @@
             html += `
                 </div>
                 <button onclick="downloadRecordData('${record.id}')">下载JSON数据</button>
-                <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')">查看处理视频</button>
+                <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}', false)">预览视频</button>
+                <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}', true)">下载视频</button>
             `;
             
             detailsDiv.innerHTML = html;
@@ -1220,7 +1252,8 @@
                 html += `
                         <div>
                             <button onclick="downloadRecordData('${record.id}')" style="margin-right: 10px;">下载JSON数据</button>
-                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')">查看处理视频</button>
+                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}', false)" style="margin-right: 5px;">预览视频</button>
+                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}', true)">下载视频</button>
                         </div>
                     </div>
                     <hr>
@@ -1254,9 +1287,24 @@
         }
 
         // 查看处理后的视频
-        function viewProcessedVideo(homeworkId, studentId) {
-            const videoUrl = `${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}`;
-            window.open(videoUrl, '_blank');
+        function viewProcessedVideo(homeworkId, studentId, download = false) {
+            const videoUrl = `${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}&download=${download}`;
+            
+            if (download) {
+                // 下载模式
+                const a = document.createElement('a');
+                a.href = videoUrl;
+                a.download = `processed_video_${homeworkId}_${studentId}.mp4`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // 显示提示
+                alert(`视频下载已开始: processed_video_${homeworkId}_${studentId}.mp4`);
+            } else {
+                // 预览模式 - 在新窗口打开
+                window.open(videoUrl, '_blank');
+            }
         }
 
         // 查看记录详情
@@ -1336,7 +1384,8 @@
                 html += `
                         <div>
                             <button onclick="downloadRecordData('${record.id}')" style="margin-right: 10px;">下载JSON数据</button>
-                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}')">查看处理视频</button>
+                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}', false)" style="margin-right: 5px;">预览视频</button>
+                            <button onclick="viewProcessedVideo('${record.homework_id}', '${record.student_id}', true)">下载视频</button>
                         </div>
                     </div>
                     <hr>
