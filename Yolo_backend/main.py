@@ -156,7 +156,7 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
         tmp_file_path = os.path.join(temp_dir, "input_video.mp4")
-        output_path = os.path.join(temp_dir, "output_video.mp4")
+        output_path = os.path.join(temp_dir, "output_video.avi")
 
         # 生成临时目录ID并存储
         temp_id = str(uuid.uuid4())
@@ -207,7 +207,8 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
         # 尝试不同的视频编码器
         fourcc_options = [
             # cv2.VideoWriter_fourcc(*'avc1'),  # H.264/AVC
-            # cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
+            cv2.VideoWriter_fourcc(*'MJPG'),
+            cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
             cv2.VideoWriter_fourcc(*'VP90'),
             cv2.VideoWriter_fourcc(*'H264'),
             cv2.VideoWriter_fourcc(*'XVID'),  # XVID
@@ -261,6 +262,7 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
         yield sse_format("init", {"message": "开始逐帧处理视频"})
 
         while True:
+            frame_start_time = time.time()
             success, frame = cap.read()
             if not success:
                 logger.info("视频读取完成")
@@ -281,7 +283,7 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
                     processed_frame_count += 1
 
                     # 每隔一定帧数发送进度更新
-                    if processed_frame_count % 2 == 0:  # 每2帧发送一次更新
+                    if processed_frame_count % 5 == 0:  # 每5帧发送一次更新
                         # 将处理后的帧编码为JPEG并转换为base64
                         _, buffer = cv2.imencode('.jpg', processed_frame)
                         jpg_as_text = base64.b64encode(buffer).decode('utf-8')
@@ -305,6 +307,11 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
                 logger.error(traceback.format_exc())
                 yield sse_format("error", {"message": error_msg})
                 continue
+
+            frame_end_time = time.time()
+            frame_process_time = frame_end_time - frame_start_time
+            if processed_frame_count % 10 == 0:
+                logger.info(f"帧 {frame_index} 处理时间: {frame_process_time:.3f}秒")
 
         logger.info(f"视频处理完成，共处理 {processed_frame_count} 帧")
 
@@ -559,7 +566,8 @@ def process_video_logic(file_content: bytes, pose_type: str):
         # 尝试不同的视频编码器
         fourcc_options = [
             # cv2.VideoWriter_fourcc(*'avc1'),  # H.264/AVC
-            # cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
+            cv2.VideoWriter_fourcc(*'MJPG'),
+            cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
             cv2.VideoWriter_fourcc(*'VP90'),
             cv2.VideoWriter_fourcc(*'H264'),
             cv2.VideoWriter_fourcc(*'XVID'),  # XVID
@@ -728,7 +736,7 @@ async def process_and_save_video(
 
     # 创建保存目录和路径
     save_dir = os.path.join("homework", homework_id, student_id)
-    save_path = os.path.join(save_dir, "processed_video.mp4")
+    save_path = os.path.join(save_dir, "processed_video.avi")
 
     # 添加日志信息
     logger.info(f"当前工作目录: {os.getcwd()}")
