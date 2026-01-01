@@ -179,11 +179,11 @@ const fetchStudents = async () => {
         const infoRespDataArray = infoRespData.split(/\t\r/).filter(item => item !== '');
         return {
           id,
-          name: infoRespDataArray[1] || '未知',
-          gender: infoRespDataArray[2] || '未知',
-          major: infoRespDataArray[3] || null,
-          college: infoRespDataArray[4] || null,
-          department: infoRespDataArray[5] || null
+          name: infoRespDataArray[0] || '未知',
+          gender: infoRespDataArray[1] || '未知',
+          major: infoRespDataArray[2] || null,
+          college: infoRespDataArray[3] || null,
+          department: infoRespDataArray[4] || null
         }
       } catch (err) {
         console.error(`获取学生 ${id} 信息失败`, err)
