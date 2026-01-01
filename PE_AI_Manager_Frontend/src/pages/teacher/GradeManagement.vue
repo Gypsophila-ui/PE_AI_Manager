@@ -21,7 +21,7 @@
 
       <section>
         <h2 class="text-4xl font-bold text-gray-800 mb-4">✏️ {{ assignmentTitle }} - 成绩管理</h2>
-        <p class="text-gray-600 mb-8">查看学生提交并进行评分（教师评分将直接覆盖作为最终成绩）</p>
+        <p class="text-gray-600 mb-8">查看学生提交并进行评分</p>
       </section>
 
       <!-- 加载状态 -->
@@ -119,10 +119,10 @@
 
                     <button
                       v-if="sub.videoUrl"
-                      @click="viewVideo(sub.videoUrl)"
-                      class="px-4 py-2 bg-gray-200 text-gray-800 rounded-xl hover:bg-gray-300 transition-all shadow text-sm"
+                      @click="viewVideo(sub.studentId, sub.studentName)"
+                      class="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-all shadow text-sm"
                     >
-                      视频
+                      播放视频
                     </button>
                     <span v-else class="text-gray-400 text-xs">尚未提交</span>
                   </div>
@@ -140,13 +140,21 @@
         </div>
       </section>
     </div>
+
+    <!-- 视频播放对话框 -->
+    <VideoDialogPlayer
+      v-model:visible="videoDialogVisible"
+      :video-url="currentVideoUrl"
+      :title="currentVideoTitle"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import apiClient from '../../services/axios.js'
+import {apiClient, aiClient} from '../../services/axios.js'
+import VideoDialogPlayer from '@/components/VideoDialogPlayer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -167,10 +175,15 @@ const editingStudentId = ref(null)
 const editingScore = ref('')
 const editingComment = ref('')
 
+// 视频播放对话框控制
+const videoDialogVisible = ref(false)
+const currentVideoUrl = ref('')
+const currentVideoTitle = ref('AI 分析视频')
+
 // 根据学号查询学生姓名
 const fetchStudentName = async (studentId) => {
   try {
-    const resp = await apiClient.post('User/get_student_info', {
+    const resp = await apiClient.post('/User/get_student_info', {
       First: teacherId,
       Second: jwt,
       Third: '1',        // 教师身份
@@ -190,24 +203,24 @@ const fetchStudentName = async (studentId) => {
 const fetchData = async () => {
   loading.value = true
   try {
-    // 获取作业标题
-    const infoResp = await apiClient.post('/Homework/get_info_by_homework_id', {
-      First: courseId,
-      Second: assignmentId
-    })
+    const [infoResp, finalResp] = await Promise.all([
+      apiClient.post('/Homework/get_info_by_homework_id', {
+        First: courseId,
+        Second: assignmentId
+      }),
+      apiClient.post('/Homework/get_final_submit', {
+        First: teacherId,
+        Second: jwt,
+        Third: courseId,
+        Fourth: assignmentId
+      })
+    ])
 
+    // 处理作业标题
     if (infoResp.data.success && infoResp.data.data) {
       const d = infoResp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
       assignmentTitle.value = d[0] || '未知作业'
     }
-
-    // 获取所有学生的最终提交情况
-    const finalResp = await apiClient.post('/Homework/get_final_submit', {
-      First: teacherId,
-      Second: jwt,
-      Third: courseId,
-      Fourth: assignmentId
-    })
 
     if (!finalResp.data.success || !finalResp.data.data) {
       studentSubmissions.value = []
@@ -218,15 +231,21 @@ const fetchData = async () => {
     const pairs = finalResp.data.data.split('\t\r').filter(Boolean)
     const submissions = []
 
+    // 提取所有 studentId 和需要查询详情的 submitId
+    const studentNamePromises = []
+    const detailPromises = []
+
     for (const pair of pairs) {
       const [studentId, submitId] = pair.split('\n')
 
-      // 查询真实姓名
-      const studentName = await fetchStudentName(studentId)
+      // 收集所有查姓名的 Promise
+      studentNamePromises.push(
+        fetchStudentName(studentId).then(name => ({ studentId, studentName: name }))
+      )
 
       let subInfo = {
         studentId,
-        studentName,
+        studentName: '加载中...', // 临时占位
         submitId,
         createTime: null,
         score: null,
@@ -240,31 +259,70 @@ const fetchData = async () => {
         continue
       }
 
-      const detailResp = await apiClient.post('/Homework/get_submit_info', {
-        First: '1',
-        Second: teacherId,
-        Third: jwt,
-        Fourth: submitId
-      })
+      // 收集所有查提交详情的 Promise
+      detailPromises.push(
+        apiClient.post('/Homework/get_submit_info', {
+          First: '1',
+          Second: teacherId,
+          Third: jwt,
+          Fourth: submitId
+        }).then(detailResp => {
+          if (detailResp.data.success && detailResp.data.data) {
+            const raw = detailResp.data.data.trim().replace(/\t\r$/g, '')
+            const parts = raw.split('\t\r')
+            return {
+              studentId,
+              submitId,
+              videoUrl: parts[0] || null,
+              score: parts[1] || null,
+              aiFeedback: parts[2] || null,
+              teacherFeedback: parts[3] || null,
+              createTime: parts[4] || null
+            }
+          }
+          return { studentId, submitId } // 失败时也返回
+        })
+      )
 
-      if (detailResp.data.success && detailResp.data.data) {
-        const raw = detailResp.data.data.trim().replace(/\t\r$/g, '')
-        let parts = raw.split('\t\r')
-        subInfo = {
-          ...subInfo,
-          videoUrl: parts[0] || null,
-          score: parts[1] || null,
-          aiFeedback: parts[2] || null,
-          teacherFeedback: parts[3] || null,
-          createTime: parts[4] || null
-        }
-      }
-
-      submissions.push(subInfo)
+      submissions.push(subInfo) // 先 push 占位
     }
 
-    // 按提交时间降序，未提交放最后
-    studentSubmissions.value = submissions.sort((a, b) => {
+    // 并行执行所有查姓名和查详情的请求
+    const [nameResults, detailResults] = await Promise.all([
+      Promise.all(studentNamePromises),
+      Promise.all(detailPromises)
+    ])
+
+    // 创建映射
+    const nameMap = {}
+    nameResults.forEach(item => {
+      nameMap[item.studentId] = item.studentName
+    })
+
+    const detailMap = {}
+    detailResults.forEach(item => {
+      if (item.submitId) {
+        detailMap[item.submitId] = item
+      }
+    })
+
+    // 合并数据
+    studentSubmissions.value = submissions.map(sub => {
+      const name = nameMap[sub.studentId] || sub.studentName
+      if (sub.submitId === '-1' || sub.submitId === '-2') {
+        return { ...sub, studentName: name }
+      }
+      const detail = detailMap[sub.submitId] || {}
+      return {
+        ...sub,
+        studentName: name,
+        videoUrl: detail.videoUrl || null,
+        score: detail.score || null,
+        aiFeedback: detail.aiFeedback || null,
+        teacherFeedback: detail.teacherFeedback || null,
+        createTime: detail.createTime || null
+      }
+    }).sort((a, b) => {
       if (!a.createTime) return 1
       if (!b.createTime) return -1
       return new Date(b.createTime) - new Date(a.createTime)
@@ -314,11 +372,13 @@ const saveGrade = async (sub) => {
   }
 }
 
-const viewVideo = (url) => {
-  if (url) {
-    window.open(url, '_blank')
-  }
+const viewVideo = (studentId, studentName = '') => {
+  if (!studentId) return
+  currentVideoUrl.value = aiClient.defaults.baseURL + '/get_processed_video?homework_id=' + assignmentId + '&student_id=' + studentId + '&download=false'
+  currentVideoTitle.value = `${studentName ? studentName + ' - ' + assignmentTitle.value + ' ' : ''}AI 分析视频`
+  videoDialogVisible.value = true
 }
+
 
 const formatDate = (dateString) => {
   if (!dateString) return '-'
