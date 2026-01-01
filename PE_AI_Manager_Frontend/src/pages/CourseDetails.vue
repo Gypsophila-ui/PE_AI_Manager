@@ -80,23 +80,28 @@
         <!-- 视频列表 -->
         <div v-else-if="teachingVideos.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div v-for="video in teachingVideos" :key="video.id"
-               class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-md p-4 hover:shadow-lg transition-all cursor-pointer"
-               @click="goToTeachingVideos">
-            <!-- 视频封面 -->
+               class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
+            <!-- 视频封面或播放器 -->
             <div class="relative aspect-video bg-gray-200 rounded-lg mb-3 overflow-hidden">
-              <img v-if="video.cover" :src="video.cover" :alt="video.title" class="w-full h-full object-cover">
-              <div v-else class="w-full h-full flex items-center justify-center bg-gray-300">
-                <span class="text-4xl text-gray-400">🎬</span>
-              </div>
-              <!-- 播放按钮覆盖层 -->
-              <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
-                  <span class="text-blue-500 text-2xl">▶</span>
+              <video v-if="video.isPlaying" :src="video.url" controls autoplay class="w-full h-full object-cover">
+                您的浏览器不支持视频播放
+              </video>
+              <div v-else>
+                <img v-if="video.cover" :src="video.cover" :alt="video.title" class="w-full h-full object-cover">
+                <div v-else class="w-full h-full flex items-center justify-center bg-gray-300">
+                  <span class="text-4xl text-gray-400">🎬</span>
                 </div>
-              </div>
-              <!-- 时长标签 -->
-              <div class="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                {{ video.duration }}
+                <!-- 播放按钮覆盖层 -->
+                <div class="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                     @click="playVideo(video)">
+                  <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+                    <span class="text-blue-500 text-2xl">▶</span>
+                  </div>
+                </div>
+                <!-- 时长标签 -->
+                <div class="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                  {{ video.duration }}
+                </div>
               </div>
             </div>
 
@@ -105,7 +110,12 @@
             <p class="text-sm text-gray-600 mb-2 line-clamp-2">{{ video.description }}</p>
             <div class="flex items-center justify-between text-xs text-gray-500">
               <span v-if="video.uploadDate">{{ formatDate(video.uploadDate) }}</span>
-              <span class="text-blue-500 font-medium">点击播放</span>
+              <button v-if="!video.isPlaying" @click="playVideo(video)" class="text-blue-500 font-medium hover:text-blue-700">
+                点击播放
+              </button>
+              <button v-else @click="stopVideo(video)" class="text-red-500 font-medium hover:text-red-700">
+                停止播放
+              </button>
             </div>
           </div>
         </div>
@@ -165,8 +175,6 @@
         </button>
       </section>
     </div>
-
-
   </div>
 </template>
 
@@ -436,36 +444,52 @@ const fetchTeachingVideos = async () => {
       third: token,
       fourth: courseId
     })
+    console.log('获取到的class_id:', classIdResp.data)
 
-    if (classIdResp.data[0] < 0) {
+    if (!classIdResp.data.data) {
       teachingVideos.value = []
       console.log('该课程暂无教学视频')
       return
     }
 
-    const classIdStr = classIdResp.data[0]
-    const classIds = classIdStr ? classIdStr.split('\t\r').filter(id => id) : []
+    const classIdStr = classIdResp.data.data
+    const classIds = classIdStr.split('\t\r')
 
     const videoDetailsPromises = classIds.map(async (classId) => {
       try {
-        const infoResp = await apiClient.post('/api/get_info_by_class_id', {
-          course_id: courseId,
-          class_id: classId
+        const infoResp = await apiClient.post('/Class/get_info_by_class_id', {
+          first: courseId,
+          second: classId
         })
 
-        if (infoResp.data[0] < 0) {
+        console.log('获取到的视频信息:', infoResp.data)
+        if (!infoResp.data.data) {
           return null
         }
 
-        const d = infoResp.data
+        const d = infoResp.data.data.split('\t\r')
+        let videoUrl = d[2]
+
+        let filename = ''
+        if (videoUrl) {
+          const lastSlashIndex = videoUrl.lastIndexOf('/')
+          if (lastSlashIndex !== -1) {
+            filename = videoUrl.substring(lastSlashIndex + 1)
+          } else {
+            filename = videoUrl
+          }
+        }
+        const correctedUrl = `http://47.121.177.100:5002/files/${filename}`
+
         return {
           id: classId,
           title: d[0],
           description: d[1],
-          url: d[2],
+          url: correctedUrl,
           duration: '00:00',
           cover: '',
-          uploadDate: d[3]
+          uploadDate: d[3],
+          isPlaying: false
         }
       } catch (error) {
         console.error(`获取视频 ${classId} 详情失败:`, error)
@@ -494,6 +518,15 @@ const goBack = () => {
 
 const goToTeachingVideos = () => {
   router.push(`/student/course/${courseId}/teaching-videos`)
+}
+
+const playVideo = (video) => {
+  teachingVideos.value.forEach(v => v.isPlaying = false)
+  video.isPlaying = true
+}
+
+const stopVideo = (video) => {
+  video.isPlaying = false
 }
 
 // 格式化日期

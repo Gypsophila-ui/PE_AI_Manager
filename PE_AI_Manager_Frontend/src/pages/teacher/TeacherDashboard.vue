@@ -154,6 +154,7 @@ import Chart from 'chart.js/auto'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import apiClient from '../../services/axios.js'
+import dayjs from 'dayjs';
 
 const router = useRouter()
 
@@ -245,6 +246,7 @@ const loadData = async () => {
             const submissionTimeStr = detail[4] || ''
 
             const submissionTime = parseDate(submissionTimeStr)
+            console.log('解析提交时间:', submissionTimeStr, '=>', submissionTime)
 
             if (submissionTime) {
               submissions.value.push({
@@ -270,11 +272,10 @@ const loadData = async () => {
 }
 
 const parseDate = (str) => {
-  if (!str) return null
+  if (!str || !str.trim()) return null
   const cleaned = str.trim()
-  const isoStr = cleaned.replace(/\//g, '-').replace(' ', 'T')
-  const date = new Date(isoStr)
-  return isNaN(date.getTime()) ? null : date
+  const date = dayjs(cleaned, 'MM/DD/YYYY h:mm:ss A', true)
+  return date.isValid() ? date.toDate() : null
 }
 
 // 筛选与统计
@@ -292,6 +293,7 @@ const filteredSubmissions = computed(() => {
 
 const stats = computed(() => {
   const list = filteredSubmissions.value
+  console.log('计算统计数据，记录数：', list.length)
   if (list.length === 0) {
     return {
       totalSubmissions: 0,

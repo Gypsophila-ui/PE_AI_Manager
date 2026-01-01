@@ -262,7 +262,15 @@ const reSubmit = () => {
   router.push(`/student/course/${courseId}/submit/${homeworkId}`)
 }
 
-const goBack = () => router.push('/student/assignments')
+const goBack = () => {
+  if (courseId && homeworkId) {
+    router.push(`/student/course/${courseId}/assignments/${homeworkId}`)
+  } else if (courseId) {
+    router.push(`/student/course/${courseId}`)
+  } else {
+    router.push('/student/assignments')
+  }
+}
 const goToHome = () => router.push('/student')
 
 const logout = () => {

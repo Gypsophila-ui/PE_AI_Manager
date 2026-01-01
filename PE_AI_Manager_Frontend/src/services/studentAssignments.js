@@ -76,13 +76,13 @@ export class StudentAssignmentService {
       // 根据课程ID获取教师ID
       let teacherId = '';
       try {
-        const courseResponse = await apiClient.post('/Course/get_course_info', {
+        const courseResponse = await apiClient.post('/Course/get_info_by_course_id', {
           first: courseId,
-          second: jwt
         });
 
         if (courseResponse.data.success && courseResponse.data.data) {
-          teacherId = courseResponse.data.data.teacher_id || '';
+          let courseData = courseResponse.data.data.split('\t\r');
+          teacherId = courseData[0] || '';
         } else {
           console.error('获取课程信息失败:', courseResponse.data);
         }
@@ -102,7 +102,7 @@ export class StudentAssignmentService {
       console.log('获取最终得分响应:', response.data);
 
       // 检查返回值
-      if (response.data && typeof response.data === 'number') {
+      if (response.data && response.data.success) {
         if (response.data >= 0) {
           return response.data;
         } else if (response.data === -26) {
@@ -125,7 +125,7 @@ export class StudentAssignmentService {
   }
 
   /**
-   * 获取AI类型（动作类型）
+   * 获取AI类型（动作类型）和要求的数量
    */
   async getPoseType(assignmentId) {
     try {
@@ -134,15 +134,28 @@ export class StudentAssignmentService {
       });
       console.log('获取AI类型响应:', aiTypeResponse.data);
       if (aiTypeResponse.data.success) {
-        const poseType = aiTypeResponse.data.data || 'squat';
-        return poseType;
+        const data = aiTypeResponse.data.data || 'squat\t\r10';
+        const parts = data.split('\t\r');
+        const poseType = parts[0] || 'squat';
+        const requiredCount = parseInt(parts[1]) || 10;
+
+        return {
+          poseType: poseType,
+          requiredCount: requiredCount
+        };
       } else {
-        console.warn('获取AI类型失败，使用默认动作类型: squat');
-        return 'squat';
+        console.warn('获取AI类型失败，使用默认动作类型: squat，默认数量: 10');
+        return {
+          poseType: 'squat',
+          requiredCount: 10
+        };
       }
     } catch (error) {
       console.error('获取AI类型失败:', error);
-      return 'squat';
+      return {
+        poseType: 'squat',
+        requiredCount: 10
+      };
     }
   }
 
@@ -190,6 +203,7 @@ export class StudentAssignmentService {
         break;
 
       case 'final_stats':
+        console.log('收到 final_stats 事件:', JSON.stringify(data.data, null, 2));
         if (data.data.download_url) {
           let downloadUrl = data.data.download_url;
           if (!downloadUrl.startsWith('http')) {
@@ -208,6 +222,8 @@ export class StudentAssignmentService {
             total_time: data.data.total_time,
             video_url: playbackUrl || data.data.download_url || ''
           };
+
+          console.log('设置 aiResult.value:', JSON.stringify(aiResult.value, null, 2));
         }
         break;
 
@@ -239,6 +255,12 @@ export class StudentAssignmentService {
           const videoDuration = latestRecord.video_duration?.toFixed(2) || 0;
 
           aiResult.value.AI_feedback = `本次动作共完成${totalCount}次，其中${correctCount}次动作标准，${incorrectCount}次动作不标准，标准度为${accuracyRate}%，视频持续时长${videoDuration}秒。`;
+
+          // 设置 final_count 为正确动作数
+          if (aiResult.value.final_count === undefined) {
+            aiResult.value.final_count = correctCount;
+          }
+
           console.log('现在的AI_feedback:', aiResult.value);
         }
       }
@@ -251,12 +273,13 @@ export class StudentAssignmentService {
   /**
    * 处理SSE流
    */
-  async processSSEStream(reader, decoder, assignmentId, studentId, poseType, resolve, reject, onFrameUpdate) {
+  async processSSEStream(reader, decoder, assignmentId, studentId, poseTypeInfo, resolve, reject, onFrameUpdate) {
     let buffer = '';
     let videoChunks = [];
     const aiResult = { value: null };
     const processedVideoUrlValue = { value: null };
     const processingVideoFrameValue = { value: null };
+    const poseType = poseTypeInfo.poseType;
 
     const processStream = () => {
       reader.read().then(({done, value}) => {
@@ -271,7 +294,8 @@ export class StudentAssignmentService {
           resolve({
             processedVideoUrlValue: processedVideoUrlValue.value,
             aiResult: aiResult.value,
-            processingVideoFrameValue: processingVideoFrameValue.value
+            processingVideoFrameValue: processingVideoFrameValue.value,
+            poseTypeInfo: poseTypeInfo
           });
           return;
         }
@@ -318,11 +342,13 @@ export class StudentAssignmentService {
     return new Promise(async (resolve, reject) => {
       try {
         const formData = this.createVideoFormData(selectedFile);
-        const poseType = await this.getPoseType(assignmentId);
+        const poseTypeInfo = await this.getPoseType(assignmentId);
+        const poseType = poseTypeInfo.poseType;
         const studentId = this.getStudentId();
         const url = this.buildVideoProcessingUrl(assignmentId, studentId, poseType);
 
         console.log('开始上传视频到AI后端服务...');
+        console.log('动作类型:', poseType, '要求数量:', poseTypeInfo.requiredCount);
 
         const response = await fetch(url, {
           method: 'POST',
@@ -336,7 +362,7 @@ export class StudentAssignmentService {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
-        await this.processSSEStream(reader, decoder, assignmentId, studentId, poseType, resolve, reject, onFrameUpdate);
+        await this.processSSEStream(reader, decoder, assignmentId, studentId, poseTypeInfo, resolve, reject, onFrameUpdate);
       } catch (error) {
         console.error('作业提交失败:', error);
         reject(error);
@@ -347,11 +373,17 @@ export class StudentAssignmentService {
   /**
    * 保存作业提交信息
    */
-  async saveAssignmentSubmission(courseId, assignmentId, aiResult, studentId, processedVideoUrlValue) {
+  async saveAssignmentSubmission(courseId, assignmentId, aiResult, studentId, processedVideoUrlValue, poseTypeInfo) {
     try {
-      console.log('开始保存作业提交信息...');
-      console.log('aiResult:', aiResult);
+      console.log('========== 开始保存作业提交信息 ==========');
+      console.log('courseId:', courseId);
+      console.log('assignmentId:', assignmentId);
+      console.log('aiResult:', JSON.stringify(aiResult, null, 2));
+      console.log('studentId:', studentId);
       console.log('processedVideoUrlValue:', processedVideoUrlValue);
+      console.log('poseTypeInfo:', JSON.stringify(poseTypeInfo, null, 2));
+      console.log('poseTypeInfo.requiredCount:', poseTypeInfo?.requiredCount);
+      console.log('poseTypeInfo.requiredCount类型:', typeof poseTypeInfo?.requiredCount);
 
       // 获取JWT token
       const token = localStorage.getItem('token');
@@ -362,7 +394,7 @@ export class StudentAssignmentService {
       // 准备视频URL - 优先使用AI处理后的视频URL，如果没有则使用原始视频URL
       let videoUrl = processedVideoUrlValue;
       if (videoUrl && !videoUrl.startsWith('http') && assignmentId && studentId) {
-        videoUrl = `/get_processed_video?homework_id=${assignmentId}&student_id=${studentId}`;
+        videoUrl = `/video/get_processed_video?homework_id=${assignmentId}&student_id=${studentId}`;
       }
 
       // 如果仍然没有视频URL，使用空字符串
@@ -404,7 +436,7 @@ export class StudentAssignmentService {
 
         // 如果有submit_id，调用AI_test API保存AI评价结果
         if (submitId) {
-          await this.saveAIEvaluation(submitId, aiResult, studentId);
+          await this.saveAIEvaluation(submitId, aiResult, studentId, poseTypeInfo.requiredCount);
         }
 
         // 根据AI评价结果显示不同的提示信息
@@ -434,11 +466,13 @@ export class StudentAssignmentService {
   /**
    * 保存AI评价结果
    */
-  async saveAIEvaluation(submitId, aiResult, studentId) {
+  async saveAIEvaluation(submitId, aiResult, studentId, requiredCount) {
     try {
-      console.log('开始保存AI评价结果...');
+      console.log('========== 开始保存AI评价结果 ==========');
       console.log('submit_id:', submitId);
-      console.log('aiResult:', aiResult);
+      console.log('aiResult:', JSON.stringify(aiResult, null, 2));
+      console.log('要求数量:', requiredCount);
+      console.log('要求数量类型:', typeof requiredCount);
 
       // 获取JWT token
       const token = localStorage.getItem('token');
@@ -448,6 +482,7 @@ export class StudentAssignmentService {
 
       // 准备视频URL - 优先使用AI处理后的视频URL
       let videoUrl = aiResult.video_url;
+      console.log('原始videoUrl:', videoUrl);
       // 如果是相对路径，转换为绝对路径
       if (videoUrl && !videoUrl.startsWith('http')) {
         if (!videoUrl.startsWith('/video')) {
@@ -460,16 +495,32 @@ export class StudentAssignmentService {
         videoUrl = '';
       }
 
-      // 准备AI评价数据 - 处理空的AI评价结果
-      // 支持两种aiResult格式：一种是AI处理返回的格式（final_count等），一种是AI评价API需要的格式（score等）
+      // 计算AI得分：correct动作数 / 要求数量 * 100
+      const finalCountValue = aiResult.final_count;
+      console.log('final_count原始值:', finalCountValue);
+      console.log('final_count类型:', typeof finalCountValue);
+
+      const correctCount = parseInt(finalCountValue) || 0;
+      console.log('correctCount解析后:', correctCount);
+      console.log('correctCount类型:', typeof correctCount);
+      console.log('requiredCount值:', requiredCount);
+      console.log('requiredCount类型:', typeof requiredCount);
+
+      const aiScore = requiredCount > 0 ? Math.round((correctCount / requiredCount) * 100) : 0;
+      console.log('计算公式: Math.round((' + correctCount + ' / ' + requiredCount + ') * 100) = ' + aiScore);
+      console.log('正确动作数:', correctCount, '要求数量:', requiredCount, 'AI得分:', aiScore);
+      console.log('AI得分类型:', typeof aiScore);
+
+      // 准备AI评价数据
       const aiEvaluationData = {
         first: submitId,
         second: videoUrl,
-        third: aiResult.score || aiResult.final_count || '0',
+        third: aiScore.toString(),
         fourth: aiResult.AI_feedback || 'AI评价暂不可用，等待教师批改'
       };
 
-      console.log('发送到AI_test的数据:', aiEvaluationData);
+      console.log('发送到AI_test的数据:', JSON.stringify(aiEvaluationData, null, 2));
+      console.log('========== 发送AI评价请求 ==========');
 
       // 调用AI_test接口
       const aiTestResponse = await apiClient.post('/Homework/AI_test', aiEvaluationData, {
@@ -478,7 +529,7 @@ export class StudentAssignmentService {
         }
       });
 
-      console.log('AI_test API响应数据:', aiTestResponse.data);
+      console.log('AI_test API响应数据:', JSON.stringify(aiTestResponse.data, null, 2));
 
       // 处理API返回结果
       if (aiTestResponse.data.success) {
