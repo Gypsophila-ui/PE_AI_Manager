@@ -1,6 +1,7 @@
 CREATE TABLE ai_type (
-    type varchar2(50),
+    type varchar2(50) not null,
     homework_id int,
+    num int not null,
     PRIMARY KEY (homework_id),
     FOREIGN KEY (homework_id)
         REFERENCES homework(id)
