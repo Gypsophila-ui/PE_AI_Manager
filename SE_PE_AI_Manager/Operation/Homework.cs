@@ -954,7 +954,7 @@ namespace SE_PE_AI_Manager.Operation
             return return_result;
         }
 
-        public static Function_result Set_AI_type(string teacher_id, string jwt, string course_id, string homework_id, string AI_type, OracleConnection connection)//给作业设置AI测试类型
+        public static Function_result Set_AI_type(string teacher_id, string jwt, string course_id, string homework_id, string AI_type, string num, OracleConnection connection)//给作业设置AI测试类型
         {
             Function_result return_result = new Function_result();
             return_result.Code = -99;
@@ -1050,9 +1050,11 @@ namespace SE_PE_AI_Manager.Operation
                 return return_result;
             }
             //以下为数据库插入操作
-            string action = "INSERT INTO AI_type(homework_id, type)\n";
+            string action = "INSERT INTO AI_type(homework_id, type, num)\n";
             action = action + "values('" + homework_id + "',";
-            action = action + "'" + AI_type + "')\n";
+            action = action + "'" + AI_type + "',";
+            action = action + "'" + num + "')\n";
+            //Console.WriteLine(action);
             try
             {
                 using (OracleCommand command = new OracleCommand(action, connection))
@@ -1071,7 +1073,7 @@ namespace SE_PE_AI_Manager.Operation
             return return_result;
         }
 
-        public static Function_result Edit_AI_type(string teacher_id, string jwt, string course_id, string homework_id, string AI_type, OracleConnection connection)//给作业修改AI测试类型
+        public static Function_result Edit_AI_type(string teacher_id, string jwt, string course_id, string homework_id, string AI_type, string num, OracleConnection connection)//给作业修改AI测试类型
         {
             Function_result return_result = new Function_result();
             return_result.Code = -99;
@@ -1168,8 +1170,10 @@ namespace SE_PE_AI_Manager.Operation
             }
             //以下为数据库修改操作
             string action = "update AI_type\n";
-            action = action + "set type = '" + AI_type + "'\n";
+            action = action + "set type = '" + AI_type + "',\n";
+            action = action + "num = '" + num + "'\n";
             action = action + "where homework_id = '" + homework_id + "'\n";
+            //Console.WriteLine(action);
             try
             {
                 using (OracleCommand command = new OracleCommand(action, connection))
@@ -1220,7 +1224,8 @@ namespace SE_PE_AI_Manager.Operation
                 return return_result;
             }
             //若课程存在，获得查询值
-            check = "SELECT type FROM AI_type WHERE homework_id = '" + homework_id + "'\n";
+            check = "SELECT type,num\n FROM AI_type\n WHERE homework_id = '" + homework_id + "'\n";
+            //Console.WriteLine(check);
             string ans = "";
             try
             {
@@ -1228,19 +1233,10 @@ namespace SE_PE_AI_Manager.Operation
                 {
                     using (OracleDataReader reader = cmd.ExecuteReader())
                     {
-                        bool first = true;
-                        while (reader.Read())
-                        {
-                            if (!first)
-                            {
-                                ans += "\t\r"; // 每两个结果之间用\t\r间隔
-                            }
-                            else
-                            {
-                                first = false;
-                            }
-                            ans += reader["type"].ToString();
-                        }
+                        reader.Read();
+                        ans += reader["type"].ToString();
+                        ans += "\t\r";
+                        ans += reader["num"].ToString();
                     }
                 }
             }

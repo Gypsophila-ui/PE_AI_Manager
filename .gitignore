@@ -17,3 +17,5 @@ obj/
 *.xlsx
 __pycache__/
 
+*.exe
+*.dll

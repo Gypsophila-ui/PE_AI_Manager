@@ -159,12 +159,12 @@ const loadSubmissions = async () => {
       // 获取课程名称
       try {
         const courseDetailResponse = await apiClient.post('/Course/get_info_by_course_id', {
-          first: courseId,
-          second: jwt
+          first: courseId
         })
 
         if (courseDetailResponse.data.success && courseDetailResponse.data.data) {
-          courseName = courseDetailResponse.data.data.name || '未命名课程'
+          const courseData = courseDetailResponse.data.data.split('\t\r')
+          courseName = courseData[1] || '未命名课程'
         }
       } catch (err) {
         console.error('获取课程信息失败:', err)

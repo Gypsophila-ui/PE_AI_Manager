@@ -5,7 +5,7 @@ import { apiClient, aiClient } from './axios';
  */
 export class StudentAssignmentService {
   constructor() {
-    this.BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+    this.BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
   }
 
   /**
@@ -167,7 +167,7 @@ export class StudentAssignmentService {
    * 构造视频处理URL
    */
   buildVideoProcessingUrl(assignmentId, studentId, poseType) {
-    return `${this.BASE_URL}/process_and_save_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&pose_type=${encodeURIComponent(poseType)}`;
+    return `/video/process_and_save_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&pose_type=${encodeURIComponent(poseType)}`;
   }
 
   /**
@@ -193,10 +193,12 @@ export class StudentAssignmentService {
         if (data.data.download_url) {
           let downloadUrl = data.data.download_url;
           if (!downloadUrl.startsWith('http')) {
-            downloadUrl = `${this.BASE_URL}${downloadUrl}`;
+            if (!downloadUrl.startsWith('/video')) {
+              downloadUrl = `/video${downloadUrl}`;
+            }
           }
 
-          const playbackUrl = `${this.BASE_URL}/get_processed_video?homework_id=${assignmentId}&student_id=${studentId}`;
+          const playbackUrl = `/video/get_processed_video?homework_id=${assignmentId}&student_id=${studentId}&download=false`;
 
           processedVideoUrlValue.value = playbackUrl;
 
@@ -219,7 +221,7 @@ export class StudentAssignmentService {
    */
   async fetchAIFeedback(assignmentId, studentId, poseType, aiResult) {
     try {
-      const response = await fetch(`${this.BASE_URL}/query_records?homework_id=${assignmentId}&student_id=${studentId}&pose_type=${poseType}`);
+      const response = await fetch(`/video/query_records?homework_id=${assignmentId}&student_id=${studentId}&pose_type=${poseType}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -357,20 +359,15 @@ export class StudentAssignmentService {
         throw new Error('未找到认证token，请重新登录');
       }
 
-      // 准备视频URL - 优先使用AI处理后的视频URL，如果没有则使用原始视频
+      // 准备视频URL - 优先使用AI处理后的视频URL，如果没有则使用原始视频URL
       let videoUrl = processedVideoUrlValue;
-      // 如果videoUrl是相对路径或需要转换为get_processed_video格式，确保使用绝对路径
       if (videoUrl && !videoUrl.startsWith('http') && assignmentId && studentId) {
-        videoUrl = `${this.BASE_URL}/get_processed_video?homework_id=${assignmentId}&student_id=${studentId}`;
-      }
-      if (!videoUrl && processedVideoBlob) {
-        // 如果没有AI返回的视频URL但有Blob，创建临时URL
-        videoUrl = URL.createObjectURL(processedVideoBlob);
+        videoUrl = `/get_processed_video?homework_id=${assignmentId}&student_id=${studentId}`;
       }
 
-      // 如果仍然没有视频URL，使用原始视频文件的URL
-      if (!videoUrl && selectedFile) {
-        videoUrl = URL.createObjectURL(selectedFile);
+      // 如果仍然没有视频URL，使用空字符串
+      if (!videoUrl) {
+        videoUrl = '';
       }
 
       // 根据API文档构造请求参数
@@ -416,11 +413,6 @@ export class StudentAssignmentService {
         } else {
           console.log(`作业提交成功！\nAI评价暂不可用，等待教师批改。\n可在作业详情查看提交记录。`);
         }
-
-        // 更新作业状态为已完成
-        if (assignment) {
-          assignment.status = '已完成';
-        }
       } else {
         console.error('作业提交失败:', submitResponse.data);
         throw new Error(submitResponse.data.message || '作业提交失败');
@@ -458,15 +450,14 @@ export class StudentAssignmentService {
       let videoUrl = aiResult.video_url;
       // 如果是相对路径，转换为绝对路径
       if (videoUrl && !videoUrl.startsWith('http')) {
-        videoUrl = `${this.BASE_URL}${videoUrl}`;
-      }
-      if (!videoUrl && processedVideoBlob) {
-        videoUrl = URL.createObjectURL(processedVideoBlob);
+        if (!videoUrl.startsWith('/video')) {
+          videoUrl = `/video${videoUrl}`;
+        }
       }
 
-      // 如果仍然没有视频URL，使用原始视频文件的URL
-      if (!videoUrl && selectedFile) {
-        videoUrl = URL.createObjectURL(selectedFile);
+      // 如果仍然没有视频URL，使用空字符串
+      if (!videoUrl) {
+        videoUrl = '';
       }
 
       // 准备AI评价数据 - 处理空的AI评价结果
@@ -542,10 +533,7 @@ export class StudentAssignmentService {
     try {
       console.log('开始获取处理后的视频...');
 
-      // 构建请求URL
-      const url = `${this.BASE_URL}/get_processed_video`;
-
-      const response = await fetch(url + `?homework_id=${homeworkId}&student_id=${studentId}`);
+      const response = await fetch(`/video/get_processed_video?homework_id=${homeworkId}&student_id=${studentId}&download=false`);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);

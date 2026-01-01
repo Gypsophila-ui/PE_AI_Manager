@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // 创建axios实例
 const aiChatClient = axios.create({
-  baseURL: 'http://118.25.145.4:5000/api',
+  baseURL: '/chat/api',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json'

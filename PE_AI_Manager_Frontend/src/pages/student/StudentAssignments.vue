@@ -76,7 +76,7 @@
             </div>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div class="flex items-center gap-2 text-gray-600">
             <div>
               <div class="text-xs text-gray-400">课程ID</div>
@@ -87,6 +87,16 @@
             <div>
               <div class="text-xs text-gray-400">分值</div>
               <div>{{ assignment.points }}分</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-gray-600">
+            <div>
+              <div class="text-xs text-gray-400">AI动作类型</div>
+              <div>
+                <span class="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  {{ aiType || '加载中...' }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -297,6 +307,7 @@ const loading = ref(true)
 const error = ref(false)
 const errorMessage = ref('')
 const finalScore = ref(null)
+const aiType = ref(null)
 
 // 文件上传相关（集成提交作业功能）
 const fileInput = ref(null)
@@ -328,6 +339,11 @@ const fetchAssignmentDetails = async () => {
     const assignmentData = await assignmentService.fetchAssignmentDetails(courseId, assignmentId);
     assignment.value = assignmentData;
     console.log('作业详情加载成功:', assignment.value);
+
+    // 获取AI类型
+    const poseType = await assignmentService.getPoseType(assignmentId);
+    aiType.value = poseType;
+    console.log('AI类型:', aiType.value);
   } catch (err) {
     console.error('获取作业详情失败:', err);
     error.value = true;
@@ -483,6 +499,11 @@ const submitAssignment = async () => {
 
       // 更新本地状态
       processedVideoUrl.value = processedVideoUrlValue;
+
+      // 更新作业状态为已完成
+      if (assignment.value) {
+        assignment.value.status = '已完成';
+      }
     } catch (error) {
       // AI服务调用失败，创建空的AI评价结果
       console.error('AI服务调用失败:', error);
@@ -504,6 +525,11 @@ const submitAssignment = async () => {
         studentId,
         null
       );
+
+      // 更新作业状态为已完成
+      if (assignment.value) {
+        assignment.value.status = '已完成';
+      }
     }
   } catch (error) {
     console.error('作业提交失败:', error);
