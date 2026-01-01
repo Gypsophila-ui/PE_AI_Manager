@@ -436,28 +436,29 @@ const fetchTeachingVideos = async () => {
       third: token,
       fourth: courseId
     })
+    console.log('获取到的class_id:', classIdResp.data)
 
-    if (classIdResp.data[0] < 0) {
+    if (!classIdResp.data.data) {
       teachingVideos.value = []
       console.log('该课程暂无教学视频')
       return
     }
 
-    const classIdStr = classIdResp.data[0]
-    const classIds = classIdStr ? classIdStr.split('\t\r').filter(id => id) : []
+    const classIdStr = classIdResp.data.data
+    const classIds = classIdStr.split('\t\r')
 
     const videoDetailsPromises = classIds.map(async (classId) => {
       try {
-        const infoResp = await apiClient.post('/api/get_info_by_class_id', {
-          course_id: courseId,
-          class_id: classId
+        const infoResp = await apiClient.post('/Class/get_info_by_class_id', {
+          first: courseId,
+          second: classId
         })
 
-        if (infoResp.data[0] < 0) {
+        if (!infoResp.data.data) {
           return null
         }
 
-        const d = infoResp.data
+        const d = infoResp.data.data.split('\t\r')
         return {
           id: classId,
           title: d[0],
