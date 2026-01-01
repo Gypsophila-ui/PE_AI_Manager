@@ -18,27 +18,27 @@ export default defineConfig({
   server: {
     proxy: {
       '/User': {
-        target: 'http://localhost:5000',
+        target: 'http://118.25.145.4:5001',
         changeOrigin: true,
         secure: false
       },
       '/Class': {
-        target: 'http://localhost:5000',
+        target: 'http://118.25.145.4:5001',
         changeOrigin: true,
         secure: false
       },
       '/Course': {
-        target: 'http://localhost:5000',
+        target: 'http://118.25.145.4:5001',
         changeOrigin: true,
         secure: false
       },
       '/Course_student': {
-        target: 'http://localhost:5000',
+        target: 'http://118.25.145.4:5001',
         changeOrigin: true,
         secure: false
       },
       '/Homework': {
-        target: 'http://localhost:5000',
+        target: 'http://118.25.145.4:5001',
         changeOrigin: true,
         secure: false
       },
