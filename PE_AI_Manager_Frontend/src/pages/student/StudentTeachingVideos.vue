@@ -214,21 +214,26 @@ const loadVideos = async () => {
         fourth: courseId  // course_id
       })
 
-      if (classIdResp.data[0] < 0) continue
+      if (!classIdResp.data.data) {
+        console.log(`课程 ${courseId} 暂无教学视频`)
+        continue
+      }
 
-      const classIdStr = classIdResp.data[0]
-      const classIds = classIdStr ? classIdStr.split('\t\r').filter(id => id) : []
+      const classIdStr = classIdResp.data.data
+      const classIds = classIdStr.split('\t\r')
 
       // 获取每个视频详情
       for (const classId of classIds) {
-        const infoResp = await apiClient.post('/api/get_info_by_class_id', {
-          course_id: courseId,
-          class_id: classId
+        const infoResp = await apiClient.post('/Class/get_info_by_class_id', {
+          first: courseId,
+          second: classId
         })
 
-        if (infoResp.data[0] < 0) continue
+        if (!infoResp.data.data) {
+          continue
+        }
 
-        const d = infoResp.data
+        const d = infoResp.data.data.split('\t\r')
         videos.value.push({
           id: classId,
           courseId: courseId,

@@ -18,7 +18,7 @@
           </div>
         </div>
         <button @click="goToHistory" class="px-6 py-3 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-all shadow-lg flex items-center gap-2">
-          <span>📋</span> 查看提交历史
+          查看提交历史
         </button>
       </section>
 
@@ -40,32 +40,32 @@
 
       <!-- 作业信息卡片 -->
       <section v-else-if="assignment" class="bg-white rounded-3xl shadow-xl p-6">
-        <h3 class="text-2xl font-bold text-gray-800 mb-4">{{ assignment.title }}</h3>
+        <h3 class="text-3xl font-bold text-gray-800 mb-4">{{ assignment.title }}</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div class="flex items-center gap-2 text-gray-600">
             <div>
-              <div class="text-xs text-gray-400">创建时间</div>
-              <div>{{ formatDate(assignment.create_time) }}</div>
+              <div class="text-sm text-gray-400">创建时间</div>
+              <div class="text-lg">{{ formatDate(assignment.create_time) }}</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
             <div>
-              <div class="text-xs text-gray-400">截止时间</div>
-              <div>{{ formatDate(assignment.deadline) }}</div>
+              <div class="text-sm text-gray-400">截止时间</div>
+              <div class="text-lg">{{ formatDate(assignment.deadline) }}</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
             <div>
-              <div class="text-xs text-gray-400">科目</div>
-              <div>{{ assignment.subject }}</div>
+              <div class="text-sm text-gray-400">科目</div>
+              <div class="text-lg">{{ assignment.subject }}</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
             <div>
-              <div class="text-xs text-gray-400">状态</div>
+              <div class="text-sm text-gray-400">状态</div>
               <div>
                 <span :class="[
-                  'px-2 py-1 rounded-full text-xs font-medium',
+                  'px-3 py-1 rounded-full text-sm font-medium',
                   assignment.status === '进行中' ? 'bg-blue-100 text-blue-800' :
                   assignment.status === '已完成' ? 'bg-green-100 text-green-800' :
                   'bg-gray-100 text-gray-800'
@@ -76,25 +76,35 @@
             </div>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div class="flex items-center gap-2 text-gray-600">
             <div>
-              <div class="text-xs text-gray-400">课程ID</div>
-              <div>{{ assignment.course_id }}</div>
+              <div class="text-sm text-gray-400">课程ID</div>
+              <div class="text-lg">{{ assignment.course_id }}</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
             <div>
-              <div class="text-xs text-gray-400">分值</div>
-              <div>{{ assignment.points }}分</div>
+              <div class="text-sm text-gray-400">分值</div>
+              <div class="text-lg">{{ assignment.points }}分</div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-gray-600">
             <div>
-              <div class="text-xs text-gray-400">AI动作类型</div>
+              <div class="text-sm text-gray-400">动作类型</div>
               <div>
-                <span class="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                <span class="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
                   {{ aiType || '加载中...' }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-gray-600">
+            <div>
+              <div class="text-sm text-gray-400">要求动作个数</div>
+              <div>
+                <span class="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                  {{ requiredCount !== null ? requiredCount : '加载中...' }}
                 </span>
               </div>
             </div>
@@ -294,6 +304,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessageBox } from 'element-plus'
 import { StudentAssignmentService } from '../../services/studentAssignments'
 import InlineVideoPlayer from '@/components/InlineVideoPlayer.vue'
 
@@ -308,6 +319,7 @@ const error = ref(false)
 const errorMessage = ref('')
 const finalScore = ref(null)
 const aiType = ref(null)
+const requiredCount = ref(null)
 
 // 文件上传相关（集成提交作业功能）
 const fileInput = ref(null)
@@ -341,9 +353,11 @@ const fetchAssignmentDetails = async () => {
     console.log('作业详情加载成功:', assignment.value);
 
     // 获取AI类型
-    const poseType = await assignmentService.getPoseType(assignmentId);
-    aiType.value = poseType;
+    const poseTypeInfo = await assignmentService.getPoseType(assignmentId);
+    aiType.value = poseTypeInfo.poseType;
+    requiredCount.value = poseTypeInfo.requiredCount;
     console.log('AI类型:', aiType.value);
+    console.log('要求数量:', requiredCount.value);
   } catch (err) {
     console.error('获取作业详情失败:', err);
     error.value = true;
@@ -486,7 +500,7 @@ const submitAssignment = async () => {
         }
       );
 
-      const { processedVideoUrlValue, aiResult } = result;
+      const { processedVideoUrlValue, aiResult, poseTypeInfo } = result;
 
       // 保存作业提交信息
       await assignmentService.saveAssignmentSubmission(
@@ -494,7 +508,8 @@ const submitAssignment = async () => {
         assignmentId,
         aiResult,
         studentId,
-        processedVideoUrlValue
+        processedVideoUrlValue,
+        poseTypeInfo
       );
 
       // 更新本地状态
@@ -504,10 +519,22 @@ const submitAssignment = async () => {
       if (assignment.value) {
         assignment.value.status = '已完成';
       }
+
+      // 重新获取最终得分
+      await fetchFinalScore();
+
+      // 显示提交成功弹窗
+      ElMessageBox.alert('作业提交成功！', '提示', {
+        confirmButtonText: '确定',
+        type: 'success'
+      });
     } catch (error) {
-      // AI服务调用失败，创建空的AI评价结果
+      // AI服务调用失败，获取poseTypeInfo并创建空的AI评价结果
       console.error('AI服务调用失败:', error);
       processingStats.value = `AI服务暂时不可用，将直接提交作业。<br>错误: ${error.message}`;
+
+      // 获取poseTypeInfo
+      const poseTypeInfo = await assignmentService.getPoseType(assignmentId);
 
       // 创建空的AI评价结果
       const aiResult = {
@@ -523,13 +550,17 @@ const submitAssignment = async () => {
         assignmentId,
         aiResult,
         studentId,
-        null
+        null,
+        poseTypeInfo
       );
 
       // 更新作业状态为已完成
       if (assignment.value) {
         assignment.value.status = '已完成';
       }
+
+      // 重新获取最终得分
+      await fetchFinalScore();
     }
   } catch (error) {
     console.error('作业提交失败:', error);
