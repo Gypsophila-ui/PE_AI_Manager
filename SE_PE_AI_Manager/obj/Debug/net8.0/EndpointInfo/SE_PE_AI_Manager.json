@@ -1262,17 +1262,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_five"
+                "$ref": "#/components/schemas/Request_six"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_five"
+                "$ref": "#/components/schemas/Request_six"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_five"
+                "$ref": "#/components/schemas/Request_six"
               }
             }
           }
@@ -1310,17 +1310,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_five"
+                "$ref": "#/components/schemas/Request_six"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_five"
+                "$ref": "#/components/schemas/Request_six"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Request_five"
+                "$ref": "#/components/schemas/Request_six"
               }
             }
           }
