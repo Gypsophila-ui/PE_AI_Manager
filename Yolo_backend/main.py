@@ -156,7 +156,7 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
         tmp_file_path = os.path.join(temp_dir, "input_video.mp4")
-        output_path = os.path.join(temp_dir, "output_video.avi")
+        output_path = os.path.join(temp_dir, "output_video.mp4")
 
         # 生成临时目录ID并存储
         temp_id = str(uuid.uuid4())
@@ -206,11 +206,9 @@ async def stream_process_video_endpoint(file_content: bytes, pose_type: str, sav
 
         # 尝试不同的视频编码器
         fourcc_options = [
-            # cv2.VideoWriter_fourcc(*'avc1'),  # H.264/AVC
-            cv2.VideoWriter_fourcc(*'MJPG'),
             cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
-            cv2.VideoWriter_fourcc(*'VP90'),
-            cv2.VideoWriter_fourcc(*'H264'),
+            # cv2.VideoWriter_fourcc(*'VP90'),
+            # cv2.VideoWriter_fourcc(*'H264'),
             cv2.VideoWriter_fourcc(*'XVID'),  # XVID
             cv2.VideoWriter_fourcc(*'MJPG')  # Motion JPEG
         ]
@@ -565,11 +563,9 @@ def process_video_logic(file_content: bytes, pose_type: str):
 
         # 尝试不同的视频编码器
         fourcc_options = [
-            # cv2.VideoWriter_fourcc(*'avc1'),  # H.264/AVC
-            cv2.VideoWriter_fourcc(*'MJPG'),
             cv2.VideoWriter_fourcc(*'mp4v'),  # MPEG-4
-            cv2.VideoWriter_fourcc(*'VP90'),
-            cv2.VideoWriter_fourcc(*'H264'),
+            # cv2.VideoWriter_fourcc(*'VP90'),
+            # cv2.VideoWriter_fourcc(*'H264'),
             cv2.VideoWriter_fourcc(*'XVID'),  # XVID
             cv2.VideoWriter_fourcc(*'MJPG')  # Motion JPEG
         ]
@@ -736,7 +732,7 @@ async def process_and_save_video(
 
     # 创建保存目录和路径
     save_dir = os.path.join("homework", homework_id, student_id)
-    save_path = os.path.join(save_dir, "processed_video.avi")
+    save_path = os.path.join(save_dir, "processed_video.mp4")
 
     # 添加日志信息
     logger.info(f"当前工作目录: {os.getcwd()}")
@@ -761,56 +757,130 @@ async def get_processed_video(
         student_id: str = Query(..., description="学生ID"),
         download: bool = Query(False, description="是否作为附件下载")
 ):
-    """获取已处理的视频文件 - 支持预览和下载"""
-
-    # 记录请求信息
-    logger.info(f"获取视频请求 - homework_id={homework_id}, student_id={student_id}, download={download}")
-
+    """获取已处理的视频文件 - 支持下载和流式预览"""
     video_path = os.path.join("homework", homework_id, student_id, "processed_video.mp4")
-    logger.info(f"视频路径: {video_path}")
 
     if not os.path.exists(video_path):
-        logger.warning(f"视频文件不存在: {video_path}")
         raise HTTPException(status_code=404, detail="视频文件不存在")
 
-    try:
-        # 获取文件信息用于日志
-        file_size = os.path.getsize(video_path)
-        file_mtime = datetime.fromtimestamp(os.path.getmtime(video_path)).strftime('%Y-%m-%d %H:%M:%S')
+    # 如果是下载模式，直接返回文件
+    if download:
+        filename = f"processed_video_{homework_id}_{student_id}.mp4"
+        return FileResponse(
+            video_path,
+            media_type="video/mp4",
+            filename=filename,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-Video-Info": f"homework_id={homework_id}, student_id={student_id}"
+            }
+        )
 
-        logger.info(f"视频文件信息 - 大小: {file_size} 字节, 修改时间: {file_mtime}")
+    # 流式预览模式 - 使用YOLO风格的SSE格式
+    async def video_stream_generator():
+        cap = None
+        try:
+            logger.info(f"开始流式传输视频: {video_path}")
 
-        # 如果是下载模式，设置下载文件名
-        if download:
-            filename = f"processed_video_{homework_id}_{student_id}.mp4"
-            logger.info(f"下载模式: 文件名={filename}")
-            return FileResponse(
-                video_path,
-                media_type="video/mp4",
-                filename=filename,  # 设置下载文件名
-                headers={
-                    "Content-Disposition": f'attachment; filename="{filename}"',
-                    "Content-Length": str(file_size),
-                    "X-Video-Info": f"homework_id={homework_id}, student_id={student_id}, size={file_size}"
-                }
-            )
-        else:
-            # 预览模式
-            logger.info(f"预览模式: 内联播放")
-            return FileResponse(
-                video_path,
-                media_type="video/mp4",
-                headers={
-                    "Content-Disposition": "inline",
-                    "Content-Length": str(file_size),
-                    "X-Video-Info": f"homework_id={homework_id}, student_id={student_id}, size={file_size}"
-                }
-            )
+            # 打开视频文件
+            cap = cv2.VideoCapture(video_path)
+            if not cap.isOpened():
+                # 发送错误信息
+                yield sse_format("error", {"message": "无法打开视频文件"})
+                return
 
-    except Exception as e:
-        logger.error(f"获取视频时出错: {e}")
-        logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"获取视频时出错: {str(e)}")
+            # 获取视频信息
+            fps = int(cap.get(cv2.CAP_PROP_FPS))
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+            # 发送视频元数据（模仿YOLO格式）
+            metadata = {
+                "fps": fps,
+                "width": width,
+                "height": height,
+                "total_frames": total_frames,
+                "homework_id": homework_id,
+                "student_id": student_id
+            }
+            yield sse_format("video_info", metadata)
+
+            frame_index = 0
+            SKIP_FACTOR = 1  # 跳帧因子，减少数据传输量
+
+            while True:
+                success, frame = cap.read()
+                if not success:
+                    logger.info("视频流传输完成")
+                    break
+
+                # 跳帧处理，减少数据量
+                if frame_index % SKIP_FACTOR != 0:
+                    frame_index += 1
+                    continue
+
+                # 将帧编码为JPEG格式
+                try:
+                    _, buffer = cv2.imencode('.jpg', frame, [
+                        cv2.IMWRITE_JPEG_QUALITY, 80  # 质量设为80%以减小文件大小
+                    ])
+
+                    if buffer is not None:
+                        # 转换为base64字符串
+                        frame_base64 = base64.b64encode(buffer).decode('utf-8')
+
+                        # YOLO风格的数据格式
+                        frame_data = {
+                            "frame_index": frame_index,
+                            "timestamp": frame_index / fps if fps > 0 else 0,
+                            "image": frame_base64  # 注意：这里使用"image"而不是"data"
+                        }
+
+                        yield sse_format("frame", frame_data)
+
+                        # 控制发送速率
+                        await asyncio.sleep(0.033)  # 约30fps
+
+                except Exception as e:
+                    logger.error(f"编码第 {frame_index} 帧时出错: {e}")
+                    error_data = {
+                        "message": f"编码帧错误: {str(e)}",
+                        "frame": frame_index
+                    }
+                    yield sse_format("error", error_data)
+
+                frame_index += 1
+
+            # 发送完成信号
+            done_data = {
+                "message": "视频流传输完成",
+                "total_frames_sent": frame_index
+            }
+            yield sse_format("complete", done_data)
+
+        except Exception as e:
+            logger.error(f"视频流传输出错: {e}")
+            error_data = {
+                "message": str(e)
+            }
+            yield sse_format("error", error_data)
+
+        finally:
+            if cap is not None:
+                cap.release()
+
+    # 返回流式响应
+    return StreamingResponse(
+        video_stream_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+            "Access-Control-Allow-Origin": "*",
+        }
+    )
 
 
 @app.delete("/delete_homework")
