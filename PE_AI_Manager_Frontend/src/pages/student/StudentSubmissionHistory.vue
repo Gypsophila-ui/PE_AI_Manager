@@ -99,12 +99,6 @@
 
             <div class="flex justify-end gap-3 mt-6">
               <button
-                @click="viewDetail(submission)"
-                class="px-6 py-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-lg"
-              >
-                查看详情
-              </button>
-              <button
                 v-if="submission.video_url"
                 @click="deleteVideo(submission)"
                 class="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg"
@@ -268,10 +262,6 @@ const loadSubmissions = async () => {
   } finally {
     loading.value = false
   }
-}
-
-const viewDetail = (submission) => {
-  router.push(`/student/course/${submission.courseId}/submission/${submission.id}`)
 }
 
 const deleteVideo = async (submission) => {

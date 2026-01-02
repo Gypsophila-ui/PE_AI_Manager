@@ -9,7 +9,6 @@ import TeacherAssignments from '../pages/teacher/TeacherAssignments.vue'
 import StudentAssignments from '../pages/student/StudentAssignments.vue'
 import StudentTeachingVideos from '../pages/student/StudentTeachingVideos.vue'
 import StudentSubmissionHistory from '../pages/student/StudentSubmissionHistory.vue'
-import StudentSubmissionDetail from '../pages/student/StudentSubmissionDetail.vue'
 
 import PublishAssignment from '../pages/teacher/PublishAssignment.vue'
 import GradeManagement from '../pages/teacher/GradeManagement.vue'
@@ -37,7 +36,6 @@ const routes = [
   { path: '/student/course/:courseId/assignments/:assignmentId', component: StudentAssignments },
   { path: '/student/course/:courseId/teaching-videos', component: StudentTeachingVideos },
   { path: '/student/course/:courseId/assignments/:assignmentId/submission-history', component: StudentSubmissionHistory },
-  { path: '/student/course/:courseId/submission/:submitId', component: StudentSubmissionDetail },
 
   // 教师端路由
   { path: '/teacher', component: TeacherHome },

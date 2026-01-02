@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-    <div class="max-w-4xl mx-auto p-6 flex justify-between items-center">
+    <div class="max-w-3xl mx-auto p-6 flex justify-between items-center">
       <div class="flex items-center gap-2">
         <button @click="goBack" class="text-2xl text-gray-600 hover:text-gray-800 transition-colors">
           ←
@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <div class="max-w-4xl mx-auto p-6 space-y-8 pb-20">
+    <div class="max-w-3xl mx-auto p-6 space-y-8 pb-20">
 
       <div v-if="loading" class="flex justify-center items-center h-64">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
@@ -104,7 +104,7 @@
 
     <!-- 编辑作业模态框 -->
     <div v-if="showEditModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
         <div class="p-8">
           <div class="flex justify-between items-center mb-6">
             <h3 class="text-2xl font-bold text-gray-800">✏️ 编辑作业</h3>
