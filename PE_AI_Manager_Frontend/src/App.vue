@@ -27,7 +27,7 @@ const route = useRoute()
 
 // 判断当前是否为登录页面
 const isLoginPage = computed(() => {
-  return route.path === '/login' || route.path === '/register'
+  return route.path === '/login' || route.path === '/register' || route.path === '/'
 })
 
 const goToHome = () => {
