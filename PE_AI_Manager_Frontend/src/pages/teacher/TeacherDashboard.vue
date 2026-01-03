@@ -246,7 +246,6 @@ const loadData = async () => {
             const submissionTimeStr = detail[4] || ''
 
             const submissionTime = parseDate(submissionTimeStr)
-            console.log('解析提交时间:', submissionTimeStr, '=>', submissionTime)
 
             if (submissionTime) {
               submissions.value.push({
@@ -273,8 +272,17 @@ const loadData = async () => {
 
 const parseDate = (str) => {
   if (!str || !str.trim()) return null
+
   const cleaned = str.trim()
-  const date = dayjs(cleaned, 'MM/DD/YYYY h:mm:ss A', true)
+
+  // 先尝试标准格式
+  let date = dayjs(cleaned)
+
+  // 如果无效，再尝试美式格式
+  if (!date.isValid()) {
+    date = dayjs(cleaned, 'MM/DD/YYYY h:mm:ss A')
+  }
+
   return date.isValid() ? date.toDate() : null
 }
 

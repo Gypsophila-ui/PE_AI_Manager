@@ -104,10 +104,20 @@
                   </span>
                 </td>
                 <td class="py-2 px-3">
-                  <button @click="viewAssignmentDetails(assignment.courseId, assignment.id)"
-                          class="px-3 py-1 rounded-md bg-blue-500 text-white text-xs hover:bg-blue-600 transition-all">
-                    查看详情
-                  </button>
+                  <div class="flex flex-wrap gap-3 justify-center">
+                    <button
+                      @click="viewAssignmentDetails(assignment.courseId, assignment.id)"
+                      class="px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 transition shadow-sm"
+                    >
+                      查看详情
+                    </button>
+                    <button
+                      @click="goToGrading(assignment.courseId, assignment.id)"
+                      class="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition shadow-sm"
+                    >
+                      批改作业
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -327,6 +337,10 @@ const formatDate = (dateString) => {
 
 const viewAssignmentDetails = (courseId, homeworkId) => {
   router.push(`/teacher/course/${courseId}/assignment/${homeworkId}`)
+}
+
+const goToGrading = (courseId, homeworkId) => {
+  router.push(`/teacher/grade/course/${courseId}/assignment/${homeworkId}`)
 }
 
 const goHome = () => router.push('/teacher')

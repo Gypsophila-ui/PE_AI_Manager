@@ -118,7 +118,7 @@
                     </button>
 
                     <button
-                      v-if="sub.videoUrl"
+                      v-if="sub.videoUrl && !sub.videoUrl.includes('test')"
                       @click="viewVideo(sub.studentId, sub.studentName)"
                       class="px-4 py-2 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-all shadow text-sm"
                     >

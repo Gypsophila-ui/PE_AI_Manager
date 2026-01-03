@@ -1,4 +1,5 @@
 <template>
+  <!-- 模板部分完全不变 -->
   <div class="file-uploader-wrapper">
     <div class="file-uploader" :style="{ maxWidth: maxWidth }">
       <!-- 拖拽上传区域 -->
@@ -21,7 +22,7 @@
         <div class="upload-hint">
           <div class="text-5xl text-gray-300 mb-4">🎥</div>
           <p>点击或将 MP4 视频文件拖拽到这里上传</p>
-          <p class="tip">仅支持 MP4 格式，单个文件最大 100MB</p>
+          <p class="tip">仅支持 MP4 格式，单个文件最大 {{ formatBytes(maxSize) }}</p>
         </div>
       </div>
 
@@ -33,7 +34,11 @@
           <p>速度：{{ uploadSpeed }}/s</p>
           <p>预计剩余时间：{{ remainingTime }}</p>
         </div>
-        <el-progress :percentage="progress" :stroke-width="12" />
+        <el-progress
+          :percentage="progress"
+          :stroke-width="12"
+          :format="formatProgress"
+        />
         <button @click="cancelUpload" class="cancel-btn">取消上传</button>
       </div>
 
@@ -46,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { fileClient } from '@/services/fileClient';
 import axios from 'axios';
 import { ElMessage } from 'element-plus';
@@ -59,24 +64,34 @@ const progress = ref(0);
 const fileName = ref('');
 const totalSize = ref(0);
 const uploadedSize = ref(0);
-const uploadSpeed = ref('0 KB');
-const remainingTime = ref('--');
+const uploadSpeed = ref('计算中...');
+const remainingTime = ref('计算中...');
 const uploadResult = ref(null);
 
 const fileInput = ref(null);
 
-const MAX_SIZE = 100 * 1024 * 1024; // 100MB
-
-let cancelTokenSource = null;
-let startTime = null;
-let lastLoadedTime = null;
-
+// 支持传入的最大文件大小（单位：字节），默认 100MB
 const props = defineProps({
   maxWidth: {
     type: String,
-    default: '600px'  // 默认 600px
+    default: '600px'
+  },
+  maxFileSize: {
+    type: Number,           // 单位：MB，例如 500 表示 500MB
+    default: 100
   }
 });
+
+// 计算实际的最大字节数
+const maxSize = computed(() => props.maxFileSize * 1024 * 1024);
+
+let cancelTokenSource = null;
+let startTime = null;
+
+// 用于平滑速度计算
+let lastLoaded = 0;
+let lastTime = null;
+let smoothedSpeed = 0; // 字节/秒
 
 const formatBytes = (bytes) => {
   if (bytes === 0) return '0 Bytes';
@@ -90,19 +105,16 @@ const triggerFileInput = () => {
   fileInput.value.click();
 };
 
-// 校验文件函数（类型 + 大小）
 const validateFile = (file) => {
   if (!file) return false;
 
-  // 检查类型
   if (file.type !== 'video/mp4' && !file.name.toLowerCase().endsWith('.mp4')) {
     ElMessage.warning('只允许上传 MP4 格式的视频文件！');
     return false;
   }
 
-  // 检查大小
-  if (file.size > MAX_SIZE) {
-    ElMessage.warning('文件大小不能超过 100MB！');
+  if (file.size > maxSize.value) {
+    ElMessage.warning(`文件大小不能超过 ${props.maxFileSize}MB！`);
     return false;
   }
 
@@ -114,7 +126,6 @@ const handleFileChange = (e) => {
   if (file && validateFile(file)) {
     uploadFile(file);
   }
-  // 清空 input 值，允许重复上传同一个文件
   e.target.value = '';
 };
 
@@ -126,13 +137,28 @@ const handleDrop = (e) => {
   }
 };
 
-// 其余上传逻辑保持不变（速度、进度、取消等）
-const calculateSpeedAndTime = (loaded, total, timeElapsed) => {
-  const speed = loaded / (timeElapsed / 1000);
-  uploadSpeed.value = formatBytes(speed);
+// 更新速度和剩余时间（平滑处理）
+const updateSpeedAndTime = (loaded, total) => {
+  const now = Date.now();
+  if (!lastTime) {
+    lastTime = now;
+    lastLoaded = loaded;
+    return;
+  }
 
-  if (speed > 0) {
-    const remainingSeconds = Math.round((total - loaded) / speed);
+  const timeDiff = (now - lastTime) / 1000; // 秒
+  const loadedDiff = loaded - lastLoaded;
+  const instantSpeed = loadedDiff / timeDiff;
+
+  // 简单指数移动平均（平滑系数 0.3）
+  const alpha = 0.3;
+  smoothedSpeed = smoothedSpeed === 0 ? instantSpeed : alpha * instantSpeed + (1 - alpha) * smoothedSpeed;
+
+  uploadSpeed.value = formatBytes(smoothedSpeed) + '/s';
+
+  if (smoothedSpeed > 100) {
+    const remainingBytes = total - loaded;
+    const remainingSeconds = Math.round(remainingBytes / smoothedSpeed);
     if (remainingSeconds < 60) {
       remainingTime.value = `${remainingSeconds} 秒`;
     } else {
@@ -141,6 +167,9 @@ const calculateSpeedAndTime = (loaded, total, timeElapsed) => {
       remainingTime.value = `${min} 分 ${sec} 秒`;
     }
   }
+
+  lastLoaded = loaded;
+  lastTime = now;
 };
 
 const uploadFile = async (file) => {
@@ -148,14 +177,16 @@ const uploadFile = async (file) => {
   totalSize.value = file.size;
   uploadedSize.value = 0;
   progress.value = 0;
-  uploadSpeed.value = '0 KB';
-  remainingTime.value = '--';
+  uploadSpeed.value = '计算中...';
+  remainingTime.value = '计算中...';
   uploadResult.value = null;
   uploading.value = true;
 
   cancelTokenSource = axios.CancelToken.source();
   startTime = Date.now();
-  lastLoadedTime = Date.now();
+  lastLoaded = 0;
+  lastTime = null;
+  smoothedSpeed = 0;
 
   const formData = new FormData();
   formData.append('file', file);
@@ -166,21 +197,21 @@ const uploadFile = async (file) => {
       headers: { 'Content-Type': undefined },
       onUploadProgress: (progressEvent) => {
         const { loaded, total } = progressEvent;
-        const now = Date.now();
-        const timeElapsed = (now - startTime) / 1000;
 
         uploadedSize.value = loaded;
-        progress.value = (loaded / total) * 100;
+        progress.value = total ? (loaded / total) * 100 : 0;
 
-        if (now - lastLoadedTime >= 1000 || loaded === total) {
-          calculateSpeedAndTime(loaded, total, timeElapsed);
-          lastLoadedTime = now;
+        const now = Date.now();
+        // 每约 800ms 更新一次显示，避免太频繁导致跳动
+        if (!lastTime || now - lastTime >= 800 || loaded === total) {
+          updateSpeedAndTime(loaded, total);
         }
       },
     });
 
     uploadResult.value = response.data;
     emit('uploaded', response.data);
+
     ElMessage.success('上传成功！');
   } catch (error) {
     if (axios.isCancel(error)) {
@@ -196,6 +227,10 @@ const uploadFile = async (file) => {
 
 const cancelUpload = () => {
   if (cancelTokenSource) cancelTokenSource.cancel();
+};
+
+const formatProgress = (percentage) => {
+  return Number(percentage.toFixed(1)) + '%';
 };
 </script>
 

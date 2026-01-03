@@ -147,7 +147,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   {{ isEditMode ? '替换视频（可选）' : '上传视频' }} <span class="text-red-500">*</span>
                 </label>
-                <FileUploader max-width="100%" @uploaded="onVideoUploaded" />
+                <FileUploader max-width="100%" :max-file-size="2048" @uploaded="onVideoUploaded" />
               </div>
 
               <!-- 视频标题 -->
@@ -216,8 +216,7 @@ const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const teacherId = currentUser.id || ''
 const jwt = currentUser.token || ''
 
-const defaultCover = 'https://images.unsplash.com/photo-1570545887596-2a6c5cbcf9c3?w=800'
-
+const defaultCover = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgDTDzwAAAABJRU5ErkJggg=='
 const videoForm = ref({
   courseId: '',
   title: '',
@@ -482,6 +481,7 @@ const loadVideos = async () => {
   // 动态计算每个视频的封面和时长
   videos.value.forEach(video => {
     if (video.url) {
+      video.cover = defaultCover
       generateVideoMeta(video.url, (cover, duration) => {
         video.cover = cover
         video.duration = duration
