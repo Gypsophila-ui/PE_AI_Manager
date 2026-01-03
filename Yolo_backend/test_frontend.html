@@ -138,6 +138,27 @@
             margin: 0;
             font-family: monospace;
         }
+        .video-stream-container {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .stream-canvas {
+            max-width: 100%;
+            background-color: #000;
+            display: block;
+        }
+
+        .stream-controls {
+            margin-top: 10px;
+        }
+
+        .stream-status {
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -183,7 +204,7 @@
                 </div>
                 <button type="submit" id="streamProcessBtn">流式处理视频</button>
             </form>
-            <div class="video-container">
+            <div id="streamVideoContainer" class="video-container">
                 <img id="streamVideo" alt="流式视频处理结果" style="display: none;">
             </div>
             <div id="streamStats"></div>
@@ -233,7 +254,7 @@
                 </div>
                 <button type="submit" id="viewVideoBtn">查看视频</button>
             </form>
-            <div class="video-container">
+            <div id="processedVideoContainer" class="video-container">
                 <video id="processedVideo" controls style="display: none;">
                     您的浏览器不支持视频标签。
                 </video>
@@ -353,7 +374,7 @@
 
     <script>
         // 设置基础URL
-        const BASE_URL = 'http://localhost:8000';
+        const BASE_URL = 'http://118.25.145.4:8000';
 
         // 直接处理视频
         document.getElementById('directProcessForm').addEventListener('submit', function(e) {
@@ -468,8 +489,12 @@
 
                                             case 'frame':
                                                 // 显示处理后的帧
-                                                streamVideo.src = `data:image/jpeg;base64,${data.data.image}`;
-                                                streamVideo.style.display = 'block';
+                                                if (data.data && data.data.image) {
+                                                    streamVideo.src = `data:image/jpeg;base64,${data.data.image}`;
+                                                    streamVideo.style.display = 'block';
+                                                } else {
+                                                    console.warn('接收到的帧数据缺少image字段:', data);
+                                                }
                                                 streamStats.innerHTML = `
                                                     <strong>处理中...</strong><br>
                                                     当前帧: ${data.data.processed_frame_count}<br>
@@ -860,7 +885,7 @@
 
             const homeworkId = document.getElementById('viewHomeworkId').value;
             const studentId = document.getElementById('viewStudentId').value;
-            const videoElement = document.getElementById('processedVideo');
+            const videoContainer = document.getElementById('processedVideoContainer');
 
             // 询问用户是预览还是下载
             const action = confirm("预览视频？点击'确定'预览，'取消'下载");
@@ -886,25 +911,113 @@
                         showResult(resultDiv, `视频下载已开始: processed_video_${homeworkId}_${studentId}.mp4`, 'success');
                     }
                 } else {
-                    // 预览模式 - 在页面中播放
-                    const response = await fetch(url);
-
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        videoElement.src = url;
-                        videoElement.style.display = 'block';
-
-                        // 显示视频信息
-                        const videoSize = response.headers.get('Content-Length');
-                        const videoInfo = response.headers.get('X-Video-Info');
-                        console.log(`视频大小: ${videoSize} 字节, 信息: ${videoInfo}`);
-                    } else if (response.status === 404) {
-                        alert('未找到视频文件，请确认作业ID和学生ID是否正确');
-                    } else {
-                        const errorText = await response.text();
-                        throw new Error(`获取视频失败: ${errorText}`);
+                    // 预览模式 - 使用流式传输
+                    // 清空容器
+                    if (!videoContainer) {
+                        console.error('找不到视频容器元素');
+                        return;
                     }
+                    videoContainer.innerHTML = '';
+
+                    // 创建canvas用于显示视频帧
+                    const canvas = document.createElement('canvas');
+                    canvas.id = 'viewStreamCanvas';
+                    canvas.style.maxWidth = '100%';
+                    canvas.style.height = 'auto';
+                    canvas.style.display = 'block';
+                    canvas.style.backgroundColor = '#000';
+
+                    // 创建信息显示区域
+                    const infoDiv = document.createElement('div');
+                    infoDiv.id = 'viewStreamInfo';
+                    infoDiv.style.marginTop = '10px';
+                    infoDiv.style.padding = '10px';
+                    infoDiv.style.backgroundColor = '#f0f0f0';
+                    infoDiv.style.borderRadius = '4px';
+                    infoDiv.innerHTML = '正在连接视频流...';
+
+                    // 添加到容器
+                    videoContainer.appendChild(canvas);
+                    videoContainer.appendChild(infoDiv);
+
+                    const ctx = canvas.getContext('2d');
+                    let eventSource = null;
+
+                    // 创建SSE连接
+                    const streamUrl = `${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}&download=false`;
+                    eventSource = new EventSource(streamUrl);
+
+                    eventSource.onopen = function() {
+                        infoDiv.innerHTML = '视频流连接成功，正在接收数据...';
+                    };
+
+                    eventSource.onmessage = function(event) {
+                        try {
+                            const data = JSON.parse(event.data);
+
+                            switch (data.event) {
+                                case 'video_info':
+                                    const width = data.data.width !== undefined ? data.data.width : 'N/A';
+                                    const height = data.data.height !== undefined ? data.data.height : 'N/A';
+                                    const fps = data.data.fps !== undefined ? data.data.fps : 30;
+                                    infoDiv.innerHTML = `视频信息: ${width}x${height} @ ${fps}fps`;
+                                    break;
+
+                                case 'frame':
+                                    // 解码base64图像并显示
+                                    const img = new Image();
+                                    img.onload = function() {
+                                        canvas.width = img.width;
+                                        canvas.height = img.height;
+                                        ctx.drawImage(img, 0, 0);
+                                        const frameIndex = data.data.frame_index !== undefined ? data.data.frame_index : 'N/A';
+                                        const timestamp = data.data.timestamp !== undefined ? data.data.timestamp.toFixed(2) : 'N/A';
+                                        infoDiv.innerHTML = `正在播放: 第 ${frameIndex} 帧 (${timestamp}秒)`;
+                                    };
+                                    if (data.data && data.data.image) {
+                                        img.src = `data:image/jpeg;base64,${data.data.image}`;
+                                    } else {
+                                        console.warn('接收到的帧数据缺少image字段:', data);
+                                    }
+                                    break;
+
+                                case 'complete':
+                                    infoDiv.innerHTML = '视频播放完成';
+                                    eventSource.close();
+                                    break;
+
+                                case 'error':
+                                    const errorMessage = data.data && data.data.message ? data.data.message : '未知错误';
+                                    infoDiv.innerHTML = `错误: ${errorMessage}`;
+                                    eventSource.close();
+                                    alert(`视频流错误: ${errorMessage}`);
+                                    break;
+                            }
+                        } catch (e) {
+                            console.error('解析SSE数据出错:', e);
+                            infoDiv.innerHTML = `解析数据出错: ${e.message}`;
+                        }
+                    };
+
+                    eventSource.onerror = function(err) {
+                        console.error('SSE连接错误:', err);
+                        infoDiv.innerHTML = '连接错误，请重试';
+                        if (eventSource) {
+                            eventSource.close();
+                        }
+                    };
+
+                    // 添加停止按钮
+                    const stopBtn = document.createElement('button');
+                    stopBtn.textContent = '停止播放';
+                    stopBtn.style.marginTop = '10px';
+                    stopBtn.onclick = function() {
+                        if (eventSource) {
+                            eventSource.close();
+                            infoDiv.innerHTML = '已停止播放';
+                        }
+                    };
+                    videoContainer.appendChild(stopBtn);
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -1289,22 +1402,201 @@
         // 查看处理后的视频
         function viewProcessedVideo(homeworkId, studentId, download = false) {
             const videoUrl = `${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}&download=${download}`;
-            
+
             if (download) {
-                // 下载模式
+                // 下载模式 - 保持不变
                 const a = document.createElement('a');
                 a.href = videoUrl;
                 a.download = `processed_video_${homeworkId}_${studentId}.mp4`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                
+
                 // 显示提示
                 alert(`视频下载已开始: processed_video_${homeworkId}_${studentId}.mp4`);
             } else {
-                // 预览模式 - 在新窗口打开
-                window.open(videoUrl, '_blank');
+                // 预览模式 - 使用SSE流
+                startSimpleVideoStream(homeworkId, studentId);
             }
+        }
+
+        function startSimpleVideoStream(homeworkId, studentId) {
+            console.log(`开始SSE视频流: homeworkId=${homeworkId}, studentId=${studentId}`);
+
+            // 清空视频容器
+            const videoContainer = document.getElementById('processedVideoContainer');
+            if (!videoContainer) {
+                console.error('找不到视频容器元素');
+                return;
+            }
+            videoContainer.innerHTML = '';
+
+            // 创建Canvas
+            const canvas = document.createElement('canvas');
+            canvas.id = 'video-canvas';
+            canvas.style.width = '100%';
+            canvas.style.maxWidth = '640px';
+            canvas.style.height = 'auto';
+            canvas.style.backgroundColor = '#000';
+            canvas.style.display = 'block';
+
+            // 创建状态显示
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'stream-status';
+            statusDiv.style.padding = '10px';
+            statusDiv.style.backgroundColor = '#f0f0f0';
+            statusDiv.style.borderRadius = '4px';
+            statusDiv.style.margin = '10px 0';
+            statusDiv.textContent = '正在连接视频流...';
+
+            // 添加到容器
+            videoContainer.appendChild(canvas);
+            videoContainer.appendChild(statusDiv);
+
+            const ctx = canvas.getContext('2d');
+            let frameCount = 0;
+            let startTime = Date.now();
+
+            // SSE URL
+            const streamUrl = `${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}&download=false`;
+
+            console.log('SSE URL:', streamUrl);
+
+            // 创建EventSource
+            const eventSource = new EventSource(streamUrl);
+
+            // 保存引用以便停止
+            window.currentVideoStream = eventSource;
+
+            eventSource.onopen = function() {
+                console.log('SSE连接已建立');
+                statusDiv.textContent = '视频流连接成功...';
+            };
+
+            eventSource.onmessage = function(event) {
+                try {
+                    // 解析JSON数据
+                    const data = JSON.parse(event.data);
+                    console.log('收到SSE事件:', data.event);
+
+                    switch (data.event) {
+                        case 'video_info':
+                            statusDiv.textContent = `视频信息: ${data.data.width}x${data.data.height} @ ${data.data.fps || 30}fps`;
+                            console.log('视频信息:', data);
+                            break;
+
+                        case 'frame':
+                            // 解码base64图像并显示
+                            try {
+                                const img = new Image();
+                                img.onload = function() {
+                                    // 设置canvas尺寸匹配图像
+                                    canvas.width = img.width;
+                                    canvas.height = img.height;
+
+                                    // 绘制图像
+                                    ctx.drawImage(img, 0, 0);
+
+                                    // 更新状态
+                                    frameCount++;
+                                    const elapsed = (Date.now() - startTime) / 1000;
+                                    const fps = (frameCount / elapsed).toFixed(1);
+
+                                    const frameIndex = data.data.frame_index !== undefined ? data.data.frame_index : 'N/A';
+                                    const timestamp = data.data.timestamp !== undefined ? data.data.timestamp.toFixed(2) + '秒' : 'N/A';
+                                    statusDiv.innerHTML = `
+                                        正在播放: 第${frameIndex}帧<br>
+                                        时间: ${timestamp}<br>
+                                        实时FPS: ${fps}<br>
+                                        总帧数: ${frameCount}
+                                    `;
+                                };
+                                img.onerror = function() {
+                                    console.error('图像加载失败');
+                                };
+
+                                // 使用image字段而不是data字段
+                                if (data.data && data.data.image) {
+                                    img.src = `data:image/jpeg;base64,${data.data.image}`;
+                                } else {
+                                    console.warn('接收到的帧数据缺少image字段:', data);
+                                }
+                            } catch (imgError) {
+                                console.error('处理图像失败:', imgError);
+                            }
+                            break;
+
+                        case 'complete':
+                            const totalFrames = data.data.total_frames_sent !== undefined ? data.data.total_frames_sent : 'N/A';
+                            statusDiv.textContent = `视频播放完成 - 总共${totalFrames}帧`;
+                            eventSource.close();
+                            break;
+
+                        case 'error':
+                            const errorMessage = data.data.message !== undefined ? data.data.message : '未知错误';
+                            statusDiv.innerHTML = `<span style="color: red">错误: ${errorMessage}</span>`;
+                            console.error('SSE错误:', errorMessage);
+                            eventSource.close();
+                            break;
+
+                        default:
+                            console.log('未知事件类型:', data.event);
+                    }
+                } catch (parseError) {
+                    console.error('解析SSE数据失败:', parseError, '原始数据:', event.data);
+                }
+            };
+
+            eventSource.onerror = function(error) {
+                console.error('SSE连接错误:', error);
+                statusDiv.innerHTML = '<span style="color: red">连接错误，请重试</span>';
+                eventSource.close();
+            };
+
+            // 添加停止按钮
+            const stopBtn = document.createElement('button');
+            stopBtn.textContent = '停止播放';
+            stopBtn.style.marginTop = '10px';
+            stopBtn.style.padding = '8px 16px';
+            stopBtn.style.backgroundColor = '#f44336';
+            stopBtn.style.color = 'white';
+            stopBtn.style.border = 'none';
+            stopBtn.style.borderRadius = '4px';
+            stopBtn.style.cursor = 'pointer';
+
+            stopBtn.onclick = function() {
+                if (eventSource) {
+                    eventSource.close();
+                    statusDiv.textContent = '已停止播放';
+                    console.log('视频流已停止');
+                }
+            };
+
+            videoContainer.appendChild(stopBtn);
+
+            // 添加下载按钮
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = '下载完整视频';
+            downloadBtn.style.marginTop = '10px';
+            downloadBtn.style.marginLeft = '10px';
+            downloadBtn.style.padding = '8px 16px';
+            downloadBtn.style.backgroundColor = '#4CAF50';
+            downloadBtn.style.color = 'white';
+            downloadBtn.style.border = 'none';
+            downloadBtn.style.borderRadius = '4px';
+            downloadBtn.style.cursor = 'pointer';
+
+            downloadBtn.onclick = function() {
+                const downloadUrl = `${BASE_URL}/get_processed_video?homework_id=${encodeURIComponent(homeworkId)}&student_id=${encodeURIComponent(studentId)}&download=true`;
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `processed_video_${homeworkId}_${studentId}.mp4`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            };
+
+            videoContainer.appendChild(downloadBtn);
         }
 
         // 查看记录详情

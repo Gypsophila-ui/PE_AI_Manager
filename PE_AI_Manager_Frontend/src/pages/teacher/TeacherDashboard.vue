@@ -4,19 +4,11 @@
       <!-- 顶部导航栏 -->
       <div class="flex justify-between items-center py-4">
         <div class="flex items-center gap-3">
-          <button @click="goBack" class="text-2xl text-gray-600 hover:text-gray-800 transition-colors">
-            ←
-          </button>
-          <h1 class="text-2xl font-bold text-gray-800">体育作业平台</h1>
-        </div>
-        <div class="flex gap-4">
-          <button @click="goToAssistant" class="px-4 py-2 rounded-xl bg-purple-500 text-white hover:bg-purple-600 transition-all shadow-lg">
-            💬 AI助手
-          </button>
-          <button @click="logout" class="px-4 py-2 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow">
-            退出登录
+          <button @click="goBack" class="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+            返回
           </button>
         </div>
+
       </div>
 
       <!-- 页面标题 -->
@@ -548,11 +540,6 @@ const exportToExcel = () => {
 
 // 导航
 const goBack = () => router.push('/teacher')
-const goToAssistant = () => router.push('/teacher/assistant')
-const logout = () => {
-  localStorage.removeItem('user')
-  router.push('/login')
-}
 
 // 初始化
 onMounted(() => {

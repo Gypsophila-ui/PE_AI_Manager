@@ -1,4 +1,5 @@
 import apiClient from './axios';
+import SHA256 from 'crypto-js/sha256';
 
 // API错误处理函数
 const handleApiError = (error, operationType) => {
@@ -81,14 +82,9 @@ const handleApiError = (error, operationType) => {
   }
 };
 
-// SHA-256加密函数
+// SHA-256加密函数（使用crypto-js）
 const sha256 = async (str) => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hash));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
+  return SHA256(str).toString();
 };
 
 // 教师登录
