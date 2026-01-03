@@ -1,19 +1,6 @@
 <template>
   <div class="min-h-screen bg-white">
     <div class="max-w-7xl mx-auto p-6 space-y-8">
-      <!-- 顶部导航栏 -->
-      <div class="flex justify-between items-center py-4">
-        <h1 class="text-2xl font-bold text-gray-800">体育作业平台 - 教师端</h1>
-        <div class="flex gap-4">
-          <button @click="goHome" class="px-4 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600 transition-all shadow-md">
-            🏠 首页
-          </button>
-          <button @click="logout" class="px-4 py-2 rounded-full bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow">
-            退出登录
-          </button>
-        </div>
-      </div>
-
       <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold text-gray-800">📝 作业统计</h2>
       </div>
@@ -327,12 +314,6 @@ const formatDate = (dateString) => {
 
 const viewAssignmentDetails = (courseId, homeworkId) => {
   router.push(`/teacher/course/${courseId}/assignment/${homeworkId}`)
-}
-
-const goHome = () => router.push('/teacher')
-const logout = () => {
-  localStorage.removeItem('user')
-  router.push('/login')
 }
 
 onMounted(loadData)

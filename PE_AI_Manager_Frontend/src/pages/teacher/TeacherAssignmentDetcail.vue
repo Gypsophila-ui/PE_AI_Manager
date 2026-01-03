@@ -2,8 +2,8 @@
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
     <div class="max-w-3xl mx-auto p-6 flex justify-between items-center">
       <div class="flex items-center gap-2">
-        <button @click="goBack" class="text-2xl text-gray-600 hover:text-gray-800 transition-colors">
-          ←
+        <button @click="goBack" class="px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors">
+          返回
         </button>
         <h1 class="text-xl font-bold text-gray-800">作业管理</h1>
       </div>

@@ -111,24 +111,6 @@
           </div>
         </div>
 
-        <!-- 最终得分卡片 -->
-        <div class="mb-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl border-2 border-green-200">
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="text-lg font-bold text-gray-800 mb-1">最终得分</h4>
-              <p class="text-sm text-gray-600">教师评定的最终成绩</p>
-            </div>
-            <div v-if="finalScore !== null" class="text-right">
-              <div class="text-4xl font-bold text-green-600">{{ finalScore }}分</div>
-              <span class="text-sm text-green-700">已评分</span>
-            </div>
-            <div v-else class="text-right">
-              <div class="text-4xl font-bold text-gray-400">--</div>
-              <span class="text-sm text-gray-500">待评分</span>
-            </div>
-          </div>
-        </div>
-
         <!-- 作业描述与视频上传上下布局 -->
         <div class="space-y-6">
           <!-- 作业描述和AI评分说明 -->

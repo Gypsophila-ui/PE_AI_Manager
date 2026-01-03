@@ -68,12 +68,10 @@
         <div class="flex gap-2">
           <button @click="clearCurrentSession"
                   class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition-all flex items-center gap-2">
-            <span>🗑️</span>
             清空
           </button>
           <button @click="exportCurrentSession"
                   class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition-all flex items-center gap-2">
-            <span>📥</span>
             导出
           </button>
         </div>
