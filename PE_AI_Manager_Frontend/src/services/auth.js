@@ -257,11 +257,141 @@ export const changeStudentPassword = async (id, oldPassword, newPassword) => {
   }
 };
 
+// 教师修改个人信息
+export const changeTeacherInfo = async (id, jwt, name, gender, title, college, department) => {
+  const requestBody = {
+    first: id,
+    second: jwt,
+    third: name,
+    fourth: gender,
+    fifth: title,
+    sixth: college,
+    seventh: department
+  };
+  console.log('修改教师个人信息请求体:', requestBody);
+
+  try {
+    const response = await apiClient.post('/User/change_teacher_info', requestBody);
+    console.log('修改教师个人信息响应:', response.data);
+
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('修改教师个人信息错误:', error);
+    return handleApiError(error, 'info_change');
+  }
+};
+
+// 学生修改个人信息
+export const changeStudentInfo = async (id, jwt, name, gender, major, college, department) => {
+  const requestBody = {
+    first: id,
+    second: jwt,
+    third: name,
+    fourth: gender,
+    fifth: major,
+    sixth: college,
+    seventh: department
+  };
+  console.log('修改学生个人信息请求体:', requestBody);
+
+  try {
+    const response = await apiClient.post('/User/change_student_info', requestBody);
+    console.log('修改学生个人信息响应:', response.data);
+
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('修改学生个人信息错误:', error);
+    return handleApiError(error, 'info_change');
+  }
+};
+
+// 获取教师个人信息
+export const getTeacherInfo = async (id, jwt, userType, teacherId) => {
+  const requestBody = {
+    first: id,
+    second: jwt,
+    third: userType,
+    fourth: teacherId
+  };
+  console.log('获取教师个人信息请求体:', requestBody);
+
+  try {
+    const response = await apiClient.post('/User/get_teacher_info', requestBody);
+    console.log('获取教师个人信息响应:', response.data);
+
+    const data = response.data.data.split('\t\r');
+    console.log('解析后的教师信息:', {
+      name: data[0],
+      gender: data[1],
+      title: data[2],
+      college: data[3],
+      department: data[4]
+    });
+
+    return {
+      success: true,
+      data: {
+        name: data[0],
+        gender: data[1],
+        title: data[2],
+        college: data[3],
+        department: data[4]
+      }
+    };
+  } catch (error) {
+    console.error('获取教师个人信息错误:', error);
+    return handleApiError(error, 'get_info');
+  }
+};
+
+// 获取学生个人信息
+export const getStudentInfo = async (id, jwt, userType, studentId) => {
+  const requestBody = {
+    first: id,
+    second: jwt,
+    third: userType,
+    fourth: studentId
+  };
+  console.log('获取学生个人信息请求体:', requestBody);
+
+  try {
+    const response = await apiClient.post('/User/get_student_info', requestBody);
+    console.log('获取学生个人信息响应:', response.data);
+
+    const data = response.data.data.split('\t\r');
+    console.log('解析后的学生信息:', {
+      name: data[0],
+      gender: data[1],
+      major: data[2],
+      college: data[3],
+      department: data[4]
+    });
+
+    return {
+      success: true,
+      data: {
+        name: data[0],
+        gender: data[1],
+        major: data[2],
+        college: data[3],
+        department: data[4]
+      }
+    };
+  } catch (error) {
+    console.error('获取学生个人信息错误:', error);
+    return handleApiError(error, 'get_info');
+  }
+};
+
 export default {
   loginTeacher,
   loginStudent,
   registerTeacher,
   registerStudent,
   changeTeacherPassword,
-  changeStudentPassword
+  changeStudentPassword,
+  changeTeacherInfo,
+  changeStudentInfo,
+  getTeacherInfo,
+  getStudentInfo
 };
