@@ -30,14 +30,29 @@
 
       <div v-else class="space-y-6">
         <div
-          v-for="submission in submissions"
+          v-for="(submission, index) in submissions"
           :key="submission.id"
           class="bg-white rounded-3xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow"
+          :class="{ 'ring-2 ring-green-500': isLatestSubmission(index) }"
         >
           <div class="p-6">
             <div class="flex justify-between items-start mb-4">
               <div class="flex-1">
-                <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ submission.title }}</h3>
+                <div class="flex items-center gap-3 mb-2">
+                  <h3 class="text-2xl font-bold text-gray-800">{{ submission.title }}</h3>
+                  <span
+                    v-if="isLatestSubmission(index)"
+                    class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700"
+                  >
+                    当前有效提交
+                  </span>
+                  <span
+                    v-else
+                    class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600"
+                  >
+                    历史提交
+                  </span>
+                </div>
                 <div class="flex items-center gap-4 text-gray-600">
                   <span class="flex items-center gap-1">
                     {{ submission.courseName }}
@@ -62,7 +77,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+              <div v-if="isLatestSubmission(index)">
                 <h4 class="text-lg font-semibold text-gray-700 mb-3">AI 分析视频</h4>
                 <div v-if="submission.content_url" class="space-y-3">
                   <SSEVideoPlayer
@@ -76,24 +91,26 @@
                 </div>
               </div>
 
-              <div class="space-y-4">
-                <div>
-                  <h4 class="text-lg font-semibold text-gray-700 mb-2">AI 智能评价</h4>
-                  <div v-if="submission.AI_feedback" class="bg-indigo-50 rounded-xl p-4 border border-indigo-200 max-h-32 overflow-y-auto">
-                    <p class="text-indigo-900 text-sm whitespace-pre-wrap">{{ submission.AI_feedback }}</p>
+              <div :class="{ 'md:col-span-2': !isLatestSubmission(index) }">
+                <div class="space-y-4">
+                  <div>
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">AI 智能评价</h4>
+                    <div v-if="submission.AI_feedback" class="bg-indigo-50 rounded-xl p-4 border border-indigo-200 max-h-32 overflow-y-auto">
+                      <p class="text-indigo-900 text-sm whitespace-pre-wrap">{{ submission.AI_feedback }}</p>
+                    </div>
+                    <div v-else class="text-center py-4 text-gray-500 bg-gray-50 rounded-xl">
+                      AI 反馈暂未生成
+                    </div>
                   </div>
-                  <div v-else class="text-center py-4 text-gray-500 bg-gray-50 rounded-xl">
-                    AI 反馈暂未生成
-                  </div>
-                </div>
 
-                <div>
-                  <h4 class="text-lg font-semibold text-gray-700 mb-2">教师评语</h4>
-                  <div v-if="submission.teacher_feedback" class="bg-blue-50 rounded-xl p-4 border border-blue-200 max-h-32 overflow-y-auto">
-                    <p class="text-blue-900 text-sm whitespace-pre-wrap">{{ submission.teacher_feedback }}</p>
-                  </div>
-                  <div v-else class="text-center py-4 text-gray-500 bg-gray-50 rounded-xl">
-                    教师尚未留下评语
+                  <div>
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">教师评语</h4>
+                    <div v-if="submission.teacher_feedback" class="bg-blue-50 rounded-xl p-4 border border-blue-200 max-h-32 overflow-y-auto">
+                      <p class="text-blue-900 text-sm whitespace-pre-wrap">{{ submission.teacher_feedback }}</p>
+                    </div>
+                    <div v-else class="text-center py-4 text-gray-500 bg-gray-50 rounded-xl">
+                      教师尚未留下评语
+                    </div>
                   </div>
                 </div>
               </div>
@@ -101,7 +118,7 @@
 
             <div class="flex justify-end gap-3 mt-6">
               <button
-                v-if="submission.content_url"
+                v-if="isLatestSubmission(index) && submission.content_url"
                 @click="deleteVideo(submission)"
                 class="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg"
               >
@@ -308,6 +325,10 @@ const formatDate = (dateStr) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+const isLatestSubmission = (index) => {
+  return index === submissions.value.length - 1
 }
 
 const goBack = () => {
