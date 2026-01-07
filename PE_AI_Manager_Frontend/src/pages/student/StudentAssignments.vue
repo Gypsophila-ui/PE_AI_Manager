@@ -216,15 +216,39 @@
                     </div>
                   </div>
                 </div>
-                <!-- AI处理后的视频预览 - 使用组件库中的视频播放器 -->
+                <!-- AI处理后的视频预览 - 使用SSE流播放 -->
                 <div class="rounded-lg overflow-hidden border border-gray-300 w-full">
-                  <InlineVideoPlayer
-                    :src="processedVideoUrl"
-                    v-if="processedVideoUrl"
-                    class="w-full"
-                  />
-                  <div v-else class="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
-                    <p class="text-gray-500">视频预览待加载...</p>
+                  <div class="relative aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
+                    <canvas
+                      id="processed-video-canvas"
+                      class="w-full h-full object-contain"
+                      style="display: none;"
+                    ></canvas>
+                    <div
+                      v-if="!isPlayingProcessedVideo"
+                      class="absolute inset-0 flex items-center justify-center bg-gray-900"
+                    >
+                      <button
+                        @click="startProcessedVideoPlayback"
+                        class="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all shadow-lg"
+                      >
+                        ▶
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    id="processed-video-info"
+                    class="text-sm text-gray-600 bg-gray-100 rounded-lg p-3 mt-3"
+                  >
+                    点击播放按钮开始观看视频
+                  </div>
+                  <div v-if="isPlayingProcessedVideo" class="flex gap-2 mt-3">
+                    <button
+                      @click="stopProcessedVideoPlayback"
+                      class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
+                    >
+                      ⏹ 停止
+                    </button>
                   </div>
                 </div>
                 <div class="mt-4 flex justify-center">
@@ -284,11 +308,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { StudentAssignmentService } from '../../services/studentAssignments'
-import InlineVideoPlayer from '@/components/InlineVideoPlayer.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -302,6 +325,10 @@ const errorMessage = ref('')
 const finalScore = ref(null)
 const aiType = ref(null)
 const requiredCount = ref(null)
+
+// SSE流播放相关
+const isPlayingProcessedVideo = ref(false)
+const processedVideoEventSource = ref(null)
 
 // 文件上传相关（集成提交作业功能）
 const fileInput = ref(null)
@@ -497,6 +524,16 @@ const submitAssignment = async () => {
       // 更新本地状态
       processedVideoUrl.value = processedVideoUrlValue;
 
+      console.log('提交作业后设置 processedVideoUrl:', processedVideoUrl.value);
+
+      // 如果有处理后的视频URL，显示视频预览区域
+      if (processedVideoUrlValue) {
+        showProcessedVideo.value = true;
+        console.log('设置 showProcessedVideo = true');
+      } else {
+        console.log('processedVideoUrlValue 为空，不显示视频预览');
+      }
+
       // 更新作业状态为已完成
       if (assignment.value) {
         assignment.value.status = '已完成';
@@ -554,7 +591,112 @@ const submitAssignment = async () => {
   }
 }
 
+// SSE流播放处理后的视频
+const startProcessedVideoPlayback = () => {
+  const canvasId = 'processed-video-canvas'
+  const infoId = 'processed-video-info'
 
+  const canvas = document.getElementById(canvasId)
+  const infoDiv = document.getElementById(infoId)
+
+  if (!canvas || !infoDiv) {
+    alert('视频播放器初始化失败')
+    return
+  }
+
+  const ctx = canvas.getContext('2d')
+
+  isPlayingProcessedVideo.value = true
+  processedVideoEventSource.value = null
+
+  const streamUrl = processedVideoUrl.value
+
+  if (!streamUrl) {
+    alert('视频URL不存在')
+    stopProcessedVideoPlayback()
+    return
+  }
+
+  processedVideoEventSource.value = new EventSource(streamUrl)
+
+  processedVideoEventSource.value.onopen = function() {
+    infoDiv.innerHTML = '视频流连接成功，正在接收数据...'
+    canvas.style.display = 'block'
+  }
+
+  processedVideoEventSource.value.onmessage = function(event) {
+    try {
+      const data = JSON.parse(event.data)
+
+      switch (data.event) {
+        case 'video_info':
+          const width = data.data.width !== undefined ? data.data.width : 'N/A'
+          const height = data.data.height !== undefined ? data.data.height : 'N/A'
+          const fps = data.data.fps !== undefined ? data.data.fps : 30
+          infoDiv.innerHTML = `视频信息: ${width}x${height} @ ${fps}fps`
+          break
+
+        case 'frame':
+          const img = new Image()
+          img.onload = function() {
+            canvas.width = img.width
+            canvas.height = img.height
+            ctx.drawImage(img, 0, 0)
+            const frameIndex = data.data.frame_index !== undefined ? data.data.frame_index : 'N/A'
+            const timestamp = data.data.timestamp !== undefined ? data.data.timestamp.toFixed(2) : 'N/A'
+            infoDiv.innerHTML = `正在播放: 第 ${frameIndex} 帧 (${timestamp}秒)`
+          }
+          if (data.data && data.data.image) {
+            img.src = `data:image/jpeg;base64,${data.data.image}`
+          } else {
+            console.warn('接收到的帧数据缺少image字段:', data)
+          }
+          break
+
+        case 'complete':
+          infoDiv.innerHTML = '视频播放完成'
+          stopProcessedVideoPlayback()
+          break
+
+        case 'error':
+          const errorMessage = data.data && data.data.message ? data.data.message : '未知错误'
+          infoDiv.innerHTML = `错误: ${errorMessage}`
+          stopProcessedVideoPlayback()
+          alert(`视频流错误: ${errorMessage}`)
+          break
+      }
+    } catch (e) {
+      console.error('解析SSE数据出错:', e)
+      infoDiv.innerHTML = `解析数据出错: ${e.message}`
+    }
+  }
+
+  processedVideoEventSource.value.onerror = function(err) {
+    console.error('SSE连接错误:', err)
+    infoDiv.innerHTML = '连接错误，请重试'
+    stopProcessedVideoPlayback()
+  }
+}
+
+const stopProcessedVideoPlayback = () => {
+  if (processedVideoEventSource.value) {
+    processedVideoEventSource.value.close()
+    processedVideoEventSource.value = null
+  }
+  isPlayingProcessedVideo.value = false
+
+  const canvasId = 'processed-video-canvas'
+  const infoId = 'processed-video-info'
+  const canvas = document.getElementById(canvasId)
+  const infoDiv = document.getElementById(infoId)
+
+  if (canvas) {
+    canvas.style.display = 'none'
+  }
+  if (infoDiv) {
+    infoDiv.innerHTML = '点击播放按钮开始观看视频'
+  }
+}
 
 // 下载处理后的视频
 const downloadProcessedVideo = async () => {
@@ -575,5 +717,10 @@ const downloadProcessedVideo = async () => {
 onMounted(() => {
   fetchAssignmentDetails()
   fetchFinalScore()
+})
+
+// 组件卸载时清理SSE连接
+onBeforeUnmount(() => {
+  stopProcessedVideoPlayback()
 })
 </script>
