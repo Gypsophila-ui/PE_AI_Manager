@@ -155,6 +155,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs';
 import apiClient from '../../services/axios.js'
+import { cacheService } from '../../services/DataCacheService.js'
 
 const router = useRouter()
 
@@ -296,6 +297,8 @@ const submitForm = async () => {
         return { courseId, success: false, stage: 'set_AI_type' }
       }
 
+      // 缓存清理
+      cacheService.invalidate(`course_homework_ids:${courseId}`);
       return { courseId, success: true }
     })
 

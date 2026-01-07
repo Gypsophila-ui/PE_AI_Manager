@@ -109,6 +109,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import apiClient from '../services/axios.js'
 import { controllers } from 'chart.js'
+import { cacheService } from '../services/DataCacheService.js'
 
 const router = useRouter()
 
@@ -227,6 +228,8 @@ const deleteCourse = async (courseId) => {
     if (resp.data.success) {  // 成功标志
       alert('课程删除成功')
       teacherCourses.value = teacherCourses.value.filter(c => c.id !== courseId)
+      cacheService.invalidate(`teacher_course_ids:${teacherId}`)
+      cacheService.invalidate(`course_info:${courseId}`)
     } else {
       alert('删除失败：' + (resp.data.message || '未知错误'))
     }

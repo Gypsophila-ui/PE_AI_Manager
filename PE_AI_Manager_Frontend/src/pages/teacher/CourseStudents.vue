@@ -111,6 +111,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import apiClient from '../../services/axios.js'
+import { cacheService } from '../../services/DataCacheService.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -133,11 +134,13 @@ const fetchStudents = async () => {
 
   try {
     // 1. 获取学生ID列表
-    const idResp = await apiClient.post('/Course_student/get_student_id_by_course', {
-      First: teacherId,
-      Second: jwt,
-      Third: courseId
-    })
+    const idResp = await cacheService.fetchWithCache(`course_student_ids:${courseId}`, () =>
+      apiClient.post('/Course_student/get_student_id_by_course', {
+        First: teacherId,
+        Second: jwt,
+        Third: courseId
+      })
+    )
 
     if (!idResp.data.success) {
       loading.value = false
@@ -155,12 +158,15 @@ const fetchStudents = async () => {
     // 2. 并行获取每个学生的个人信息
     const studentPromises = studentIds.map(async (id) => {
       try {
-        const infoResp = await apiClient.post('/User/get_student_info', {
-          First: teacherId,      // 查询者ID
-          Second: jwt,
-          Third: '1',            // user_type: 1=教师
-          Fourth: id             // student_id
-        })
+        // 使用学生学号作为缓存键
+        const infoResp = await cacheService.fetchWithCache(`user_info:${id}`, () =>
+          apiClient.post('/User/get_student_info', {
+            First: teacherId,
+            Second: jwt,
+            Third: '1',
+            Fourth: id
+          })
+        )
 
         if (!infoResp.data.success) {
           return { id, name: null, gender: null, major: null, college: null, department: null }
@@ -208,6 +214,10 @@ const removeStudent = async (studentId) => {
     })
 
     if (resp.data.success) {
+      // 缓存清理
+      cacheService.invalidate(`course_student_ids:${courseId}`);
+      cacheService.invalidate(`course_student_count:${courseId}`);
+
       alert('学生已成功移除')
       students.value = students.value.filter(s => s.id !== studentId)
     } else {

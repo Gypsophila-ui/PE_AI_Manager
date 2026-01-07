@@ -160,6 +160,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import apiClient from '../../services/axios.js'
+import { cacheService } from '../../services/DataCacheService.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -267,6 +268,11 @@ const submitForm = async () => {
         Fourth: form.value.is_active ? '1' : '0'
       })
 
+      // 清除该特定课程的详细信息缓存
+      cacheService.invalidate(`course_info:${courseId}`);
+      // 清除该教师的课程列表 ID 缓存（防止列表页显示的名称没更新）
+      cacheService.invalidate(`teacher_course_ids:${teacherId}`);
+
       alert('课程修改成功！')
     } else {
       // 新建课程
@@ -301,6 +307,10 @@ const submitForm = async () => {
       })
 
       form.value.code = newCode
+
+      // 清除教师的课程列表缓存
+      cacheService.invalidate(`teacher_course_ids:${teacherId}`);
+
       alert('课程创建成功！邀请码已生成，可复制分享给学生')
     }
 
