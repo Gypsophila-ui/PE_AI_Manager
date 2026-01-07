@@ -65,38 +65,11 @@
               <div>
                 <h4 class="text-lg font-semibold text-gray-700 mb-3">AI 分析视频</h4>
                 <div v-if="submission.content_url" class="space-y-3">
-                  <div class="relative aspect-video bg-black rounded-xl overflow-hidden shadow-lg">
-                    <canvas
-                      :id="'video-canvas-' + submission.id"
-                      class="w-full h-full object-contain"
-                      style="display: none;"
-                    ></canvas>
-                    <div
-                      v-if="!submission.isPlaying"
-                      class="absolute inset-0 flex items-center justify-center bg-gray-900"
-                    >
-                      <button
-                        @click="startStreamPlayback(submission)"
-                        class="px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all shadow-lg"
-                      >
-                        ▶
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    :id="'video-info-' + submission.id"
-                    class="text-sm text-gray-600 bg-gray-100 rounded-lg p-3"
-                  >
-                    点击播放按钮开始观看视频
-                  </div>
-                  <div v-if="submission.isPlaying" class="flex gap-2">
-                    <button
-                      @click="stopStreamPlayback(submission)"
-                      class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
-                    >
-                      ⏹ 停止
-                    </button>
-                  </div>
+                  <SSEVideoPlayer
+                    :stream-url="submission.content_url"
+                    @playback-started="submission.isPlaying = true"
+                    @playback-stopped="submission.isPlaying = false"
+                  />
                 </div>
                 <div v-else class="aspect-video bg-gray-100 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
                   <p class="text-gray-500">暂无AI分析视频</p>
@@ -146,6 +119,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import apiClient from '../../services/axios.js'
+import SSEVideoPlayer from '../../components/SSEVideoPlayer.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -161,106 +135,6 @@ const jwt = currentUser.token || ''
 
 const courseId = route.params.courseId || ''
 const assignmentId = route.params.assignmentId || ''
-
-const startStreamPlayback = (submission) => {
-  const canvasId = `video-canvas-${submission.id}`
-  const infoId = `video-info-${submission.id}`
-
-  const canvas = document.getElementById(canvasId)
-  const infoDiv = document.getElementById(infoId)
-
-  if (!canvas || !infoDiv) {
-    alert('视频播放器初始化失败')
-    return
-  }
-
-  const ctx = canvas.getContext('2d')
-
-  submission.isPlaying = true
-  submission.eventSource = null
-
-  const streamUrl = submission.content_url
-
-  submission.eventSource = new EventSource(streamUrl)
-
-  submission.eventSource.onopen = function() {
-    infoDiv.innerHTML = '视频流连接成功，正在接收数据...'
-    canvas.style.display = 'block'
-  }
-
-  submission.eventSource.onmessage = function(event) {
-    try {
-      const data = JSON.parse(event.data)
-
-      switch (data.event) {
-        case 'video_info':
-          const width = data.data.width !== undefined ? data.data.width : 'N/A'
-          const height = data.data.height !== undefined ? data.data.height : 'N/A'
-          const fps = data.data.fps !== undefined ? data.data.fps : 30
-          infoDiv.innerHTML = `视频信息: ${width}x${height} @ ${fps}fps`
-          break
-
-        case 'frame':
-          const img = new Image()
-          img.onload = function() {
-            canvas.width = img.width
-            canvas.height = img.height
-            ctx.drawImage(img, 0, 0)
-            const frameIndex = data.data.frame_index !== undefined ? data.data.frame_index : 'N/A'
-            const timestamp = data.data.timestamp !== undefined ? data.data.timestamp.toFixed(2) : 'N/A'
-            infoDiv.innerHTML = `正在播放: 第 ${frameIndex} 帧 (${timestamp}秒)`
-          }
-          if (data.data && data.data.image) {
-            img.src = `data:image/jpeg;base64,${data.data.image}`
-          } else {
-            console.warn('接收到的帧数据缺少image字段:', data)
-          }
-          break
-
-        case 'complete':
-          infoDiv.innerHTML = '视频播放完成'
-          stopStreamPlayback(submission)
-          break
-
-        case 'error':
-          const errorMessage = data.data && data.data.message ? data.data.message : '未知错误'
-          infoDiv.innerHTML = `错误: ${errorMessage}`
-          stopStreamPlayback(submission)
-          alert(`视频流错误: ${errorMessage}`)
-          break
-      }
-    } catch (e) {
-      console.error('解析SSE数据出错:', e)
-      infoDiv.innerHTML = `解析数据出错: ${e.message}`
-    }
-  }
-
-  submission.eventSource.onerror = function(err) {
-    console.error('SSE连接错误:', err)
-    infoDiv.innerHTML = '连接错误，请重试'
-    stopStreamPlayback(submission)
-  }
-}
-
-const stopStreamPlayback = (submission) => {
-  if (submission.eventSource) {
-    submission.eventSource.close()
-    submission.eventSource = null
-  }
-  submission.isPlaying = false
-
-  const canvasId = `video-canvas-${submission.id}`
-  const infoId = `video-info-${submission.id}`
-  const canvas = document.getElementById(canvasId)
-  const infoDiv = document.getElementById(infoId)
-
-  if (canvas) {
-    canvas.style.display = 'none'
-  }
-  if (infoDiv) {
-    infoDiv.innerHTML = '点击播放按钮开始观看视频'
-  }
-}
 
 const loadSubmissions = async () => {
   loading.value = true

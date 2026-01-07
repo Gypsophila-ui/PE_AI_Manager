@@ -204,27 +204,24 @@ export class StudentAssignmentService {
 
       case 'final_stats':
         console.log('收到 final_stats 事件:', JSON.stringify(data.data, null, 2));
-        if (data.data.download_url) {
-          let downloadUrl = data.data.download_url;
-          if (!downloadUrl.startsWith('http')) {
-            if (!downloadUrl.startsWith('/video')) {
-              downloadUrl = `/video${downloadUrl}`;
-            }
-          }
 
-          const playbackUrl = `/video/get_processed_video?homework_id=${assignmentId}&student_id=${studentId}&download=false`;
+        const sseStreamUrl = `/video/get_processed_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&download=false`;
+        const downloadUrl = `/video/get_processed_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&download=true`;
 
-          processedVideoUrlValue.value = playbackUrl;
+        console.log('构造的 SSE 流播放 URL:', sseStreamUrl);
+        console.log('构造的下载 URL:', downloadUrl);
 
-          aiResult.value = {
-            final_count: data.data.max_count,
-            processed_frame_count: data.data.processed_frame_count,
-            total_time: data.data.total_time,
-            video_url: playbackUrl || data.data.download_url || ''
-          };
+        aiResult.value = {
+          final_count: data.data.max_count,
+          processed_frame_count: data.data.processed_frame_count,
+          total_time: data.data.total_time,
+          video_url: sseStreamUrl || ''
+        };
 
-          console.log('设置 aiResult.value:', JSON.stringify(aiResult.value, null, 2));
-        }
+        processedVideoUrlValue.value = sseStreamUrl;
+
+        console.log('设置 aiResult.value:', JSON.stringify(aiResult.value, null, 2));
+        console.log('设置 processedVideoUrlValue.value:', processedVideoUrlValue.value);
         break;
 
       case 'error':
@@ -629,13 +626,11 @@ export class StudentAssignmentService {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const studentId = user.id || 'student1';
 
-        // 调用get_processed_video API
-        const videoResult = await this.getProcessedVideo(assignmentId, studentId);
-        if (videoResult && videoResult.videoUrl) {
-          downloadUrl = videoResult.videoUrl;
-        }
+        // 构造下载URL（使用download=true参数）
+        downloadUrl = `/video/get_processed_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&download=true`;
+        console.log('构造的下载URL:', downloadUrl);
       } catch (error) {
-        console.error('获取处理后的视频用于下载失败:', error);
+        console.error('构造下载URL失败:', error);
         throw new Error('无法获取视频文件进行下载');
       }
     }
