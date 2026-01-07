@@ -134,11 +134,27 @@
     </div>
 
     <!-- 视频播放对话框 -->
-    <VideoDialogPlayer
-      v-model:visible="videoDialogVisible"
-      :video-url="currentVideoUrl"
+    <el-dialog
+      v-model="videoDialogVisible"
       :title="currentVideoTitle"
-    />
+      width="800px"
+      top="5vh"
+      :destroy-on-close="true"
+      @closed="currentVideoUrl = ''"
+    >
+      <div class="bg-black rounded-xl p-2">
+        <SSEVideoPlayer
+          v-if="videoDialogVisible && currentVideoUrl"
+      :stream-url="currentVideoUrl"
+      />
+      </div>
+
+      <template #footer>
+        <div class="flex justify-center pb-4">
+          <el-button @click="videoDialogVisible = false" type="info" plain>关闭预览</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -146,7 +162,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {apiClient, aiClient} from '../../services/axios.js'
-import VideoDialogPlayer from '@/components/VideoDialogPlayer.vue'
+import SSEVideoPlayer from '@/components/SSEVideoPlayer.vue'
 import { cacheService } from '../../services/DataCacheService.js'
 
 const route = useRoute()
@@ -347,8 +363,12 @@ const saveGrade = async (sub) => {
 
 const viewVideo = (studentId, studentName = '') => {
   if (!studentId) return
-  currentVideoUrl.value = aiClient.defaults.baseURL + '/get_processed_video?homework_id=' + assignmentId + '&student_id=' + studentId + '&download=false'
-  currentVideoTitle.value = `${studentName ? studentName + ' - ' + assignmentTitle.value + ' ' : ''}AI 分析视频`
+
+  // 构造 SSE 流地址
+  const baseUrl = aiClient.defaults.baseURL
+  currentVideoUrl.value = `${baseUrl}/get_processed_video?homework_id=${assignmentId}&student_id=${studentId}&download=false`
+
+  currentVideoTitle.value = `正在查看：${studentName} 的 AI 分析`
   videoDialogVisible.value = true
 }
 
