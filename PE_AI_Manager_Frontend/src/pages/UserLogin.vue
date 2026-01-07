@@ -71,20 +71,7 @@
           </button>
         </form>
 
-        <!-- 测试账户信息 -->
-        <div class="mt-6 p-4 bg-sky-500/5 rounded-xl border border-sky-500/20">
-          <h3 class="text-lg font-semibold text-sky-500 mb-3">测试账户</h3>
-          <div class="space-y-3">
-            <div>
-              <p class="text-sm text-gray-600">学生端：</p>
-              <p class="text-sm font-medium">用户名：student001 | 密码：123456</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-600">教师端：</p>
-              <p class="text-sm font-medium">用户名：teacher001 | 密码：123456</p>
-            </div>
-          </div>
-        </div>
+
 
         <!-- 注册链接 -->
         <div class="mt-6 text-center">

@@ -323,7 +323,7 @@ const fetchCourseDetails = async () => {
       name: c[1],
       info: c[2] || '',
       code: c[3],
-      subject: '体育',
+      subject: c[3] || '未知课号',
       is_active: c[5],
       assignments: []
     }

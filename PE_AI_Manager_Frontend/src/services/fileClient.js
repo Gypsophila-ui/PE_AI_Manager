@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://47.121.177.100:5002';
+const BASE_URL = '/Teaching-video';
 
 export const fileClient = axios.create({
   baseURL: BASE_URL,

@@ -168,6 +168,7 @@ const loadCourses = async () => {
         name: courseRespDataArray[1],
         info: courseRespDataArray[2],
         code: courseRespDataArray[3],
+        subject: courseRespDataArray[3] || '未知课号',
         semester: courseRespDataArray[4],
         is_active: courseRespDataArray[5],
         created_time: courseRespDataArray[6],

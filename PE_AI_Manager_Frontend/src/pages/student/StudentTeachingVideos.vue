@@ -22,7 +22,7 @@
         <section class="flex flex-col md:flex-row md:justify-between md:items-center gap-6">
           <div>
             <h2 class="text-4xl font-bold text-gray-800 mb-2">🎥 教学视频</h2>
-            <p class="text-gray-600">观看教师发布的体育教学视频，提升技能</p>
+
           </div>
           <select v-model="selectedCourse"
                   @change="loadVideos"
@@ -34,14 +34,14 @@
           </select>
         </section>
 
-        <!-- 视频网格 -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- 视频列表 - 纵向排布 -->
+        <section class="flex flex-col items-center gap-6">
           <div v-for="video in videos"
                :key="video.id"
-               class="bg-white rounded-3xl shadow-xl overflow-hidden transition-all hover:shadow-2xl cursor-pointer"
+               class="w-full max-w-2xl bg-white rounded-3xl shadow-xl overflow-hidden transition-all hover:shadow-2xl cursor-pointer"
                @click="playVideo(video)">
             <div class="relative">
-              <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
+              <div class="w-full h-64 bg-gray-200 flex items-center justify-center">
                 <span class="text-6xl">🎬</span>  <!-- 占位封面 -->
               </div>
               <div class="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -72,18 +72,17 @@
         </section>
       </div>
 
-      <!-- 全屏播放器 -->
-      <div v-if="playingVideo" class="fixed inset-0 bg-black z-50 flex items-center justify-center p-8">
+      <!-- 内联视频播放器 -->
+      <div v-if="showVideoPlayer" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
         <div class="relative w-full max-w-5xl">
-          <button @click="playingVideo = null" class="absolute -top-12 right-0 text-white text-3xl hover:text-gray-300">
+          <button @click="closeVideoPlayer" class="absolute -top-12 right-0 text-white text-3xl hover:text-gray-300 transition-colors z-10">
             ✕
           </button>
-          <video :src="playingVideo.content_url" controls autoplay class="w-full rounded-2xl shadow-2xl">
-            您的浏览器不支持视频播放
-          </video>
-          <div class="mt-6 text-white">
-            <h3 class="text-2xl font-bold mb-2">{{ playingVideo.title }}</h3>
-            <p class="text-lg opacity-90">{{ playingVideo.description }}</p>
+          <div class="bg-black rounded-2xl overflow-hidden shadow-2xl" style="height: 70vh;">
+            <InlineVideoPlayer :src="playingVideoUrl" />
+          </div>
+          <div class="mt-4 text-white text-center">
+            <h3 class="text-2xl font-bold mb-2">{{ playingVideoTitle }}</h3>
           </div>
         </div>
       </div>
@@ -94,18 +93,20 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import apiClient from '../../services/axios.js'  // 你的 axios 封装
+import apiClient from '../../services/axios.js'
+import InlineVideoPlayer from '../../components/InlineVideoPlayer.vue'
 
 const router = useRouter()
 const route = useRoute()
 
-// 获取路由中的 courseId 参数
 const courseIdFromRoute = route.params.courseId || ''
 
-const courses = ref([])      // 课程列表 {id, name}
-const videos = ref([])       // 视频列表
+const courses = ref([])
+const videos = ref([])
 const selectedCourse = ref(courseIdFromRoute || 'all')
-const playingVideo = ref(null)
+const showVideoPlayer = ref(false)
+const playingVideoUrl = ref('')
+const playingVideoTitle = ref('')
 const loading = ref(true)
 const errorMsg = ref('')
 
@@ -266,7 +267,36 @@ const formatDate = (dateString) => {
 }
 
 const playVideo = (video) => {
-  playingVideo.value = video
+  console.log('播放视频:', video)
+  console.log('原始视频URL:', video.content_url)
+
+  let videoUrl = video.content_url
+
+  if (videoUrl && videoUrl.includes('http://47.121.177.100:5002')) {
+    let filename = ''
+    if (videoUrl) {
+      const lastSlashIndex = videoUrl.lastIndexOf('/')
+      if (lastSlashIndex !== -1) {
+        filename = videoUrl.substring(lastSlashIndex + 1)
+      } else {
+        filename = videoUrl
+      }
+    }
+    videoUrl = `/Teaching-video/files/${filename}`
+    console.log('转换后的视频URL:', videoUrl)
+  }
+
+  playingVideoUrl.value = videoUrl
+  playingVideoTitle.value = video.title
+  showVideoPlayer.value = true
+
+  console.log('播放器URL:', playingVideoUrl.value)
+}
+
+const closeVideoPlayer = () => {
+  showVideoPlayer.value = false
+  playingVideoUrl.value = ''
+  playingVideoTitle.value = ''
 }
 
 const goBack = () => {

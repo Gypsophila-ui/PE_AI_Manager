@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-    <div class="max-w-6xl mx-auto p-6 space-y-8">
+    <div class="max-w-3xl mx-auto p-6 space-y-8">
       <!-- 页面标题 -->
       <section class="flex items-center gap-4">
         <button @click="goBack" class="px-6 py-3 rounded-xl bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all shadow">
@@ -34,7 +34,7 @@
             <p class="text-gray-600 mb-4">{{ course.description }}</p>
             <div class="flex items-center gap-4">
               <div class="flex items-center gap-2 text-gray-600">
-                <span class="text-gray-400">学科:</span>
+                <span class="text-gray-400">课号:</span>
                 <span>{{ course.subject }}</span>
               </div>
               <div class="flex items-center gap-2 text-gray-600">
@@ -78,8 +78,8 @@
         </div>
 
         <!-- 视频列表 -->
-        <div v-else-if="teachingVideos.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="video in teachingVideos" :key="video.id"
+        <div v-else-if="teachingVideos.length > 0">
+          <div v-for="video in teachingVideos.slice(0, 1)" :key="video.id"
                class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-md p-4 hover:shadow-lg transition-all">
             <!-- 视频封面或播放器 -->
             <div class="relative aspect-video bg-gray-200 rounded-lg mb-3 overflow-hidden">
@@ -278,7 +278,7 @@ const fetchCourseDetails = async () => {
                   deadline: assignmentData[2] || '待定',
                   create_time: assignmentData[3] || '',
                   course_id: courseId,
-                  subject: '体育',
+                  subject: courseCode || '未知课号',
                   status: new Date(assignmentData[2]) > new Date() ? '进行中' : '已截止',
                   points: 100
                 }
@@ -292,7 +292,7 @@ const fetchCourseDetails = async () => {
                 deadline: '待定',
                 create_time: '',
                 course_id: courseId,
-                subject: '体育',
+                subject: courseCode || '未知课号',
                 status: '进行中',
                 points: 100
               }
@@ -331,7 +331,7 @@ const fetchCourseDetails = async () => {
           id: courseId,
           name: courseName || '未命名课程',
           description: courseDescription || '暂无描述',
-          subject: '体育',
+          subject: courseCode || '未知课号',
           status: isActive === '1' ? '进行中' : '未发布',
           assignments: assignments,
           teacherId: teacherId,
@@ -357,7 +357,7 @@ const fetchCourseDetails = async () => {
       id: courseId,
       name: '默认课程',
       description: '这是一个默认课程的描述。',
-      subject: '体育',
+      subject: courseId || '未知课号',
       status: '进行中',
       assignments: [
         {
@@ -479,7 +479,7 @@ const fetchTeachingVideos = async () => {
             filename = videoUrl
           }
         }
-        const correctedUrl = `http://47.121.177.100:5002/files/${filename}`
+        const correctedUrl = `/Teaching-video/files/${filename}`
 
         return {
           id: classId,

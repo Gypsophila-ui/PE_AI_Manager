@@ -234,7 +234,7 @@ const fetchCourseList = async () => {
                 name: courseName,
                 description: courseDescription,
                 code: courseCode,
-                subject: '体育',
+                subject: courseCode || '未知课号',
                 status: isActive === '1' ? '进行中' : '已结束',
                 term: courseTerm,
                 createTime: createTime,

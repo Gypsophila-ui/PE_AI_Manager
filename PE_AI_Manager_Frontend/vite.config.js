@@ -3,12 +3,13 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import ElementPlus from 'unplugin-element-plus/vite'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
+    ElementPlus(),
   ],
   resolve: {
     alias: {
@@ -53,6 +54,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/chat/, '')
+      },
+      '/Teaching-video': {
+        target: 'http://47.121.177.100:5002',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/Teaching-video/, '')
       }
 
 

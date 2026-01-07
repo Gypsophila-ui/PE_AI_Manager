@@ -229,8 +229,23 @@ const filteredVideos = computed(() => {
   return videos.value.filter(v => v.courseId === selectedCourseFilter.value)
 })
 
-// 路径修正：/video_data/ → /files/
-const getPlayUrl = (url) => url ? url.replace('/video_data/', '/files/') : ''
+// 路径修正：将完整URL转换为相对路径
+const getPlayUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http://47.121.177.100:5002')) {
+    let filename = ''
+    if (url) {
+      const lastSlashIndex = url.lastIndexOf('/')
+      if (lastSlashIndex !== -1) {
+        filename = url.substring(lastSlashIndex + 1)
+      } else {
+        filename = url
+      }
+    }
+    return `/Teaching-video/files/${filename}`
+  }
+  return url
+}
 
 // 点击卡片弹窗播放
 const openPlayDialog = (video) => {
@@ -275,7 +290,8 @@ const generateVideoMeta = (url, callback) => {
 // 上传成功回调
 const onVideoUploaded = (result) => {
   if (result && result.url) {
-    videoForm.value.url = result.url
+    // 将完整URL转换为相对路径存储
+    videoForm.value.url = getPlayUrl(result.url)
     ElMessage.success('视频上传成功！封面和时长加载中...')
 
     // 立即生成封面和时长（仅用于当前表单预览）
@@ -467,7 +483,7 @@ const loadVideos = async () => {
           courseId: courseId,
           title: d[0] || '无标题',
           description: d[1] || '暂无描述',
-          url: d[2] || '',
+          url: getPlayUrl(d[2] || ''),
           cover: defaultCover,  // 占位
           duration: '加载中...',
           createdAt: d[3] || ''
