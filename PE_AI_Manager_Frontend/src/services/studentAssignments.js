@@ -204,7 +204,7 @@ export class StudentAssignmentService {
 
       case 'final_stats':
         console.log('收到 final_stats 事件:', JSON.stringify(data.data, null, 2));
-        
+
         const sseStreamUrl = `/video/get_processed_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&download=false`;
         const downloadUrl = `/video/get_processed_video?homework_id=${encodeURIComponent(assignmentId)}&student_id=${encodeURIComponent(studentId)}&download=true`;
 
@@ -215,7 +215,7 @@ export class StudentAssignmentService {
           final_count: data.data.max_count,
           processed_frame_count: data.data.processed_frame_count,
           total_time: data.data.total_time,
-          video_url: downloadUrl || ''
+          video_url: sseStreamUrl || ''
         };
 
         processedVideoUrlValue.value = sseStreamUrl;
