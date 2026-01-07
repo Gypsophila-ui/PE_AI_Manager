@@ -147,6 +147,7 @@ import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import apiClient from '../../services/axios.js'
 import dayjs from 'dayjs';
+import { cacheService } from '../../services/DataCacheService.js'
 
 const router = useRouter()
 
@@ -178,12 +179,20 @@ const loadData = async () => {
   submissions.value = []
 
   try {
-    const courseResp = await apiClient.post('/Course/get_course_id_by_teacher', { First: teacherId, Second: jwt })
-    if (!courseResp.data.success || !courseResp.data.data) return
+    // 1. 教师课程 ID 列表
+    const courseIdResp = await cacheService.fetchWithCache(`teacher_course_ids:${teacherId}`, () =>
+      apiClient.post('/Course/get_course_id_by_teacher', { First: teacherId, Second: jwt })
+    )
+    if (!courseIdResp.data.success || !courseIdResp.data.data) return
 
-    const courseIds = courseResp.data.data.split('\t\r').filter(Boolean)
+    const courseIds = courseIdResp.data.data.split('\t\r').filter(Boolean)
 
-    const coursePromises = courseIds.map(id => apiClient.post('/Course/get_info_by_course_id', { First: id }))
+    // 2. 课程详情 (并行缓存)
+    const coursePromises = courseIds.map(id =>
+      cacheService.fetchWithCache(`course_info:${id}`, () =>
+        apiClient.post('/Course/get_info_by_course_id', { First: id })
+      )
+    )
     const courseResps = await Promise.all(coursePromises)
 
     courses.value = courseResps
@@ -195,31 +204,46 @@ const loadData = async () => {
       .filter(Boolean)
 
     for (const courseId of courseIds) {
-      const hwResp = await apiClient.post('/Homework/get_homework_id_by_course', {
-        First: '1', Second: teacherId, Third: jwt, Fourth: courseId
-      })
+      // 3. 课程下的作业 ID 列表
+      const hwResp = await cacheService.fetchWithCache(`course_homework_ids:${courseId}`, () =>
+        apiClient.post('/Homework/get_homework_id_by_course', {
+          First: '1', Second: teacherId, Third: jwt, Fourth: courseId
+        })
+      )
       if (!hwResp.data.success || !hwResp.data.data) continue
       const hwIds = hwResp.data.data.split('\t\r').filter(Boolean)
 
-      const studentResp = await apiClient.post('/Course_student/get_student_id_by_course', {
-        First: teacherId, Second: jwt, Third: courseId
-      })
+      // 4. 课程学生总数
+      const studentResp = await cacheService.fetchWithCache(`course_student_ids:${courseId}`, () =>
+        apiClient.post('/Course_student/get_student_id_by_course', {
+          First: teacherId, Second: jwt, Third: courseId
+        })
+      )
       const totalStudents = studentResp.data.success && studentResp.data.data
         ? studentResp.data.data.split('\t\r').filter(Boolean).length
         : 0
 
       for (const hwId of hwIds) {
-        const infoResp = await apiClient.post('/Homework/get_info_by_homework_id', { First: courseId, Second: hwId })
+        // 5. 作业基本信息
+        const infoResp = await cacheService.fetchWithCache(`homework_info:${hwId}`, () =>
+          apiClient.post('/Homework/get_info_by_homework_id', { First: courseId, Second: hwId })
+        )
         if (!infoResp.data.success) continue
         const infoParts = infoResp.data.data.split('\t\r').filter(Boolean)
         const title = infoParts[0] || '未命名作业'
 
-        const aiResp = await apiClient.post('/Homework/get_AI_type', { First: hwId })
+        // 6. AI 类型配置
+        const aiResp = await cacheService.fetchWithCache(`homework_ai_config:${hwId}`, () =>
+          apiClient.post('/Homework/get_AI_type', { First: hwId })
+        )
         const rawAiType = aiResp.data.data.split('\t\r')[0] || 'squat'
 
-        const submitResp = await apiClient.post('/Homework/get_final_submit', {
-          First: teacherId, Second: jwt, Third: courseId, Fourth: hwId
-        })
+        // 7. 提交列表
+        const submitResp = await cacheService.fetchWithCache(`final_submits:${hwId}`, () =>
+          apiClient.post('/Homework/get_final_submit', {
+            First: teacherId, Second: jwt, Third: courseId, Fourth: hwId
+          })
+        )
         if (!submitResp.data.success || !submitResp.data.data) continue
 
         const pairs = submitResp.data.data.split('\t\r').filter(Boolean)
@@ -227,9 +251,12 @@ const loadData = async () => {
           const [studentId, submitId] = pair.split('\n')
           if (submitId === '-1' || submitId === '-2') continue
 
-          const detailResp = await apiClient.post('/Homework/get_submit_info', {
-            First: '1', Second: teacherId, Third: jwt, Fourth: submitId
-          })
+          // 8. 具体的单条提交详情
+          const detailResp = await cacheService.fetchWithCache(`submit_detail:${submitId}`, () =>
+            apiClient.post('/Homework/get_submit_info', {
+              First: '1', Second: teacherId, Third: jwt, Fourth: submitId
+            })
+          )
 
           if (detailResp.data.success && detailResp.data.data) {
             const raw = detailResp.data.data.trim().replace(/\t\r$/g, '')

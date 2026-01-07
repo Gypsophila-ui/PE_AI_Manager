@@ -248,6 +248,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import dayjs from 'dayjs';
 import apiClient from '../../services/axios.js'
+import { cacheService } from '../../services/DataCacheService.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -307,8 +308,10 @@ const fetchCourseDetails = async () => {
   error.value = false
 
   try {
-    // 1. 获取课程基本信息
-    const courseResp = await apiClient.post('/Course/get_info_by_course_id', { First: courseId })
+    // 1. 获取课程基本信息 (使用缓存)
+    const courseResp = await cacheService.fetchWithCache(`course_info:${courseId}`, () =>
+      apiClient.post('/Course/get_info_by_course_id', { First: courseId })
+    )
     if (!courseResp.data.success) {
       errorMessage.value = '课程不存在或已被删除'
       error.value = true
@@ -328,13 +331,12 @@ const fetchCourseDetails = async () => {
       assignments: []
     }
 
-    // 2. 获取作业ID列表
-    const homeworkResp = await apiClient.post('/Homework/get_homework_id_by_course', {
-      First: '1',
-      Second: teacherId,
-      Third: jwt,
-      Fourth: courseId
-    })
+    // 2. 获取作业ID列表 (使用缓存)
+    const homeworkResp = await cacheService.fetchWithCache(`course_homework_ids:${courseId}`, () =>
+      apiClient.post('/Homework/get_homework_id_by_course', {
+        First: '1', Second: teacherId, Third: jwt, Fourth: courseId
+      })
+    )
 
     if (!homeworkResp.data.success || !homeworkResp.data.data.trim()) {
       course.value.assignments = []
@@ -344,11 +346,15 @@ const fetchCourseDetails = async () => {
 
     const homeworkIds = homeworkResp.data.data.split('\t\r').filter(Boolean)
 
-    // 3. 并行获取每个作业的详情 + AI类型
+    // 3. 并行获取每个作业的详情 + AI类型 (使用缓存)
     const assignmentPromises = homeworkIds.map(async (id) => {
       const [infoResp, aiResp] = await Promise.all([
-        apiClient.post('/Homework/get_info_by_homework_id', { First: courseId, Second: id }),
-        apiClient.post('/Homework/get_AI_type', { First: id })  // 获取AI类型
+        cacheService.fetchWithCache(`homework_info:${id}`, () =>
+          apiClient.post('/Homework/get_info_by_homework_id', { First: courseId, Second: id })
+        ),
+        cacheService.fetchWithCache(`homework_ai_config:${id}`, () =>
+          apiClient.post('/Homework/get_AI_type', { First: id })
+        )
       ])
 
 
@@ -430,6 +436,7 @@ const submitForm = async () => {
     }
 
     alert('作业发布成功！')
+    cacheService.invalidate(`course_homework_ids:${courseId}`);
     showPublishAssignment.value = false
     newAssignment.value = { title: '', aiType: '', description: '', deadline: '' }
     await fetchCourseDetails()  // 刷新列表，显示新作业和正确运动类型

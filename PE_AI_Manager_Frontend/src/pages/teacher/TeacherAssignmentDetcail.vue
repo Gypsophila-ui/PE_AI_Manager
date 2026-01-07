@@ -197,6 +197,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 import apiClient from '../../services/axios.js'
+import { cacheService } from '../../services/DataCacheService.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -234,11 +235,12 @@ const aiTypeMap = {
 const fetchDetail = async () => {
   loading.value = true
   try {
-    // 获取作业基本信息
-    const infoResp = await apiClient.post('/Homework/get_info_by_homework_id', {
-      First: courseId,
-      Second: assignmentId
-    })
+    // 获取作业基本信息（使用缓存）
+    const infoResp = await cacheService.fetchWithCache(`homework_info:${assignmentId}`, () =>
+      apiClient.post('/Homework/get_info_by_homework_id', {
+        First: courseId, Second: assignmentId
+      })
+    )
 
     if (!infoResp.data.success || !infoResp.data.data) {
       assignment.value = null
@@ -247,38 +249,33 @@ const fetchDetail = async () => {
 
     const infoData = infoResp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
 
-    // 获取 AI 类型和次数
-    const aiResp = await apiClient.post('/Homework/get_AI_type', { First: assignmentId })
+    // 获取 AI 配置（使用缓存）
+    const aiResp = await cacheService.fetchWithCache(`homework_ai_config:${assignmentId}`, () =>
+      apiClient.post('/Homework/get_AI_type', { First: assignmentId })
+    )
+
     let currentAiType = 'squat'
     let currentRequiredCount = 30
 
     if (aiResp.data.success) {
-      const config = aiResp.data.data.trim()
-      const parts = config.split('\t\r')
-      if (parts.length >= 2) {
-        currentRequiredCount = parseInt(parts[1], 10) || 30
-        currentAiType = parts[0] || 'squat'
-      } else if (parts.length === 1) {
-        currentAiType = parts[0] || 'squat'
-      }
+      const parts = aiResp.data.data.trim().split('\t\r')
+      currentAiType = parts[0] || 'squat'
+      currentRequiredCount = parseInt(parts[1], 10) || 30
     }
 
-    // 获取学生总数
-    const studentResp = await apiClient.post('/Course_student/get_student_id_by_course', {
-      First: teacherId,
-      Second: jwt,
-      Third: courseId
-    })
+    // 获取学生总数（使用缓存）
+    const studentResp = await cacheService.fetchWithCache(`course_student_ids:${courseId}`, () =>
+      apiClient.post('/Course_student/get_student_id_by_course', {
+        First: teacherId, Second: jwt, Third: courseId
+      })
+    )
     const totalStudents = studentResp.data.success && studentResp.data.data
       ? studentResp.data.data.split('\t\r').filter(Boolean).length
       : 0
 
     // 获取提交统计
     const submitResp = await apiClient.post('/Homework/get_final_submit', {
-      First: teacherId,
-      Second: jwt,
-      Third: courseId,
-      Fourth: assignmentId
+      First: teacherId, Second: jwt, Third: courseId, Fourth: assignmentId
     })
 
     let submittedCount = 0
@@ -287,29 +284,34 @@ const fetchDetail = async () => {
 
     if (submitResp.data.success && submitResp.data.data) {
       const pairs = submitResp.data.data.split('\t\r').filter(Boolean)
-      for (const pair of pairs) {
+
+      // 使用 Promise.all 并行获取提交详情，并利用缓存
+      const detailPromises = pairs.map(async (pair) => {
         const [studentId, submitId] = pair.split('\n')
-        if (submitId === '-1' || submitId === '-2') continue
+        if (submitId === '-1' || submitId === '-2') return null
 
-        submittedCount++
+        const detail = await cacheService.fetchWithCache(`submit_detail:${submitId}`, () =>
+          apiClient.post('/Homework/get_submit_info', {
+            First: '1', Second: teacherId, Third: jwt, Fourth: submitId
+          })
+        )
+        return detail
+      })
 
-        const detailResp = await apiClient.post('/Homework/get_submit_info', {
-          First: '1',
-          Second: teacherId,
-          Third: jwt,
-          Fourth: submitId
-        })
+      const details = await Promise.all(detailPromises)
 
-        if (detailResp.data.success && detailResp.data.data) {
+      details.forEach(detailResp => {
+        if (detailResp && detailResp.data.success && detailResp.data.data) {
+          submittedCount++
           const raw = detailResp.data.data.trim().replace(/\t\r$/g, '')
-          let parts = raw.split('\t\r')
+          const parts = raw.split('\t\r')
           const score = parseInt(parts[1], 10)
           if (!isNaN(score) && score > 0) {
             totalScore += score
             scoreCount++
           }
         }
-      }
+      })
     }
 
     const avgScore = scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : null
@@ -324,11 +326,7 @@ const fetchDetail = async () => {
       aiTypeDisplay: `${aiTypeMap[currentAiType] || '未知动作'}（${currentRequiredCount}次）`
     }
 
-    stats.value = {
-      submittedCount,
-      totalStudents,
-      avgScore
-    }
+    stats.value = { submittedCount, totalStudents, avgScore }
 
   } catch (err) {
     console.error('加载作业详情失败:', err)
@@ -393,6 +391,11 @@ const submitEdit = async () => {
       alert('警告：AI类型更新失败，但其他信息已保存')
     }
 
+    // 清除该作业的所有相关缓存
+    cacheService.invalidate(`homework_info:${assignmentId}`)
+    cacheService.invalidate(`homework_ai_config:${assignmentId}`)
+    cacheService.invalidate(`course_homework_ids:${courseId}`)
+
     alert('作业更新成功！')
     showEditModal.value = false
     await fetchDetail()
@@ -415,6 +418,8 @@ const handleDelete = async () => {
     })
 
     if (resp.data.success) {
+      // 清除缓存
+      cacheService.invalidate(`course_homework_ids:${courseId}`)
       alert('作业已删除')
       router.push(`/teacher/course/${courseId}`)
     } else {

@@ -147,6 +147,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {apiClient, aiClient} from '../../services/axios.js'
 import VideoDialogPlayer from '@/components/VideoDialogPlayer.vue'
+import { cacheService } from '../../services/DataCacheService.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -175,12 +176,15 @@ const currentVideoTitle = ref('AI 分析视频')
 // 根据学号查询学生姓名
 const fetchStudentName = async (studentId) => {
   try {
-    const resp = await apiClient.post('/User/get_student_info', {
-      First: teacherId,
-      Second: jwt,
-      Third: '1',        // 教师身份
-      Fourth: studentId
-    })
+    // 跨页面共享学生信息缓存
+    const resp = await cacheService.fetchWithCache(`user_info:${studentId}`, () =>
+      apiClient.post('/User/get_student_info', {
+        First: teacherId,
+        Second: jwt,
+        Third: '1',
+        Fourth: studentId
+      })
+    )
 
     if (resp.data.success && resp.data.data) {
       const parts = resp.data.data.trim().replace(/\t\r$/g, '').split('\t\r').filter(Boolean)
@@ -196,10 +200,12 @@ const fetchData = async () => {
   loading.value = true
   try {
     const [infoResp, finalResp] = await Promise.all([
-      apiClient.post('/Homework/get_info_by_homework_id', {
-        First: courseId,
-        Second: assignmentId
-      }),
+      cacheService.fetchWithCache(`homework_info:${assignmentId}`, () =>
+        apiClient.post('/Homework/get_info_by_homework_id', {
+          First: courseId,
+          Second: assignmentId
+        })
+      ),
       apiClient.post('/Homework/get_final_submit', {
         First: teacherId,
         Second: jwt,
@@ -253,18 +259,16 @@ const fetchData = async () => {
 
       // 收集所有查提交详情的 Promise
       detailPromises.push(
-        apiClient.post('/Homework/get_submit_info', {
-          First: '1',
-          Second: teacherId,
-          Third: jwt,
-          Fourth: submitId
-        }).then(detailResp => {
+        cacheService.fetchWithCache(`submit_detail:${submitId}`, () =>
+          apiClient.post('/Homework/get_submit_info', {
+            First: '1', Second: teacherId, Third: jwt, Fourth: submitId
+          })
+        ).then(detailResp => {
           if (detailResp.data.success && detailResp.data.data) {
             const raw = detailResp.data.data.trim().replace(/\t\r$/g, '')
             const parts = raw.split('\t\r')
             return {
-              studentId,
-              submitId,
+              studentId, submitId,
               videoUrl: parts[0] || null,
               score: parts[1] || null,
               aiFeedback: parts[2] || null,
@@ -272,11 +276,10 @@ const fetchData = async () => {
               createTime: parts[4] || null
             }
           }
-          return { studentId, submitId } // 失败时也返回
+          return { studentId, submitId }
         })
       )
-
-      submissions.push(subInfo) // 先 push 占位
+      submissions.push(subInfo)
     }
 
     // 并行执行所有查姓名和查详情的请求
@@ -285,35 +288,15 @@ const fetchData = async () => {
       Promise.all(detailPromises)
     ])
 
-    // 创建映射
-    const nameMap = {}
-    nameResults.forEach(item => {
-      nameMap[item.studentId] = item.studentName
-    })
-
-    const detailMap = {}
-    detailResults.forEach(item => {
-      if (item.submitId) {
-        detailMap[item.submitId] = item
-      }
-    })
+    const nameMap = Object.fromEntries(nameResults.map(i => [i.studentId, i.studentName]))
+    const detailMap = Object.fromEntries(detailResults.map(i => [i.submitId, i]))
 
     // 合并数据
     studentSubmissions.value = submissions.map(sub => {
       const name = nameMap[sub.studentId] || sub.studentName
-      if (sub.submitId === '-1' || sub.submitId === '-2') {
-        return { ...sub, studentName: name }
-      }
+      if (sub.submitId === '-1' || sub.submitId === '-2') return { ...sub, studentName: name }
       const detail = detailMap[sub.submitId] || {}
-      return {
-        ...sub,
-        studentName: name,
-        videoUrl: detail.videoUrl || null,
-        score: detail.score || null,
-        aiFeedback: detail.aiFeedback || null,
-        teacherFeedback: detail.teacherFeedback || null,
-        createTime: detail.createTime || null
-      }
+      return { ...sub, studentName: name, ...detail }
     }).sort((a, b) => {
       if (!a.createTime) return 1
       if (!b.createTime) return -1
@@ -335,26 +318,24 @@ const startEdit = (sub) => {
 }
 
 const saveGrade = async (sub) => {
-  if (!sub.submitId || sub.submitId === '-1'|| sub.submitId === '-2') {
+  if (!sub.submitId || sub.submitId === '-1' || sub.submitId === '-2') {
     alert('无法评分：学生未提交')
     return
   }
 
   try {
     const resp = await apiClient.post('/Homework/teacher_test', {
-      First: teacherId,
-      Second: jwt,
-      Third: courseId,
-      Fourth: assignmentId,
-      Fifth: sub.submitId,
-      Sixth: editingScore.value,           // 字符串传入
-      Seventh: editingComment.value.trim()
+      First: teacherId, Second: jwt, Third: courseId, Fourth: assignmentId,
+      Fifth: sub.submitId, Sixth: editingScore.value, Seventh: editingComment.value.trim()
     })
 
     if (resp.data[0] === 0 || resp.data.success) {
+      // 缓存清理
+      cacheService.invalidate(`submit_detail:${sub.submitId}`);
+
       alert('评分保存成功！')
       editingStudentId.value = null
-      await fetchData()  // 刷新获取最新 score
+      await fetchData()
     } else {
       alert('保存失败')
     }
