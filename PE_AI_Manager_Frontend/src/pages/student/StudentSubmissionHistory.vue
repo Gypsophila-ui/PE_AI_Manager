@@ -118,6 +118,13 @@
 
             <div class="flex justify-end gap-3 mt-6">
               <button
+                v-if="isLatestSubmission(index)"
+                @click="openReportDialog(submission)"
+                class="px-6 py-2 rounded-xl bg-blue-400 text-white hover:shadow-lg transition-all"
+              >
+                导出AI分析报告
+              </button>
+              <button
                 v-if="isLatestSubmission(index) && submission.content_url"
                 @click="deleteVideo(submission)"
                 class="px-6 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all shadow-lg"
@@ -125,6 +132,91 @@
                 删除视频
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="showReportDialog"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      @click="closeReportDialog"
+    >
+      <div
+        class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+        @click.stop
+      >
+        <div class="p-6 border-b border-gray-200">
+          <div class="flex justify-between items-center">
+            <h3 class="text-2xl font-bold text-gray-800">AI 分析报告</h3>
+            <button
+              @click="closeReportDialog"
+              class="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+            >
+              ×
+            </button>
+          </div>
+          <p class="text-gray-600 mt-2">{{ currentSubmission?.title }}</p>
+        </div>
+
+        <div class="p-6 overflow-y-auto max-h-[60vh]">
+          <div class="mb-6 p-4 bg-gray-50 rounded-xl">
+            <h4 class="text-lg font-semibold text-gray-700 mb-3">可选信息</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">身高 (cm)</label>
+                <input
+                  v-model="studentHeight"
+                  type="number"
+                  placeholder="例如：175"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">体重 (kg)</label>
+                <input
+                  v-model="studentWeight"
+                  type="number"
+                  placeholder="例如：70"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+              </div>
+            </div>
+            <button
+              @click="generateAnalysisReport"
+              :disabled="reportLoading"
+              class="mt-4 w-full px-6 py-3 bg-blue-400 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ reportLoading ? '生成中...' : '生成AI分析报告' }}
+            </button>
+          </div>
+
+          <div v-if="reportLoading" class="flex justify-center items-center py-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-500"></div>
+          </div>
+
+          <div v-else-if="reportError" class="bg-red-50 border border-red-200 rounded-xl p-6">
+            <h4 class="text-lg font-bold text-red-800 mb-2">生成失败</h4>
+            <p class="text-red-700">{{ reportError }}</p>
+          </div>
+
+          <div v-else-if="reportContent" class="prose prose-sm max-w-none bg-white">
+            <div v-html="renderMarkdown(reportContent)"></div>
+          </div>
+
+          <div v-else class="text-center py-8 text-gray-500">
+            点击上方按钮生成AI分析报告
+          </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-200 bg-gray-50">
+          <div class="flex justify-end gap-3">
+            <button
+              @click="closeReportDialog"
+              class="px-6 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
+            >
+              关闭
+            </button>
           </div>
         </div>
       </div>
@@ -137,6 +229,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import apiClient from '../../services/axios.js'
 import SSEVideoPlayer from '../../components/SSEVideoPlayer.vue'
+import { marked } from 'marked'
 
 const router = useRouter()
 const route = useRoute()
@@ -145,6 +238,14 @@ const submissions = ref([])
 const loading = ref(true)
 const error = ref(false)
 const errorMessage = ref('')
+
+const showReportDialog = ref(false)
+const currentSubmission = ref(null)
+const reportContent = ref('')
+const reportLoading = ref(false)
+const reportError = ref('')
+const studentHeight = ref('')
+const studentWeight = ref('')
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const studentId = currentUser.id || ''
@@ -329,6 +430,96 @@ const formatDate = (dateStr) => {
 
 const isLatestSubmission = (index) => {
   return index === submissions.value.length - 1
+}
+
+const openReportDialog = (submission) => {
+  currentSubmission.value = submission
+  showReportDialog.value = true
+  reportContent.value = ''
+  reportError.value = ''
+}
+
+const closeReportDialog = () => {
+  showReportDialog.value = false
+  currentSubmission.value = null
+  reportContent.value = ''
+  reportError.value = ''
+}
+
+const generateAnalysisReport = async () => {
+  if (!currentSubmission.value) return
+
+  reportLoading.value = true
+  reportError.value = ''
+  reportContent.value = ''
+
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || '/chat'
+
+    const requestData = {
+      student_id: studentId,
+      analysis_type: 'homework_feedback',
+      homework_id: assignmentId,
+      query: '请详细分析这次作业的表现，包括动作规范度、完成质量、改进建议等'
+    }
+
+    if (studentHeight.value || studentWeight.value) {
+      requestData.student_info = {}
+      if (studentHeight.value) {
+        requestData.student_info.height = studentHeight.value
+      }
+      if (studentWeight.value) {
+        requestData.student_info.weight = studentWeight.value
+      }
+    }
+
+    const url = `${baseUrl}/api/analysis/generate`
+
+    console.log('请求URL:', url)
+    console.log('请求体:', JSON.stringify(requestData, null, 2))
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestData)
+    })
+
+    console.log('响应状态:', response.status, response.statusText)
+
+    const responseText = await response.text()
+    console.log('响应内容:', responseText)
+
+    let result
+    try {
+      result = JSON.parse(responseText)
+    } catch (parseErr) {
+      console.error('JSON解析失败:', parseErr)
+      throw new Error(`API返回格式错误: ${responseText}`)
+    }
+
+    if (result.success) {
+      reportContent.value = result.data.report
+    } else {
+      reportError.value = result.error || '生成报告失败'
+    }
+  } catch (err) {
+    console.error('生成AI分析报告失败:', err)
+    reportError.value = err.message || '生成报告时发生错误'
+  } finally {
+    reportLoading.value = false
+  }
+}
+
+const renderMarkdown = (content) => {
+  if (!content) return ''
+  try {
+    return marked.parse(content)
+  } catch (err) {
+    console.error('Markdown渲染失败:', err)
+    return content
+  }
 }
 
 const goBack = () => {

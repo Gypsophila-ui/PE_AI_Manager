@@ -93,7 +93,7 @@
             <div>
               <div class="text-sm text-gray-400">动作类型</div>
               <div>
-                <span class="px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                <span class="text-lg font-medium text-gray-700">
                   {{ aiType || '加载中...' }}
                 </span>
               </div>
@@ -103,7 +103,7 @@
             <div>
               <div class="text-sm text-gray-400">要求动作个数</div>
               <div>
-                <span class="px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                <span class="text-lg font-medium text-gray-700">
                   {{ requiredCount !== null ? requiredCount : '加载中...' }}
                 </span>
               </div>
