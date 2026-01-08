@@ -74,10 +74,6 @@
                   class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition-all flex items-center gap-2">
             导出
           </button>
-          <button @click="openHealthReportDialog"
-                  class="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium hover:shadow-lg transition-all flex items-center gap-2">
-            生成个性化健康报告
-          </button>
         </div>
       </div>
 
@@ -124,96 +120,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 个性化健康报告对话框 -->
-    <div
-      v-if="showHealthReportDialog"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      @click="closeHealthReportDialog"
-    >
-      <div
-        class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
-        @click.stop
-      >
-        <div class="p-6 border-b border-gray-200">
-          <div class="flex justify-between items-center">
-            <h3 class="text-2xl font-bold text-gray-800">生成个性化健康报告</h3>
-            <button @click="closeHealthReportDialog" class="text-gray-500 hover:text-gray-700">
-              <span class="text-3xl">×</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="p-6 overflow-y-auto max-h-[60vh]">
-          <div class="mb-6 p-4 bg-gray-50 rounded-xl">
-            <h4 class="font-medium text-gray-700 mb-4">学生信息（可选）</h4>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">身高（cm）</label>
-                <input
-                  v-model="studentHeight"
-                  type="number"
-                  placeholder="例如：175"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">体重（kg）</label>
-                <input
-                  v-model="studentWeight"
-                  type="number"
-                  placeholder="例如：65"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-              </div>
-            </div>
-          </div>
-
-          <div class="mb-6 p-4 bg-gray-50 rounded-xl">
-            <h4 class="font-medium text-gray-700 mb-4">您的健康问题</h4>
-            <textarea
-              v-model="healthReportQuery"
-              placeholder="请输入您想要咨询的健康问题，例如：根据我的情况给出长期训练建议"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
-              rows="3"
-            ></textarea>
-          </div>
-
-          <button
-            @click="generateHealthReport"
-            :disabled="healthReportLoading || !healthReportQuery.trim()"
-            class="mt-4 w-full px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ healthReportLoading ? '生成中...' : '生成个性化健康报告' }}
-          </button>
-        </div>
-
-        <div v-if="healthReportLoading" class="flex justify-center items-center py-8">
-          <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-500"></div>
-        </div>
-
-        <div v-else-if="healthReportError" class="bg-red-50 border border-red-200 rounded-xl p-6">
-          <h4 class="text-lg font-bold text-red-800 mb-2">生成失败</h4>
-          <p class="text-red-700">{{ healthReportError }}</p>
-        </div>
-
-        <div v-else-if="healthReportContent" class="prose prose-sm max-w-none bg-white p-6">
-          <div v-html="renderMarkdown(healthReportContent)"></div>
-        </div>
-
-
-        <div class="p-6 border-t border-gray-200 bg-gray-50">
-          <div class="flex justify-end gap-3">
-            <button
-              @click="closeHealthReportDialog"
-              class="px-6 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
-            >
-              关闭
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -237,14 +143,6 @@ const loadingMessages = ref(false)
 const sendingMessage = ref(false)
 const selectedModel = ref('Qwen')
 const availableModels = ref(['Qwen', 'ERNIE', 'Moonshot'])
-
-const showHealthReportDialog = ref(false)
-const studentHeight = ref('')
-const studentWeight = ref('')
-const healthReportQuery = ref('')
-const healthReportContent = ref('')
-const healthReportLoading = ref(false)
-const healthReportError = ref('')
 
 // Markdown渲染函数
 const renderMarkdown = (content) => {
@@ -517,89 +415,6 @@ const goBack = () => {
     router.push('/teacher')
   } else {
     router.push('/login')
-  }
-}
-
-const openHealthReportDialog = () => {
-  showHealthReportDialog.value = true
-  healthReportContent.value = ''
-  healthReportError.value = ''
-  healthReportQuery.value = ''
-}
-
-const closeHealthReportDialog = () => {
-  showHealthReportDialog.value = false
-}
-
-const generateHealthReport = async () => {
-  healthReportLoading.value = true
-  healthReportError.value = ''
-  healthReportContent.value = ''
-
-  try {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || '/chat'
-
-    const requestData = {
-      student_id: getUserId(),
-      analysis_type: 'personalized_tips',
-      query: healthReportQuery.value
-    }
-
-    if (studentHeight.value || studentWeight.value) {
-      requestData.student_info = {}
-      if (studentHeight.value) {
-        requestData.student_info.height = studentHeight.value
-      }
-      if (studentWeight.value) {
-        requestData.student_info.weight = studentWeight.value
-      }
-    }
-
-    const url = `${baseUrl}/api/analysis/generate`
-
-    console.log('请求URL:', url)
-    console.log('请求体:', JSON.stringify(requestData, null, 2))
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestData)
-    })
-
-    console.log('响应状态:', response.status)
-    console.log('响应头:', Object.fromEntries(response.headers.entries()))
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('响应错误文本:', errorText)
-      throw new Error(`HTTP ${response.status}: ${errorText}`)
-    }
-
-    const responseText = await response.text()
-    console.log('响应文本:', responseText)
-
-    let result
-    try {
-      result = JSON.parse(responseText)
-      console.log('解析后的JSON:', result)
-    } catch (parseError) {
-      console.error('JSON解析错误:', parseError)
-      console.error('无法解析的响应文本:', responseText)
-      throw new Error(`JSON解析错误: ${parseError.message}`)
-    }
-
-    if (result.success && result.data) {
-      healthReportContent.value = result.data
-    } else {
-      healthReportError.value = result.message || '生成失败，请重试'
-    }
-  } catch (err) {
-    console.error('生成健康报告失败:', err)
-    healthReportError.value = `生成失败: ${err.message}`
-  } finally {
-    healthReportLoading.value = false
   }
 }
 

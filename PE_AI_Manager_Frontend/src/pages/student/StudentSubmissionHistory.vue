@@ -122,7 +122,7 @@
                 @click="openReportDialog(submission)"
                 class="px-6 py-2 rounded-xl bg-blue-400 text-white hover:shadow-lg transition-all"
               >
-                导出AI分析报告
+                生成更详细的AI分析报告
               </button>
               <button
                 v-if="isLatestSubmission(index) && submission.content_url"
