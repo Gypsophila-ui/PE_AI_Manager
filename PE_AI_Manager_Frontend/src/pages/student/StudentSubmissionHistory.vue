@@ -96,7 +96,7 @@
                   <div>
                     <h4 class="text-lg font-semibold text-gray-700 mb-2">AI 智能评价</h4>
                     <div v-if="submission.AI_feedback" class="bg-indigo-50 rounded-xl p-4 border border-indigo-200 max-h-32 overflow-y-auto">
-                      <p class="text-indigo-900 text-sm whitespace-pre-wrap">{{ submission.AI_feedback }}</p>
+                      <div class="text-indigo-900 text-sm prose prose-sm max-w-none" v-html="renderMarkdown(submission.AI_feedback)"></div>
                     </div>
                     <div v-else class="text-center py-4 text-gray-500 bg-gray-50 rounded-xl">
                       AI 反馈暂未生成
@@ -502,6 +502,34 @@ const generateAnalysisReport = async () => {
 
     if (result.success) {
       reportContent.value = result.data.report
+
+      try {
+        const aiEvaluationData = {
+          first: currentSubmission.value.id,
+          second: currentSubmission.value.content_url || '',
+          third: currentSubmission.value.score !== null ? currentSubmission.value.score.toString() : '0',
+          fourth: result.data.report
+        }
+
+        console.log('发送到AI_test的数据:', JSON.stringify(aiEvaluationData, null, 2))
+
+        const aiTestResponse = await apiClient.post('/Homework/AI_test', aiEvaluationData, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+
+        console.log('AI_test API响应数据:', JSON.stringify(aiTestResponse.data, null, 2))
+
+        if (aiTestResponse.data.success) {
+          console.log('AI评价更新成功')
+          currentSubmission.value.AI_feedback = result.data.report
+        } else {
+          console.error('AI_test API返回异常状态码:', aiTestResponse.status)
+        }
+      } catch (updateErr) {
+        console.error('更新AI评价失败:', updateErr)
+      }
     } else {
       reportError.value = result.error || '生成报告失败'
     }
@@ -515,11 +543,18 @@ const generateAnalysisReport = async () => {
 
 const renderMarkdown = (content) => {
   if (!content) return ''
+
+  let contentStr = content
+
+  if (typeof content === 'object') {
+    contentStr = JSON.stringify(content, null, 2)
+  }
+
   try {
-    return marked.parse(content)
+    return marked.parse(contentStr)
   } catch (err) {
     console.error('Markdown渲染失败:', err)
-    return content
+    return contentStr
   }
 }
 

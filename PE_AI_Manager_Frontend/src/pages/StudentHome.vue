@@ -94,21 +94,25 @@
       @click="closeHealthReportDialog"
     >
       <div
-        class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden"
+        class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
         @click.stop
       >
         <div class="p-6 border-b border-gray-200">
           <div class="flex justify-between items-center">
             <h3 class="text-2xl font-bold text-gray-800">生成个性化健康报告</h3>
-            <button @click="closeHealthReportDialog" class="text-gray-500 hover:text-gray-700">
-              <span class="text-3xl">×</span>
+            <button
+              @click="closeHealthReportDialog"
+              class="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+            >
+              ×
             </button>
           </div>
+          <p class="text-gray-600 mt-2">根据您的身体条件生成个性化健康建议</p>
         </div>
 
-        <div class="p-6 overflow-y-auto max-h-[75vh]">
+        <div class="p-6 overflow-y-auto max-h-[60vh]">
           <div class="mb-6 p-4 bg-gray-50 rounded-xl">
-            <h4 class="font-medium text-gray-700 mb-4">学生信息（可选）</h4>
+            <h4 class="text-lg font-semibold text-gray-700 mb-3">学生信息（可选）</h4>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-600 mb-2">身高（cm）</label>
@@ -132,35 +136,56 @@
           </div>
 
           <div class="mb-6 p-4 bg-gray-50 rounded-xl">
-            <h4 class="font-medium text-gray-700 mb-4">您的健康问题</h4>
+            <h4 class="text-lg font-semibold text-gray-700 mb-3">您的健康问题</h4>
             <textarea
               v-model="healthReportQuery"
               placeholder="请输入您想要咨询的健康问题，例如：根据我的情况给出长期训练建议"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
               rows="3"
             ></textarea>
+            <button
+              @click="generateHealthReport"
+              :disabled="healthReportLoading || !healthReportQuery.trim()"
+              class="mt-4 w-full px-6 py-3 bg-blue-400 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ healthReportLoading ? '生成中...' : '生成个性化健康报告' }}
+            </button>
           </div>
 
-          <button
-            @click="generateHealthReport"
-            :disabled="healthReportLoading || !healthReportQuery.trim()"
-            class="mt-4 w-full px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ healthReportLoading ? '生成中...' : '生成个性化健康报告' }}
-          </button>
+          <div v-if="healthReportLoading" class="flex justify-center items-center py-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-500"></div>
+          </div>
+
+          <div v-else-if="healthReportError" class="bg-red-50 border border-red-200 rounded-xl p-6">
+            <h4 class="text-lg font-bold text-red-800 mb-2">生成失败</h4>
+            <p class="text-red-700">{{ healthReportError }}</p>
+          </div>
+
+          <div v-else-if="healthReportContent" class="prose prose-sm max-w-none bg-white">
+            <div v-html="renderMarkdown(healthReportContent)"></div>
+          </div>
+
+          <div v-else class="text-center py-8 text-gray-500">
+            点击上方按钮生成个性化健康报告
+          </div>
         </div>
 
-        <div v-if="healthReportLoading" class="flex justify-center items-center py-8">
-          <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-500"></div>
-        </div>
-
-        <div v-else-if="healthReportError" class="bg-red-50 border border-red-200 rounded-xl p-6">
-          <h4 class="text-lg font-bold text-red-800 mb-2">生成失败</h4>
-          <p class="text-red-700">{{ healthReportError }}</p>
-        </div>
-
-        <div v-else-if="healthReportContent" class="prose prose-sm max-w-none bg-white p-6">
-          <div v-html="renderMarkdown(healthReportContent)"></div>
+        <div class="p-6 border-t border-gray-200 bg-gray-50">
+          <div class="flex justify-end gap-3">
+            <button
+              v-if="healthReportContent"
+              @click="downloadHealthReport"
+              class="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all"
+            >
+              下载
+            </button>
+            <button
+              @click="closeHealthReportDialog"
+              class="px-6 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
+            >
+              关闭
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -471,7 +496,20 @@ onMounted(() => {
 
 // Markdown渲染函数
 const renderMarkdown = (content) => {
-  return marked(content)
+  if (!content) return ''
+
+  let contentStr = content
+
+  if (typeof content === 'object') {
+    contentStr = JSON.stringify(content, null, 2)
+  }
+
+  try {
+    return marked.parse(contentStr)
+  } catch (err) {
+    console.error('Markdown渲染失败:', err)
+    return contentStr
+  }
 }
 
 // 获取当前用户ID
@@ -547,22 +585,50 @@ const generateHealthReport = async () => {
     try {
       result = JSON.parse(responseText)
       console.log('解析后的JSON:', result)
+      // 修复：正确获取报告内容
+      if (result.success && result.data && result.data.report) {
+        healthReportContent.value = result.data.report
+      } else {
+        healthReportContent.value = result.analysis || result.content || responseText
+      }
     } catch (parseError) {
-      console.error('JSON解析错误:', parseError)
-      console.error('无法解析的响应文本:', responseText)
-      throw new Error(`JSON解析错误: ${parseError.message}`)
-    }
-
-    if (result.success && result.data) {
-      healthReportContent.value = result.data
-    } else {
-      healthReportError.value = result.message || '生成失败，请重试'
+      console.log('JSON解析失败，直接使用响应文本')
+      healthReportContent.value = responseText
     }
   } catch (err) {
     console.error('生成健康报告失败:', err)
-    healthReportError.value = `生成失败: ${err.message}`
+    healthReportError.value = err.message || '生成健康报告失败，请稍后重试'
   } finally {
     healthReportLoading.value = false
+  }
+}
+
+// 下载健康报告
+const downloadHealthReport = () => {
+  if (!healthReportContent.value) return
+
+  try {
+    // 确保内容是字符串格式
+    let contentStr = healthReportContent.value
+    if (typeof healthReportContent.value === 'object' && healthReportContent.value.success && healthReportContent.value.data && healthReportContent.value.data.report) {
+      // 如果是API返回的完整对象，提取报告内容
+      contentStr = healthReportContent.value.data.report
+    } else if (typeof healthReportContent.value === 'object') {
+      contentStr = JSON.stringify(healthReportContent.value, null, 2)
+    }
+
+    const blob = new Blob([contentStr], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `健康报告_${getUserId()}_${new Date().toLocaleDateString('zh-CN')}.md`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('下载报告失败:', err)
+    alert('下载报告失败，请稍后重试')
   }
 }
 </script>
