@@ -198,6 +198,13 @@
         <div class="p-6 border-t border-gray-200 bg-gray-50">
           <div class="flex justify-end gap-3">
             <button
+              v-if="reportContent"
+              @click="downloadReportMD"
+              class="px-6 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all"
+            >
+              下载
+            </button>
+            <button
               @click="closeReportDialog"
               class="px-6 py-2 rounded-xl bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
             >
@@ -430,6 +437,24 @@ const closeReportDialog = () => {
   currentSubmission.value = null
   reportContent.value = ''
   reportError.value = ''
+}
+
+const downloadReportMD = () => {
+  if (!reportContent.value) return
+
+  const submissionTitle = currentSubmission.value?.title || '报告'
+  const timestamp = new Date().toISOString().slice(0, 10)
+  const filename = `${submissionTitle}_AI分析报告_${timestamp}.md`
+
+  const blob = new Blob([reportContent.value], { type: 'text/markdown;charset=utf-8' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
 }
 
 const generateAnalysisReport = async () => {
