@@ -28,7 +28,7 @@ def generate_student_data(n):
     data = []
     for i in range(n):
         # 生成学号，格式为235xxxx
-        student_id = f"235{random.randint(1000, 9999)}"
+        student_id = f"245{i}"
         
         # 随机生成姓名
         surname = random.choice(surnames)

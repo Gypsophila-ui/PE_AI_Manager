@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="7f820a90-c4ec-49e9-b7f4-1246bb5f69e8" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/ProjectEvaluation/se_pe_ai_manager.metadata.v9.bin" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/ProjectEvaluation/se_pe_ai_manager.metadata.v9.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/ProjectEvaluation/se_pe_ai_manager.projects.v9.bin" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/ProjectEvaluation/se_pe_ai_manager.projects.v9.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/ProjectEvaluation/se_pe_ai_manager.strings.v9.bin" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/ProjectEvaluation/se_pe_ai_manager.strings.v9.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/CopilotIndices/17.14.995.13737/CodeChunks.db" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/CopilotIndices/17.14.995.13737/CodeChunks.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/CopilotIndices/17.14.995.13737/SemanticSymbols.db" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/CopilotIndices/17.14.995.13737/SemanticSymbols.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/DesignTimeBuild/.dtbcache.v2" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/DesignTimeBuild/.dtbcache.v2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/FileContentIndex/2a99526d-421b-49b5-940b-ee89ecc69839.vsidx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/FileContentIndex/5f3cbd30-c22f-4e33-8b3d-be8fafe80130.vsidx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/FileContentIndex/ae7c8818-0b50-4a7e-81fa-49b4e13512e8.vsidx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/FileContentIndex/ec194511-d813-4e1e-9641-272c4621720a.vsidx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/v17/.futdcache.v2" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/v17/.futdcache.v2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/v17/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/v17/.suo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/v17/DocumentLayout.backup.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/v17/DocumentLayout.backup.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/v17/DocumentLayout.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/.vs/SE_PE_AI_Manager/v17/DocumentLayout.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/Controllers/Test_controller.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/Controllers/Test_controller.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/Operation/Course_student.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/Operation/Course_student.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/Operation/Homework.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/Operation/Homework.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/Test/Upload_std.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/Test/Upload_std.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/SE_PE_AI_Manager.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/SE_PE_AI_Manager.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/SE_PE_AI_Manager.exe" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/SE_PE_AI_Manager.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/SE_PE_AI_Manager.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/SE_PE_AI_Manager.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/publish/SE_PE_AI_Manager.deps.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/publish/SE_PE_AI_Manager.runtimeconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/publish/SE_PE_AI_Manager.staticwebassets.endpoints.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/publish/appsettings.Development.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/publish/appsettings.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Debug/net8.0/publish/web.config" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Release/net8.0/linux-x64/SE_PE_AI_Manager.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Release/net8.0/linux-x64/SE_PE_AI_Manager.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Release/net8.0/linux-x64/SE_PE_AI_Manager.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/bin/Release/net8.0/linux-x64/SE_PE_AI_Manager.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/ApiEndpoints.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/ApiEndpoints.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/EndpointInfo/SE_PE_AI_Manager.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/EndpointInfo/SE_PE_AI_Manager.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/SE_PE_AI_Manager.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/apphost.exe" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/apphost.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/ref/SE_PE_AI_Manager.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/ref/SE_PE_AI_Manager.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/refint/SE_PE_AI_Manager.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/refint/SE_PE_AI_Manager.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/rjsmcshtml.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/rjsmcshtml.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/rjsmrazor.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/rjsmrazor.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/rpswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Debug/net8.0/rpswa.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/SE_PE_AI_Manager.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/SE_PE_AI_Manager.AssemblyInfo.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/SE_PE_AI_Manager.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/SE_PE_AI_Manager.AssemblyInfoInputs.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/SE_PE_AI_Manager.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/SE_PE_AI_Manager.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/SE_PE_AI_Manager.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/SE_PE_AI_Manager.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/ref/SE_PE_AI_Manager.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/ref/SE_PE_AI_Manager.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/refint/SE_PE_AI_Manager.dll" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/refint/SE_PE_AI_Manager.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/rjsmcshtml.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/rjsmcshtml.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/rjsmrazor.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/SE_PE_AI_Manager/obj/Release/net8.0/linux-x64/rjsmrazor.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/CsvHelper.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/EPPlus.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/Microsoft.OpenApi.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/OfficeOpenXml.Extends.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/Oracle.ManagedDataAccess.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/SE_PE_AI_Manager.deps.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/SE_PE_AI_Manager.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/SE_PE_AI_Manager.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/SE_PE_AI_Manager.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/SE_PE_AI_Manager.runtimeconfig.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/SE_PE_AI_Manager.staticwebassets.endpoints.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/Swashbuckle.AspNetCore.Swagger.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/Swashbuckle.AspNetCore.SwaggerGen.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/Swashbuckle.AspNetCore.SwaggerUI.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/System.Configuration.ConfigurationManager.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/System.Diagnostics.PerformanceCounter.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/System.DirectoryServices.Protocols.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/System.Security.Cryptography.Pkcs.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/System.Security.Cryptography.ProtectedData.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/appsettings.Development.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/appsettings.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/runtimes/linux/lib/net8.0/System.DirectoryServices.Protocols.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/runtimes/osx/lib/net8.0/System.DirectoryServices.Protocols.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/runtimes/win/lib/net8.0/System.Diagnostics.PerformanceCounter.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/runtimes/win/lib/net8.0/System.DirectoryServices.Protocols.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/runtimes/win/lib/net8.0/System.Security.Cryptography.Pkcs.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/publish/web.config" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/SE_PE_AI_Manager/std_teache1、r.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/测试数据生成/std_student.py" beforeDir="false" afterPath="$PROJECT_DIR$/测试数据生成/std_student.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/测试数据生成/学生信息表.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/测试数据生成/学生信息表.xlsx" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="37w4YDglxxe4WiOpFHsm6O0OjVX" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.std_student.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "db",
+    "ignore.virus.scanning.warn.message": "true",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-PY-253.29346.142" />
+        <option value="bundled-python-sdk-f2b7a9f6281b-6e1f45a539f7-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.29346.142" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="7f820a90-c4ec-49e9-b7f4-1246bb5f69e8" name="更改" comment="" />
+      <created>1767800845535</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1767800845535</updated>
+      <workItem from="1767800847671" duration="56000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/project$std_student.coverage" NAME="std_student 覆盖结果" MODIFIED="1767800894232" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/测试数据生成" />
+  </component>
+</project>

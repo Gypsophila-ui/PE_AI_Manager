@@ -798,7 +798,7 @@ namespace SE_PE_AI_Manager.Operation
             check = "SELECT COUNT(*) FROM submit WHERE homework_id = '" + homework_id + "'\n";
             check = check + "and AI_FEEDBACK IS NULL\n";
             count = 0;
-            Console.WriteLine(check);
+            //Console.WriteLine(check);
             try
             {
                 using (OracleCommand command = new OracleCommand(check, connection))
@@ -893,7 +893,7 @@ namespace SE_PE_AI_Manager.Operation
             check = "SELECT COUNT(*) FROM submit WHERE homework_id = '" + homework_id + "'\n";
             check = check + "and teacher_FEEDBACK IS NULL\n";
             count = 0;
-            Console.WriteLine(check);
+            //Console.WriteLine(check);
             try
             {
                 using (OracleCommand command = new OracleCommand(check, connection))
@@ -1288,7 +1288,7 @@ namespace SE_PE_AI_Manager.Operation
             action = action + "score = '" + score + "',\n";
             action = action + "AI_feedback = '" + AI_feedback + "'\n";
             action = action + "where id = '" + submit_id + "'\n";
-            Console.WriteLine(action);
+            //Console.WriteLine(action);
             try
             {
                 using (OracleCommand command = new OracleCommand(action, connection))
@@ -1433,7 +1433,7 @@ namespace SE_PE_AI_Manager.Operation
             action = action + "set score = '" + score + "',\n";
             action = action + "teacher_feedback = '" + teacher_feedback + "'\n";
             action = action + "where id = '" + submit_id + "'\n";
-            Console.WriteLine(action);
+            //Console.WriteLine(action);
             try
             {
                 using (OracleCommand command = new OracleCommand(action, connection))

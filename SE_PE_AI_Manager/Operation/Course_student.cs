@@ -347,7 +347,7 @@ namespace SE_PE_AI_Manager.Operation
             //若课程存在，查询ID值
             check = "SELECT student_id FROM student_course WHERE course_id = '" + course_id + "'";
             ans = "";
-            Console.WriteLine(check);
+            //Console.WriteLine(check);
             try
             {
                 using (OracleCommand cmd = new OracleCommand(check, connection))

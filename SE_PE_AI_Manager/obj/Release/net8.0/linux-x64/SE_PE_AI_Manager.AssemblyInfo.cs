@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SE_PE_AI_Manager")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d445a1e8d3d74591d99039ad87e33381e46923c2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bde15b3313e921029ed134100e0feca520d2ee45")]
 [assembly: System.Reflection.AssemblyProductAttribute("SE_PE_AI_Manager")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SE_PE_AI_Manager")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
