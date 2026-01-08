@@ -161,30 +161,16 @@
 
         <div class="p-6 overflow-y-auto max-h-[60vh]">
           <div class="mb-6 p-4 bg-gray-50 rounded-xl">
-            <h4 class="text-lg font-semibold text-gray-700 mb-3">可选信息</h4>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">身高 (cm)</label>
-                <input
-                  v-model="studentHeight"
-                  type="number"
-                  placeholder="例如：175"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-600 mb-2">体重 (kg)</label>
-                <input
-                  v-model="studentWeight"
-                  type="number"
-                  placeholder="例如：70"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-              </div>
-            </div>
+            <h4 class="text-lg font-semibold text-gray-700 mb-3">您的查询问题</h4>
+            <textarea
+              v-model="reportQuery"
+              placeholder="请输入您想要咨询的问题，例如：请详细分析这次作业的表现，包括动作规范度、完成质量、改进建议等"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+              rows="3"
+            ></textarea>
             <button
               @click="generateAnalysisReport"
-              :disabled="reportLoading"
+              :disabled="reportLoading || !reportQuery.trim()"
               class="mt-4 w-full px-6 py-3 bg-blue-400 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {{ reportLoading ? '生成中...' : '生成AI分析报告' }}
@@ -244,8 +230,7 @@ const currentSubmission = ref(null)
 const reportContent = ref('')
 const reportLoading = ref(false)
 const reportError = ref('')
-const studentHeight = ref('')
-const studentWeight = ref('')
+const reportQuery = ref('')
 
 const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
 const studentId = currentUser.id || ''
@@ -437,6 +422,7 @@ const openReportDialog = (submission) => {
   showReportDialog.value = true
   reportContent.value = ''
   reportError.value = ''
+  reportQuery.value = ''
 }
 
 const closeReportDialog = () => {
@@ -460,17 +446,7 @@ const generateAnalysisReport = async () => {
       student_id: studentId,
       analysis_type: 'homework_feedback',
       homework_id: assignmentId,
-      query: '请详细分析这次作业的表现，包括动作规范度、完成质量、改进建议等'
-    }
-
-    if (studentHeight.value || studentWeight.value) {
-      requestData.student_info = {}
-      if (studentHeight.value) {
-        requestData.student_info.height = studentHeight.value
-      }
-      if (studentWeight.value) {
-        requestData.student_info.weight = studentWeight.value
-      }
+      query: reportQuery.value
     }
 
     const url = `${baseUrl}/api/analysis/generate`
