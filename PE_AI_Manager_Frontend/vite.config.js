@@ -19,38 +19,38 @@ export default defineConfig({
   server: {
     proxy: {
       '/User': {
-        target: 'http://118.25.145.4:5001',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       },
       '/Class': {
-        target: 'http://118.25.145.4:5001',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       },
       '/Course': {
-        target: 'http://118.25.145.4:5001',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       },
       '/Course_student': {
-        target: 'http://118.25.145.4:5001',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       },
       '/Homework': {
-        target: 'http://118.25.145.4:5001',
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       },
       '/video': {
-        target: 'http://118.25.145.4:8000',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/video/, '')
       },
       '/chat': {
-        target: 'http://118.25.145.4:5000',
+        target: 'http://localhost:5555',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/chat/, '')
