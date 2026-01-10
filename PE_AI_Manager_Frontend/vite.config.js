@@ -61,8 +61,6 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/Teaching-video/, '')
       }
-
-
     }
   }
 })
